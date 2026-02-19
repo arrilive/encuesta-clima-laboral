@@ -16,6 +16,12 @@ class DatabaseSeeder extends Seeder
             SubdimensionesSeeder::class,
             PreguntasSeeder::class,
             PreguntasAbiertasSeeder::class,
+            AntiguedadesSeeder::class,
+            CargosSeeder::class,
+            EdadesSeeder::class,
+            GradosAcademicosSeeder::class,
+            LugaresTrabajoSeeder::class,
+            SexosSeeder::class,
         ]);
     }
 }
