@@ -9,7 +9,7 @@ class AntiguedadesSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('antiguedades')->insert([
+        DB::table('antiguedades')->insertOrIgnore([
             ['opcion' => '2 años o menos',  'orden' => 1],
             ['opcion' => '3 a 5 años',      'orden' => 2],
             ['opcion' => '6 a 10 años',     'orden' => 3],

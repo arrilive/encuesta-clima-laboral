@@ -9,7 +9,7 @@ class DimensionesSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('dimensiones')->insert([
+        DB::table('dimensiones')->insertOrIgnore([
             [
                 'nombre'      => 'Credibilidad',
                 'descripcion' => 'Mide la confianza en la dirección de la empresa',

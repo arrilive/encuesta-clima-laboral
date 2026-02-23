@@ -9,7 +9,7 @@ class EdadesSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('edades')->insert([
+        DB::table('edades')->insertOrIgnore([
             ['opcion' => '18 a 20 años',    'orden' => 1],
             ['opcion' => '21 a 25 años',    'orden' => 2],
             ['opcion' => '26 a 34 años',    'orden' => 3],

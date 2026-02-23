@@ -9,7 +9,7 @@ class CargosSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('cargos')->insert([
+        DB::table('cargos')->insertOrIgnore([
             ['opcion' => 'Director',            'orden' => 1],
             ['opcion' => 'Gerente o subgerente','orden' => 2],
             ['opcion' => 'Jefe de área',        'orden' => 3],

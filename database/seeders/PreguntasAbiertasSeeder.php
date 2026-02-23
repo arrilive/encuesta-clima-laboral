@@ -9,7 +9,7 @@ class PreguntasAbiertasSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('preguntas_abiertas')->insert([
+        DB::table('preguntas_abiertas')->insertOrIgnore([
             [
                 'texto'             => 'Si pudieras cambiar algo acerca de tu empresa para hacerla un mejor lugar para trabajar, ¿qué cambiarías?',
                 'orden'             => 1,

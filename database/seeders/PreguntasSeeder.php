@@ -27,7 +27,7 @@ class PreguntasSeeder extends Seeder
         $seguridad           = DB::table('subdimensiones')->where('nombre', 'Seguridad')->value('id');
         $capacitacion        = DB::table('subdimensiones')->where('nombre', 'Capacitación')->value('id');
 
-        DB::table('preguntas')->insert([
+        DB::table('preguntas')->insertOrIgnore([
             // Comunicación (3)
             ['subdimension_id' => $comunicacion, 'texto' => '¿Los jefes comunican claramente sus expectativas?', 'orden' => 1],
             ['subdimension_id' => $comunicacion, 'texto' => '¿Mis jefes son accesibles y responden con claridad a mis dudas o inquietudes?', 'orden' => 2],

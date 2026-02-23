@@ -16,7 +16,7 @@ class SubdimensionesSeeder extends Seeder
         $compañerismo   = DB::table('dimensiones')->where('nombre', 'Compañerismo')->value('id');
         $seguridad      = DB::table('dimensiones')->where('nombre', 'Seguridad y Capacitación')->value('id');
 
-        DB::table('subdimensiones')->insert([
+        DB::table('subdimensiones')->insertOrIgnore([
             // Credibilidad
             ['dimension_id' => $credibilidad,  'nombre' => 'Comunicación',          'orden' => 1],
             ['dimension_id' => $credibilidad,  'nombre' => 'Capacidad',              'orden' => 2],

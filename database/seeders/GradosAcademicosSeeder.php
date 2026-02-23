@@ -9,7 +9,7 @@ class GradosAcademicosSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('grados_academicos')->insert([
+        DB::table('grados_academicos')->insertOrIgnore([
             ['opcion' => 'Preparatoria trunca',             'orden' => 1],
             ['opcion' => 'Preparatoria / carrera técnica',  'orden' => 2],
             ['opcion' => 'Licenciatura trunca',             'orden' => 3],

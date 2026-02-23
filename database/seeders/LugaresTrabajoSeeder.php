@@ -9,7 +9,7 @@ class LugaresTrabajoSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('lugares_trabajo')->insert([
+        DB::table('lugares_trabajo')->insertOrIgnore([
             ['opcion' => 'Corporativo', 'orden' => 1],
             ['opcion' => 'Sucursal',    'orden' => 2],
         ]);

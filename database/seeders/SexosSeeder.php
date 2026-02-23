@@ -9,7 +9,7 @@ class SexosSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('sexos')->insert([
+        DB::table('sexos')->insertOrIgnore([
             ['opcion' => 'Mujer',  'orden' => 1],
             ['opcion' => 'Hombre', 'orden' => 2],
         ]);

@@ -8,7 +8,7 @@ class OpcionesRespuestaSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('opciones_respuesta')->insert([
+        DB::table('opciones_respuesta')->insertOrIgnore([
             [
                 'opcion' => 'Falso',
                 'valor_numerico' => 1,
