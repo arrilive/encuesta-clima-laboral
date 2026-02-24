@@ -8,6 +8,7 @@ use Database\Seeders\PreguntasSeeder;
 use Database\Seeders\SubdimensionesSeeder;
 
 test('hay 6 dimensiones en BD después de seedear', function () {
+    /** @var \Tests\TestCase $this */
     // Arrange
     $this->seed([
         DimensionesSeeder::class,
@@ -21,6 +22,7 @@ test('hay 6 dimensiones en BD después de seedear', function () {
 });
 
 test('la relación subdimensiones retorna las subdimensiones de la dimensión', function () {
+    /** @var \Tests\TestCase $this */
     // Arrange
     $this->seed([
         DimensionesSeeder::class,
@@ -37,6 +39,7 @@ test('la relación subdimensiones retorna las subdimensiones de la dimensión', 
 });
 
 test('la relación preguntas via hasManyThrough retorna preguntas de todas sus subdimensiones', function () {
+    /** @var \Tests\TestCase $this */
     // Arrange
     $this->seed([
         DimensionesSeeder::class,
