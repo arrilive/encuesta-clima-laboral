@@ -3,7 +3,9 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -21,6 +23,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'empresa_id',
     ];
 
     /**
@@ -44,5 +48,25 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function empresa(): BelongsTo
+    {
+        return $this->belongsTo(Empresa::class);
+    }
+
+    public function scopeSuperAdmins(Builder $query): Builder
+    {
+        return $query->where('role', 'super_admin');
+    }
+
+    public function esSuperAdmin(): bool
+    {
+        return $this->role === 'super_admin';
+    }
+
+    public function esAdminEmpresa(): bool
+    {
+        return $this->role === 'admin_empresa';
     }
 }
