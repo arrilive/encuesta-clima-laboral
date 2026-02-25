@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Empresa;
+use App\Models\Encuesta;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class EncuestaController extends Controller
 {
@@ -13,8 +16,29 @@ class EncuestaController extends Controller
 
     public function acceso(Request $request)
     {
-        // Stub — lógica en issue #12
-        return back();
+        $request->validate([
+            'password' => ['required', 'string'],
+        ]);
+
+        $empresa = Empresa::where('activa', true)
+            ->get()
+            ->first(fn ($e) => Hash::check($request->password, $e->password));
+
+        if (! $empresa) {
+            return back()->withErrors(['password' => 'Contraseña incorrecta.']);
+        }
+
+        $encuesta = Encuesta::where('empresa_id', $empresa->id)
+            ->where('estado', 'disponible')
+            ->first();
+
+        if (! $encuesta) {
+            return back()->withErrors(['password' => 'No hay tokens disponibles. Contacta al administrador.']);
+        }
+
+        $encuesta->asignar();
+
+        return view('encuesta.token-asignado', compact('encuesta'));
     }
 
     public function demograficos(string $token)

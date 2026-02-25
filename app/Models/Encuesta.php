@@ -74,4 +74,12 @@ class Encuesta extends Model
     {
         return $this->update(['estado' => 'en_progreso']);
     }
+
+    public function asignar(): void
+    {
+        $this->update([
+            'estado'           => 'asignado',
+            'fecha_asignacion' => now(),
+        ]);
+    }
 }
