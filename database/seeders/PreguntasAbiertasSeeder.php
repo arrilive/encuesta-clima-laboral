@@ -14,16 +14,22 @@ class PreguntasAbiertasSeeder extends Seeder
                 'texto'             => 'Si pudieras cambiar algo acerca de tu empresa para hacerla un mejor lugar para trabajar, ¿qué cambiarías?',
                 'orden'             => 1,
                 'limite_caracteres' => 500,
+                'created_at'        => now(),
+                'updated_at'        => now(),
             ],
             [
                 'texto'             => '¿Existe algo especial o único en tu empresa que la caracterice como un gran lugar para trabajar?',
                 'orden'             => 2,
                 'limite_caracteres' => 500,
+                'created_at'        => now(),
+                'updated_at'        => now(),
             ],
             [
                 'texto'             => '¿A quién reconocerías como embajador/a de la cultura laboral de la empresa?',
                 'orden'             => 3,
                 'limite_caracteres' => 300,
+                'created_at'        => now(),
+                'updated_at'        => now(),
             ],
         ]);
     }
