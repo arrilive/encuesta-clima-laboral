@@ -43,13 +43,10 @@ class EncuestaController extends Controller
 
     public function demograficos(string $token)
     {
-        // Stub — lógica pendiente
-        return view('encuesta.bienvenida'); // temporal, solo para que no explote
-    }
+        Encuesta::whereIn('estado', ['asignado', 'en_progreso'])
+            ->where('token', $token)
+            ->firstOrFail();
 
-    public function guardarDemograficos(Request $request, string $token)
-    {
-        // Stub — lógica pendiente
-        return back();
+        return view('encuesta.demografico', compact('token'));
     }
 }
