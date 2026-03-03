@@ -18,5 +18,11 @@ require __DIR__.'/auth.php';
 // Sprint 2 - Rutas públicas de encuesta
 Route::get('/encuesta', [EncuestaController::class, 'bienvenida'])->name('encuesta.bienvenida');
 Route::post('/encuesta/acceso', [EncuestaController::class, 'acceso'])->name('encuesta.acceso');
+
+// Pantalla de elección de acceso (post-password)
+Route::get('/encuesta/continuar', [EncuestaController::class, 'mostrarAcceso'])->name('encuesta.mostrar-acceso');
+Route::post('/encuesta/reanudar', [EncuestaController::class, 'reanudar'])->name('encuesta.reanudar');
+Route::post('/encuesta/generar', [EncuestaController::class, 'generar'])->name('encuesta.generar');
+
 Route::get('/encuesta/{token}', [EncuestaController::class, 'demograficos'])->name('encuesta.demograficos');
-Route::post('/encuesta/{token}/demograficos', [EncuestaController::class, 'guardarDemograficos'])->name('encuesta.demograficos.guardar');
+
