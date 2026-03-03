@@ -34,28 +34,27 @@ test('rechaza empresa inactiva', function () {
         ->assertSessionHasErrors('password');
 });
 
-test('muestra error si no hay tokens disponibles', function () {
-    // Empresa activa pero sin encuestas con estado 'disponible'
+test('redirige a pantalla de acceso cuando contraseña es correcta aunque no haya tokens', function () {
     $empresa = Empresa::factory()->create();
-    Encuesta::factory()->for($empresa)->asignada()->create();
+    Encuesta::factory()->for($empresa)->asignada()->create(); // sin tokens disponibles
 
     $this->post(route('encuesta.acceso'), ['password' => 'test1234'])
-        ->assertSessionHasErrors('password');
+        ->assertRedirect(route('encuesta.mostrar-acceso'));
 });
 
 // ---------------------------------------------------------------------------
 // Acceso — caso exitoso
 // ---------------------------------------------------------------------------
 
-test('asigna token disponible con contraseña correcta', function () {
+test('acceso con contraseña correcta redirige a pantalla de elección', function () {
     $empresa  = Empresa::factory()->create();
-    $encuesta = Encuesta::factory()->for($empresa)->create(); // estado 'disponible'
+    Encuesta::factory()->for($empresa)->create(); // disponible
 
-    $this->post(route('encuesta.acceso'), ['password' => 'test1234'])
-        ->assertOk()
-        ->assertSee($encuesta->fresh()->token);
+    $response = $this->post(route('encuesta.acceso'), ['password' => 'test1234']);
 
-    expect($encuesta->fresh()->estado)->toBe('asignado');
+    $response->assertRedirect(route('encuesta.mostrar-acceso'));
+
+    $response->assertSessionHas('empresa_id', $empresa->id);
 });
 
 // ---------------------------------------------------------------------------
@@ -67,7 +66,7 @@ test('muestra el formulario demográfico con token válido', function () {
 
     $this->get(route('encuesta.demograficos', $encuesta->token))
         ->assertOk()
-        ->assertSee('Datos generales');
+        ->assertSee('Cuéntanos sobre ti');
 });
 
 test('retorna 404 con token inválido', function () {

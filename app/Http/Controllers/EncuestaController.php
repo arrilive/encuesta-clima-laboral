@@ -28,12 +28,50 @@ class EncuestaController extends Controller
             return back()->withErrors(['password' => 'Contraseña incorrecta.']);
         }
 
-        $encuesta = Encuesta::where('empresa_id', $empresa->id)
+        // Guardamos empresa en sesión para usarla en generar()
+        session(['empresa_id' => $empresa->id]);
+
+        return redirect()->route('encuesta.mostrar-acceso');
+    }
+
+    // Muestra la pantalla de elección (continuar con token vs generar nuevo)
+    public function mostrarAcceso()
+    {
+        return view('encuesta.acceso');
+    }
+
+    // Opción A: el participante ya tiene un token y quiere retomarlo
+    public function reanudar(Request $request)
+    {
+        $request->validate(['token' => ['required', 'string']]);
+
+        $encuesta = Encuesta::whereIn('estado', ['asignado', 'en_progreso'])
+            ->where('token', $request->token)
+            ->first();
+
+        if (! $encuesta) {
+            return back()->withErrors(['token' => 'Código no encontrado, favor verificar que sea correcto.']);
+        }
+
+        return redirect()->route('encuesta.demograficos', $encuesta->token);
+    }
+
+    // Opción B: primera vez — asignar un token nuevo y mostrarlo
+    public function generar(Request $request)
+    {
+        $empresaId = session('empresa_id');
+
+        if (! $empresaId) {
+            return redirect()->route('encuesta.bienvenida')
+                ->withErrors(['password' => 'Sesión expirada. Vuelve a ingresar.']);
+        }
+
+        $encuesta = Encuesta::where('empresa_id', $empresaId)
             ->where('estado', 'disponible')
             ->first();
 
         if (! $encuesta) {
-            return back()->withErrors(['password' => 'No hay tokens disponibles. Contacta al administrador.']);
+            return back()->withErrors(['generar' => 'No hay tokens disponibles. Favor de contactar con el administrador.']);
         }
 
         $encuesta->asignar();

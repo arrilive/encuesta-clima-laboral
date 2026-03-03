@@ -66,14 +66,19 @@ class FormularioDemografico extends Component
 
     public function continuar(): void
     {
-        $this->validate([
-            'edad_id'            => ['required', 'exists:edades,id'],
-            'sexo_id'            => ['required', 'exists:sexos,id'],
-            'antiguedad_id'      => ['required', 'exists:antiguedades,id'],
-            'lugar_trabajo_id'   => ['required', 'exists:lugares_trabajo,id'],
-            'grado_academico_id' => ['required', 'exists:grados_academicos,id'],
-            'cargo_id'           => ['required', 'exists:cargos,id'],
-        ]);
+        $this->validate(
+            [
+                'edad_id'            => ['required', 'exists:edades,id'],
+                'sexo_id'            => ['required', 'exists:sexos,id'],
+                'antiguedad_id'      => ['required', 'exists:antiguedades,id'],
+                'lugar_trabajo_id'   => ['required', 'exists:lugares_trabajo,id'],
+                'grado_academico_id' => ['required', 'exists:grados_academicos,id'],
+                'cargo_id'           => ['required', 'exists:cargos,id'],
+            ],
+            [
+                'required' => 'Favor de seleccionar una opción.',
+            ]
+        );
 
         $this->guardarProgreso();
 
