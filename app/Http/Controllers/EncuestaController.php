@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Empresa;
 use App\Models\Encuesta;
 use Illuminate\Http\Request;
+use App\Models\Dimension;
+use App\Models\Pregunta;
+use App\Models\Respuesta;
 use Illuminate\Support\Facades\Hash;
 
 class EncuestaController extends Controller
@@ -86,5 +89,101 @@ class EncuestaController extends Controller
             ->firstOrFail();
 
         return view('encuesta.demografico', compact('token'));
+    }
+
+    public function bloque(string $token, int $dimension)
+    {
+        $encuesta = Encuesta::whereIn('estado', ['asignado', 'en_progreso'])
+            ->where('token', $token)
+            ->firstOrFail();
+
+        if ($dimension < 1 || $dimension > 6) {
+            abort(404);
+        }
+        // Marcar como en_progreso si aún está asignado
+        if ($encuesta->estado === 'asignado') {
+            $encuesta->marcarEnProgreso();
+        }
+
+        return view('encuesta.bloque', compact('token', 'dimension'));
+    }
+
+    public function abiertas(string $token)
+    {
+        $encuesta = Encuesta::where('estado', 'en_progreso')
+            ->where('token', $token)
+            ->firstOrFail();
+
+        return view('encuesta.abiertas', compact('token'));
+    }
+
+    public function gracias(string $token)
+    {
+        Encuesta::whereIn('estado', ['en_progreso', 'completado'])
+            ->where('token', $token)
+            ->firstOrFail();
+
+        return view('encuesta.gracias');
+    }
+
+   public function dimensiones(string $token)
+    {
+        $encuesta = Encuesta::whereIn('estado', ['asignado', 'en_progreso'])
+            ->where('token', $token)
+            ->firstOrFail();
+
+        $dimensiones = Dimension::with('subdimensiones')->orderBy('orden')->get()->map(function ($dimension) use ($encuesta) {
+            $totalPreguntas = Pregunta::whereHas('subdimension', fn ($q) =>
+                $q->where('dimension_id', $dimension->id)
+            )->count();
+
+            $respondidas = Respuesta::whereHas('pregunta.subdimension', fn ($q) =>
+                $q->where('dimension_id', $dimension->id)
+            )->where('encuesta_id', $encuesta->id)->count();
+
+            $dimension->total    = $totalPreguntas;
+            $dimension->respondidas = $respondidas;
+            $dimension->completada  = $respondidas >= $totalPreguntas && $totalPreguntas > 0;
+
+            return $dimension;
+        });
+
+        // Calcular cuál dimensión está disponible
+        // La primera no completada y cuya anterior sí está completada
+        $disponibleOrden = 1;
+        foreach ($dimensiones as $dim) {
+            if ($dim->completada) {
+                $disponibleOrden = $dim->orden + 1;
+            } else {
+                break;
+            }
+        }
+
+        return response()
+            ->view('encuesta.dimensiones', compact('token', 'dimensiones', 'disponibleOrden'))
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
+    }
+
+    public function completado(string $token, int $dimension)
+    {
+        $encuesta = Encuesta::whereIn('estado', ['asignado', 'en_progreso'])
+            ->where('token', $token)
+            ->firstOrFail();
+
+        if ($dimension < 1 || $dimension > 6) {
+            abort(404);
+        }
+
+        $dimensionActual  = Dimension::where('orden', $dimension)->firstOrFail();
+        $siguienteDimension = Dimension::where('orden', $dimension + 1)->first();
+
+        return view('encuesta.completado', compact(
+            'token',
+            'dimension',
+            'dimensionActual',
+            'siguienteDimension'
+        ));
     }
 }

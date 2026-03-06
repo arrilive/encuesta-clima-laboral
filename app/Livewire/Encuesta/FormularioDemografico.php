@@ -82,9 +82,7 @@ class FormularioDemografico extends Component
 
         $this->guardarProgreso();
 
-        // Temporal hasta Sprint 3
-        session()->flash('message', 'Datos demográficos guardados. Sprint 3 pendiente.');
-        $this->redirect(route('encuesta.bienvenida'));
+        $this->redirect(route('encuesta.dimensiones', $this->encuesta->token));
     }
 
     public function render()
