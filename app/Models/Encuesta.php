@@ -82,4 +82,12 @@ class Encuesta extends Model
             'fecha_asignacion' => now(),
         ]);
     }
+
+    public function marcarComoCompletada(): void
+    {
+        $this->update([
+            'estado'           => 'completado',
+            'fecha_completada' => now(),
+        ]);
+    }
 }
