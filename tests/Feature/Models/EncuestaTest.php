@@ -94,3 +94,15 @@ test('el state completada asigna estado completado y ambas fechas', function () 
     expect($encuesta->fecha_asignacion)->not->toBeNull();
     expect($encuesta->fecha_completada)->not->toBeNull();
 });
+
+test('el método marcarComoCompletada actualiza el estado y fecha en BD', function () {
+    // Arrange
+    $encuesta = Encuesta::factory()->asignada()->create();
+
+    // Act
+    $encuesta->marcarComoCompletada();
+
+    // Assert
+    expect($encuesta->fresh()->estado)->toBe('completado');
+    expect($encuesta->fresh()->fecha_completada)->not->toBeNull();
+});
