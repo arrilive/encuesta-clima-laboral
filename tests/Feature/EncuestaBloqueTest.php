@@ -28,6 +28,18 @@ function seedEncuesta(): void
         && (new PreguntasSeeder)->run();
     app()['db']->table('opciones_respuesta')->count() === 0
         && (new OpcionesRespuestaSeeder)->run();
+    app()['db']->table('antiguedades')->count() === 0
+        && (new \Database\Seeders\AntiguedadesSeeder)->run();
+    app()['db']->table('edades')->count() === 0
+        && (new \Database\Seeders\EdadesSeeder)->run();
+    app()['db']->table('lugares_trabajo')->count() === 0
+        && (new \Database\Seeders\LugaresTrabajoSeeder)->run();
+    app()['db']->table('sexos')->count() === 0
+        && (new \Database\Seeders\SexosSeeder)->run();
+    app()['db']->table('grados_academicos')->count() === 0
+        && (new \Database\Seeders\GradosAcademicosSeeder)->run();
+    app()['db']->table('cargos')->count() === 0
+        && (new \Database\Seeders\CargosSeeder)->run();
 }
 
 // ---------------------------------------------------------------------------
@@ -39,6 +51,10 @@ test('la ruta encuesta.bloque carga correctamente con token válido', function (
 
     $encuesta  = Encuesta::factory()->asignada()->create();
     $dimension = Dimension::where('orden', 1)->first();
+
+    \App\Models\DatoDemografico::factory()->create([
+        'encuesta_id' => $encuesta->id,
+    ]);
 
     $this->get(route('encuesta.bloque', [
         'token'     => $encuesta->token,

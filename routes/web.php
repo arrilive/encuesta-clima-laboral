@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EncuestaController;
 
-Route::view('/', 'welcome');
+Route::redirect('/', 'encuesta');
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
