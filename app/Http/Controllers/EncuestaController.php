@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\Dimension;
 use App\Models\Pregunta;
 use App\Models\Respuesta;
+use App\Models\DatoDemografico;
 use Illuminate\Support\Facades\Hash;
 
 class EncuestaController extends Controller
@@ -101,12 +102,49 @@ class EncuestaController extends Controller
         if ($dimension < 1 || $dimension > 6) {
             abort(404);
         }
+
+        // Verificar que demográficos estén completos
+        $tieneDemograficos = DatoDemografico::where('encuesta_id', $encuesta->id)->exists();
+        if (! $tieneDemograficos) {
+            return redirect()->route('encuesta.mostrar-acceso');
+        }
+
+        // Verificar orden secuencial — no puede adelantarse
+        $ultimaCompletada = $this->ultimaDimensionCompletada($encuesta);
+        if ($dimension > $ultimaCompletada + 1) {
+            return redirect()->route('encuesta.dimensiones', $token);
+        }
+
         // Marcar como en_progreso si aún está asignado
         if ($encuesta->estado === 'asignado') {
             $encuesta->marcarEnProgreso();
         }
 
         return view('encuesta.bloque', compact('token', 'dimension'));
+    }
+
+    private function ultimaDimensionCompletada(Encuesta $encuesta): int
+    {
+        $dimensiones = Dimension::with('subdimensiones')->orderBy('orden')->get();
+        $ultima = 0;
+
+        foreach ($dimensiones as $dim) {
+            $total = Pregunta::whereHas('subdimension', fn ($q) =>
+                $q->where('dimension_id', $dim->id)
+            )->count();
+
+            $respondidas = Respuesta::whereHas('pregunta.subdimension', fn ($q) =>
+                $q->where('dimension_id', $dim->id)
+            )->where('encuesta_id', $encuesta->id)->count();
+
+            if ($respondidas >= $total && $total > 0) {
+                $ultima = $dim->orden;
+            } else {
+                break;
+            }
+        }
+
+        return $ultima;
     }
 
     public function abiertas(string $token)
