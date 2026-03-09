@@ -50,6 +50,7 @@ class EncuestaController extends Controller
 
         $encuesta = Encuesta::whereIn('estado', ['asignado', 'en_progreso'])
             ->where('token', $request->token)
+            ->where('empresa_id', session('empresa_id'))
             ->first();
 
         if (! $encuesta) {
