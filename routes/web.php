@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EncuestaController;
+use App\Http\Controllers\Admin\DashboardController;
 
 Route::redirect('/', 'encuesta');
 
@@ -12,6 +13,21 @@ Route::view('dashboard', 'dashboard')
 Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
+
+
+Route::prefix('admin')
+    ->middleware(['auth', 'role:super_admin,admin_empresa'])
+    ->name('admin.')
+    ->group(function () {
+
+        Route::get('/dashboard', [DashboardController::class, 'index'])
+             ->name('dashboard');
+
+        // Solo super_admin
+        Route::middleware('role:super_admin')->group(function () {
+            // Aquí irán las rutas exclusivas de super_admin en sprints futuros
+        });
+    });
 
 require __DIR__.'/auth.php';
 

@@ -9,6 +9,7 @@ use Database\Seeders\CargosSeeder;
 use Database\Seeders\DimensionesSeeder;
 use Database\Seeders\EdadesSeeder;
 use Database\Seeders\EmpresaSeeder;
+use Database\Seeders\AdminSeeder;
 use Database\Seeders\GradosAcademicosSeeder;
 use Database\Seeders\LugaresTrabajoSeeder;
 use Database\Seeders\OpcionesRespuestaSeeder;
@@ -36,6 +37,7 @@ class DatabaseSeeder extends Seeder
             LugaresTrabajoSeeder::class,
             SexosSeeder::class,
             EmpresaSeeder::class,
+            AdminSeeder::class,
         ]);
     }
 }
