@@ -7,7 +7,7 @@
                 Tu encuesta
             </h1>
             <p class="text-sm text-slate-500 leading-relaxed">
-                Completa cada bloque en orden. Tus respuestas se guardan automáticamente.
+                Completa cada bloque en orden. Todas tus respuestas se guardan automáticamente.
             </p>
         </div>
 
