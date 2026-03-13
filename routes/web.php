@@ -23,6 +23,9 @@ Route::prefix('admin')
         Route::get('/dashboard', [DashboardController::class, 'index'])
              ->name('dashboard');
 
+        Route::get('/encuestas', \App\Livewire\Admin\EncuestasTable::class)
+            ->name('encuestas');
+
         // Solo super_admin
         Route::middleware('role:super_admin')->group(function () {
             // Aquí irán las rutas exclusivas de super_admin en sprints futuros
