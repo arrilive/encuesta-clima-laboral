@@ -24,8 +24,13 @@
             icon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>'
         />
 
+        <x-admin.sidebar-item
+            route="admin.tokens"
+            label="Tokens"
+            icon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/></svg>'
+        />
+
         {{-- Issues futuros — rutas aún no definidas
-        <x-admin.sidebar-item route="admin.tokens" label="Tokens" ... />
         @if(auth()->user()->role === 'super_admin')
             <x-admin.sidebar-item route="admin.empresas" label="Empresas" ... />
         @endif

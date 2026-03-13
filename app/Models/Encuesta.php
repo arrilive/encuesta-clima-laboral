@@ -16,6 +16,7 @@ class Encuesta extends Model
     protected $table = 'encuestas';
 
     protected $fillable = [
+        'lote_id',
         'token',
         'empresa_id',
         'estado',
@@ -35,6 +36,11 @@ class Encuesta extends Model
     public function empresa(): BelongsTo
     {
         return $this->belongsTo(Empresa::class);
+    }
+
+    public function lote(): BelongsTo
+    {
+        return $this->belongsTo(TokenLote::class, 'lote_id');
     }
 
     public function datoDemografico(): HasOne
