@@ -25,10 +25,10 @@
                     <label class="block text-xs font-semibold text-slate-700 mb-1.5">Empresa <span class="text-red-400">*</span></label>
                     <select
                         wire:model="empresaId"
-                        class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm
+                        class="w-full rounded-xl border px-4 py-2.5 text-sm
                                text-slate-800 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10
                                focus:outline-none transition-all duration-200
-                               @error('empresaId') border-red-400 bg-red-50 @enderror">
+                               {{ $errors->has('empresaId') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}">
                         <option value="">Selecciona una empresa</option>
                         @foreach($empresas as $empresa)
                             <option value="{{ $empresa->id }}">{{ $empresa->nombre }}</option>
@@ -50,10 +50,10 @@
                     wire:model="cantidad"
                     type="text"
                     inputmode="numeric"
-                    class="w-full px-4 py-2.5 border border-slate-300 rounded-xl text-sm text-slate-900
-                           bg-white focus:outline-none focus:border-blue-500 focus:ring-4
+                    class="w-full px-4 py-2.5 border rounded-xl text-sm text-slate-900
+                           focus:outline-none focus:border-blue-500 focus:ring-4
                            focus:ring-blue-500/10 transition-all duration-200
-                           @error('cantidad') border-red-400 bg-red-50 @enderror"
+                           {{ $errors->has('cantidad') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}"
                 />
                 @error('cantidad')
                     <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">
