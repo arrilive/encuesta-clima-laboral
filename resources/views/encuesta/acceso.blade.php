@@ -68,11 +68,11 @@
                 <form method="POST" action="{{ route('encuesta.reanudar') }}" class="space-y-2.5">
                     @csrf
                     <input type="text" name="token" placeholder="Pega tu código aquí…"
-                        class="w-full px-3 py-2.5 border border-slate-300 rounded-lg font-mono text-xs
-                               text-slate-800 placeholder-slate-400 bg-white
+                        class="w-full px-3 py-2.5 border rounded-lg font-mono text-xs
+                               text-slate-800 placeholder-slate-400
                                focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10
                                transition-all duration-200
-                               @error('token') border-red-400 bg-red-50 @enderror">
+                               {{ $errors->has('token') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}">
                     @error('token')
                         <p class="flex items-center gap-1.5 text-xs text-red-500">
                             {{ $message }}
