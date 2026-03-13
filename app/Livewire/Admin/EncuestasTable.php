@@ -70,7 +70,7 @@ class EncuestasTable extends Component
                 $q->whereDate('fecha_asignacion', '<=', $this->filtroHasta)
             )
             ->orderByDesc('created_at')
-            ->paginate(15);
+            ->paginate(14);
 
         return view('livewire.admin.encuestas-table', compact('encuestas'))
             ->layoutData(['heading' => 'Encuestas']);

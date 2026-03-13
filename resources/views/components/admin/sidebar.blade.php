@@ -1,4 +1,4 @@
-<aside class="flex flex-col w-64 min-h-screen bg-white border-r border-slate-200 flex-shrink-0">
+<aside class="flex flex-col w-64 h-screen max-h-screen bg-white border-r border-slate-200 flex-shrink-0 sticky top-0">
 
     {{-- Header: usuario y rol --}}
     <div class="px-6 py-5 border-b border-slate-200">

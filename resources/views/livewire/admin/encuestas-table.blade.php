@@ -87,27 +87,27 @@
             <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b border-slate-200 bg-slate-50">
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Token</th>
+                        <th class="text-left px-6 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Token</th>
                         @if(auth()->user()->role === 'super_admin')
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Empresa</th>
+                            <th class="text-left px-6 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Empresa</th>
                         @endif
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Estado</th>
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Asignado</th>
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Completado</th>
+                        <th class="text-left px-6 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Estado</th>
+                        <th class="text-left px-6 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Asignado</th>
+                        <th class="text-left px-6 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Completado</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     @forelse($encuestas as $encuesta)
                         <tr class="hover:bg-slate-50 transition-colors duration-100">
-                            <td class="px-6 py-4 font-mono text-xs text-slate-600">
+                            <td class="px-6 py-3 font-mono text-xs text-slate-600">
                                 {{ substr($encuesta->token, 0, 16) }}…
                             </td>
                             @if(auth()->user()->role === 'super_admin')
-                                <td class="px-6 py-4 text-slate-700">
+                                <td class="px-6 py-3 text-slate-700">
                                     {{ $encuesta->empresa->nombre }}
                                 </td>
                             @endif
-                            <td class="px-6 py-4">
+                            <td class="px-6 py-3">
                                 @php
                                     $badge = match($encuesta->estado) {
                                         'disponible'  => 'bg-slate-100 text-slate-600',
@@ -121,10 +121,10 @@
                                     {{ ucfirst(str_replace('_', ' ', $encuesta->estado)) }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 text-slate-500 text-xs">
+                            <td class="px-6 py-3 text-slate-500 text-xs">
                                 {{ $encuesta->fecha_asignacion?->format('d/m/Y H:i') ?? '—' }}
                             </td>
-                            <td class="px-6 py-4 text-slate-500 text-xs">
+                            <td class="px-6 py-3 text-slate-500 text-xs">
                                 {{ $encuesta->fecha_completada?->format('d/m/Y H:i') ?? '—' }}
                             </td>
                         </tr>
