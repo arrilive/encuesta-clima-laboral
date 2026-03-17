@@ -1,6 +1,6 @@
 <x-layouts.admin title="Dashboard" heading="Dashboard">
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
 
         <div class="bg-white rounded-2xl border border-slate-200 p-6">
             <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Total tokens</p>
@@ -15,6 +15,11 @@
         <div class="bg-white rounded-2xl border border-slate-200 p-6">
             <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">En progreso</p>
             <p class="text-3xl font-bold text-blue-600">{{ $kpis['en_progreso'] }}</p>
+        </div>
+        
+        <div class="bg-white rounded-2xl border border-slate-200 p-6">
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Asignados</p>
+            <p class="text-3xl font-bold text-amber-500">{{ $kpis['asignados'] }}</p>
         </div>
 
         <div class="bg-white rounded-2xl border border-slate-200 p-6">

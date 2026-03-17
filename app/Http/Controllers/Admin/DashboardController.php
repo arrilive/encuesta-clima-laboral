@@ -20,6 +20,7 @@ class DashboardController extends Controller
             'total_tokens' => (clone $base)->count(),
             'completadas'  => (clone $base)->where('estado', 'completado')->count(),
             'en_progreso'  => (clone $base)->where('estado', 'en_progreso')->count(),
+            'asignados'    => (clone $base)->where('estado', 'asignado')->count(),
             'disponibles'  => (clone $base)->where('estado', 'disponible')->count(),
         ];
 
