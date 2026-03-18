@@ -12,8 +12,7 @@ use Livewire\Component;
 #[Layout('components.layouts.admin')]
 class GenerarTokens extends Component
 {
-    public string $cantidad = '50';
-
+    public string $cantidad = '10';
     public string $nombre = '';
 
     public string $empresaId = '';
@@ -88,7 +87,7 @@ class GenerarTokens extends Component
         $this->generado = true;
 
         // Reset del formulario
-        $this->cantidad = '50';
+        $this->cantidad = '10';
         $this->nombre = '';
         if ($user->role === 'super_admin') {
             $this->empresaId = '';
