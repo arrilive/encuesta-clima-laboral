@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EncuestaController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ExportController;
 
 Route::redirect('/', 'encuesta');
 
@@ -22,6 +23,9 @@ Route::prefix('admin')
 
         Route::get('/dashboard', [DashboardController::class, 'index'])
              ->name('dashboard');
+
+        Route::get('/encuestas/exportar', [ExportController::class, 'encuestasCSV'])
+             ->name('encuestas.exportar');
 
         Route::get('/encuestas', \App\Livewire\Admin\EncuestasTable::class)
             ->name('encuestas');

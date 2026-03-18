@@ -2,6 +2,31 @@
 
     {{-- Filtros --}}
     <div class="bg-white rounded-2xl border border-slate-200 p-5">
+
+        {{-- Barra superior: acción --}}
+        <div class="flex items-center justify-between mb-4">
+            <span class="text-sm font-bold text-slate-900">Filtros</span>
+            <a href="{{ route('admin.encuestas.exportar', array_filter([
+                'estado'  => $filtroEstado,
+                'buscar'  => $buscar,
+                'empresa' => $filtroEmpresa,
+                'desde'   => $filtroDesde,
+                'hasta'   => $filtroHasta,
+            ])) }}"
+               class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700
+                      bg-white border border-slate-300 rounded-lg hover:bg-slate-50
+                      transition-all duration-200 whitespace-nowrap">
+                <svg class="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                Exportar CSV
+            </a>
+        </div>
+
+        {{-- Grid de filtros --}}
         @if(auth()->user()->role === 'super_admin')
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         @else
