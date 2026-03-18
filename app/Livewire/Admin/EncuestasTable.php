@@ -18,42 +18,25 @@ class EncuestasTable extends Component
     public string $filtroDesde = '';
     public string $filtroHasta = '';
 
-    public function updatingBuscar(): void
+    public function updated(): void
     {
         $this->resetPage();
     }
 
-    public function updatingFiltroEmpresa(): void
+    protected function onEachSide(): int
     {
-        $this->resetPage();
-    }
-
-    public function updatingFiltroEstado(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatingFiltroDesde(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatingFiltroHasta(): void
-    {
-        $this->resetPage();
+        return 1;
     }
 
     public function render()
     {
         $user = auth()->user();
 
-        $base = Encuesta::query()
+        $encuestas = Encuesta::query()
             ->with('empresa')
             ->when($user->role === 'admin_empresa', fn($q) =>
                 $q->where('empresa_id', $user->empresa_id)
-            );
-
-        $encuestas = (clone $base)
+            )
             ->when($this->buscar, fn($q) =>
                 $q->where('token', 'like', '%' . $this->buscar . '%')
             )
@@ -69,7 +52,7 @@ class EncuestasTable extends Component
             ->when($this->filtroHasta, fn($q) =>
                 $q->whereDate('fecha_asignacion', '<=', $this->filtroHasta)
             )
-            ->orderByDesc('created_at')
+            ->orderByDesc('fecha_asignacion')
             ->paginate(14);
 
         return view('livewire.admin.encuestas-table', compact('encuestas'))
