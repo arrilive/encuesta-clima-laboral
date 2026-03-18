@@ -55,7 +55,6 @@ class EncuestasTable extends Component
             ->orderByDesc('fecha_asignacion')
             ->paginate(14);
 
-        return view('livewire.admin.encuestas-table', compact('encuestas'))
-            ->layoutData(['heading' => 'Encuestas']);
+        return view('livewire.admin.encuestas-table', compact('encuestas'));
     }
 }
