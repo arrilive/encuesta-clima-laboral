@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-#[Layout('components.layouts.admin')]
+#[Layout('components.layouts.admin', ['heading' => 'Tokens'])]
 class GenerarTokens extends Component
 {
     public string $cantidad = '10';
@@ -109,7 +109,6 @@ class GenerarTokens extends Component
             ->orderByDesc('created_at')
             ->get();
 
-        return view('livewire.admin.generar-tokens', compact('empresas', 'lotes'))
-            ->layoutData(['heading' => 'Tokens']);
+        return view('livewire.admin.generar-tokens', compact('empresas', 'lotes'));
     }
 }
