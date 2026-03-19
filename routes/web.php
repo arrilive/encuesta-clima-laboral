@@ -33,6 +33,9 @@ Route::prefix('admin')
         Route::get('/tokens', \App\Livewire\Admin\GenerarTokens::class)
              ->name('tokens');
 
+        Route::get('/reportes', \App\Livewire\Admin\Reportes::class)
+             ->name('reportes');
+
         // Solo super_admin
         Route::middleware('role:super_admin')->group(function () {
             // Aquí irán las rutas exclusivas de super_admin en sprints futuros
