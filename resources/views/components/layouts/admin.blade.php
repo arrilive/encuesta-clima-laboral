@@ -18,7 +18,7 @@
             {{-- Header --}}
             <header class="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between">
                 <h1 class="text-lg font-semibold text-slate-900">{{ $heading ?? '' }}</h1>
-                <p class="text-xs text-slate-400">
+                <p class="text-sm text-slate-400">
                     {{ auth()->user()->empresa->nombre ?? 'Todas las empresas' }}
                 </p>
             </header>
