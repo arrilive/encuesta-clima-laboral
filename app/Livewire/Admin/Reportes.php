@@ -55,6 +55,18 @@ class Reportes extends Component
         $this->subdimensionActivaId = $subdimensionId;
     }
 
+    public function limpiarFiltros(): void
+    {
+        $this->filtroEdadId = '';
+        $this->filtroSexoId = '';
+        $this->filtroCargoId = '';
+        $this->filtroLugarTrabajoId = '';
+        $this->filtroGradoAcademicoId = '';
+        $this->filtroAntiguedadId = '';
+        $this->filtroEmpresaId = '';
+        $this->irNivel1();
+    }
+
     protected function getBaseQuery()
     {
         $user = auth()->user();
@@ -159,6 +171,9 @@ class Reportes extends Component
     public function render()
     {
         $user = auth()->user();
+        $datosNivel1 = $this->nivel === 1 ? $this->getDatosNivel1() : [];
+
+        $this->dispatch('radar-datos-actualizados', datos: $datosNivel1);
 
         return view('livewire.admin.reportes', [
             'edades'             => \App\Models\Edad::orderBy('orden')->get(),
@@ -170,7 +185,7 @@ class Reportes extends Component
             'empresas'           => $user->role === 'super_admin' ? Empresa::orderBy('nombre')->get() : collect(),
             'dimensionActiva'    => $this->dimensionActivaId ? Dimension::find($this->dimensionActivaId) : null,
             'subdimensionActiva' => $this->subdimensionActivaId ? Subdimension::find($this->subdimensionActivaId) : null,
-            'datosNivel1'        => $this->nivel === 1 ? $this->getDatosNivel1() : [],
+            'datosNivel1'        => $datosNivel1,
             'datosNivel2'        => $this->nivel === 2 ? $this->getDatosNivel2() : [],
         ]);
     }
