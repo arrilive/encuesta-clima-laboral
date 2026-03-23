@@ -5,7 +5,7 @@
 
         {{-- Barra superior: acción --}}
         <div class="flex items-center justify-between mb-4">
-            <span class="text-sm font-bold text-slate-900">Filtros</span>
+            <span class="text-slate-900 font-semibold">Filtros</span>
             <a href="{{ route('admin.encuestas.exportar', array_filter([
                 'estado'  => $filtroEstado,
                 'buscar'  => $buscar,
@@ -13,16 +13,27 @@
                 'desde'   => $filtroDesde,
                 'hasta'   => $filtroHasta,
             ])) }}"
+               x-data="{ exporting: false }"
+               x-on:click="exporting = true; setTimeout(() => exporting = false, 2500)"
+               x-bind:class="{ 'opacity-50 cursor-not-allowed': exporting }"
                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700
                       bg-white border border-slate-300 rounded-lg hover:bg-slate-50
-                      transition-all duration-200 whitespace-nowrap">
-                <svg class="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      transition-all duration-200 hover:-translate-y-px active:translate-y-0 whitespace-nowrap">
+                      
+                <svg x-show="exporting" style="display: none;" class="animate-spin w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+                    <path d="M12 2a10 10 0 0 1 10 10"/>
+                </svg>
+
+                <svg x-show="!exporting" class="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                      stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                     <polyline points="7 10 12 15 17 10" />
                     <line x1="12" y1="15" x2="12" y2="3" />
                 </svg>
-                Exportar CSV
+
+                <span x-show="!exporting">Exportar CSV</span>
+                <span x-show="exporting" style="display: none;">Exportando...</span>
             </a>
         </div>
 
