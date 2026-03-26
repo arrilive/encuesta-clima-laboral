@@ -144,60 +144,74 @@
         @endif
     </nav>
 
+    {{-- Lógica de Estado Vacío Global --}}
+    @php
+        $completadasFiltradas = \App\Models\Encuesta::where('estado', 'completado')
+            ->when(
+                auth()->user()->role === 'admin_empresa',
+                fn($q) => $q->where('empresa_id', auth()->user()->empresa_id),
+            )
+            ->when(
+                auth()->user()->role === 'super_admin' && $filtroEmpresaId,
+                fn($q) => $q->where('empresa_id', $filtroEmpresaId),
+            )
+            ->when(
+                $filtroEdadId,
+                fn($q) => $q->whereHas('datoDemografico', fn($q2) => $q2->where('edad_id', $filtroEdadId)),
+            )
+            ->when(
+                $filtroSexoId,
+                fn($q) => $q->whereHas('datoDemografico', fn($q2) => $q2->where('sexo_id', $filtroSexoId)),
+            )
+            ->when(
+                $filtroCargoId,
+                fn($q) => $q->whereHas('datoDemografico', fn($q2) => $q2->where('cargo_id', $filtroCargoId)),
+            )
+            ->when(
+                $filtroLugarTrabajoId,
+                fn($q) => $q->whereHas(
+                    'datoDemografico',
+                    fn($q2) => $q2->where('lugar_trabajo_id', $filtroLugarTrabajoId),
+                ),
+            )
+            ->when(
+                $filtroGradoAcademicoId,
+                fn($q) => $q->whereHas(
+                    'datoDemografico',
+                    fn($q2) => $q2->where('grado_academico_id', $filtroGradoAcademicoId),
+                ),
+            )
+            ->when(
+                $filtroAntiguedadId,
+                fn($q) => $q->whereHas(
+                    'datoDemografico',
+                    fn($q2) => $q2->where('antiguedad_id', $filtroAntiguedadId),
+                ),
+            )
+            ->count();
+
+        $completadasTotal = \App\Models\Encuesta::where('estado', 'completado')
+            ->when(
+                auth()->user()->role === 'admin_empresa',
+                fn($q) => $q->where('empresa_id', auth()->user()->empresa_id),
+            )
+            ->when(
+                auth()->user()->role === 'super_admin' && $filtroEmpresaId,
+                fn($q) => $q->where('empresa_id', $filtroEmpresaId),
+            )
+            ->count();
+
+        $sinDatos = $completadasFiltradas === 0;
+    @endphp
+
     {{-- SECCIÓN 3 — Contenido nivel 1 --}}
     @if ($nivel === 1)
-        @php
-            $completadasFiltradas = \App\Models\Encuesta::where('estado', 'completado')
-                ->when(
-                    auth()->user()->role === 'admin_empresa',
-                    fn($q) => $q->where('empresa_id', auth()->user()->empresa_id),
-                )
-                ->when(
-                    $filtroEdadId,
-                    fn($q) => $q->whereHas('datoDemografico', fn($q2) => $q2->where('edad_id', $filtroEdadId)),
-                )
-                ->when(
-                    $filtroSexoId,
-                    fn($q) => $q->whereHas('datoDemografico', fn($q2) => $q2->where('sexo_id', $filtroSexoId)),
-                )
-                ->when(
-                    $filtroCargoId,
-                    fn($q) => $q->whereHas('datoDemografico', fn($q2) => $q2->where('cargo_id', $filtroCargoId)),
-                )
-                ->when(
-                    $filtroLugarTrabajoId,
-                    fn($q) => $q->whereHas(
-                        'datoDemografico',
-                        fn($q2) => $q2->where('lugar_trabajo_id', $filtroLugarTrabajoId),
-                    ),
-                )
-                ->when(
-                    $filtroGradoAcademicoId,
-                    fn($q) => $q->whereHas(
-                        'datoDemografico',
-                        fn($q2) => $q2->where('grado_academico_id', $filtroGradoAcademicoId),
-                    ),
-                )
-                ->when(
-                    $filtroAntiguedadId,
-                    fn($q) => $q->whereHas(
-                        'datoDemografico',
-                        fn($q2) => $q2->where('antiguedad_id', $filtroAntiguedadId),
-                    ),
-                )
-                ->count();
-
-            $completadasTotal = \App\Models\Encuesta::where('estado', 'completado')
-                ->when(
-                    auth()->user()->role === 'admin_empresa',
-                    fn($q) => $q->where('empresa_id', auth()->user()->empresa_id),
-                )
-                ->count();
-
-            $sinDatos = $completadasFiltradas === 0;
-        @endphp
-
-        <div class="space-y-6">
+        @if ($sinDatos || empty($datosNivel1))
+            <x-admin.empty-state 
+                mensaje="No hay encuestas completadas que coincidan con los filtros seleccionados."
+            />
+        @else
+            <div class="space-y-6">
             {{-- 3a. KPIs --}}
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {{-- Promedio General --}}
@@ -358,9 +372,122 @@
                 </div>
             </div>
         </div>
+        @endif
     @endif
 
-    {{-- Nivel 2: issue #47 --}}
+    {{-- SECCIÓN 4 — Contenido nivel 2 --}}
+    @if ($nivel === 2)
+        @if ($sinDatos)
+            <x-admin.empty-state 
+                mensaje="No hay subdimensiones con datos para los filtros seleccionados."
+            />
+        @else
+            {{-- Grid 55/45: barras + donut --}}
+            <div class="grid grid-cols-1 lg:grid-cols-[55fr_45fr] gap-6 items-start">
+
+                {{-- Chart de barras horizontales --}}
+                <div class="bg-white rounded-2xl shadow-sm p-4">
+                    <h2 class="text-slate-900 font-semibold mb-4">Puntaje por Subdimensión</h2>
+                    <div x-data="{ chart: null }"
+                        x-init="
+                            window.barrasNivel2Datos = @js($datosNivel2);
+                            if (chart) { chart.destroy(); }
+                            chart = new ApexCharts(
+                                $el.querySelector('#barras-nivel2-container'),
+                                JSON.parse(JSON.stringify(window.barrasNivel2Options))
+                            );
+                            chart.render();
+                        "
+                        x-on:barras-nivel2-update.window="
+                            if (chart) { chart.destroy(); }
+                            window.barrasNivel2Options.series = [{ name: 'Puntaje', data: $event.detail.datos.map(d => d.puntaje) }];
+                            window.barrasNivel2Options.xaxis = { categories: $event.detail.datos.map(d => d.nombre) };
+                            chart = new ApexCharts(
+                                $el.querySelector('#barras-nivel2-container'),
+                                JSON.parse(JSON.stringify(window.barrasNivel2Options))
+                            );
+                            chart.render();
+                        ">
+                        <div x-ignore>
+                            <div id="barras-nivel2-container" style="min-height: 340px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Chart donut distribución --}}
+                <div class="bg-white rounded-2xl shadow-sm p-4">
+                    <h2 class="text-slate-900 font-semibold mb-4">Distribución de Respuestas</h2>
+                    <div x-data="{ chart: null }"
+                        x-init="
+                            window.donutNivel2Datos = @js($distribucionAgregada);
+                            if (chart) { chart.destroy(); }
+                            chart = new ApexCharts(
+                                $el.querySelector('#donut-nivel2-container'),
+                                JSON.parse(JSON.stringify(window.donutNivel2Options))
+                            );
+                            chart.render();
+                        "
+                        x-on:donut-nivel2-update.window="
+                            if (chart) { chart.destroy(); }
+                            window.donutNivel2Options.series  = $event.detail.datos.map(d => d.total);
+                            window.donutNivel2Options.labels  = $event.detail.datos.map(d => d.opcion);
+                            chart = new ApexCharts(
+                                $el.querySelector('#donut-nivel2-container'),
+                                JSON.parse(JSON.stringify(window.donutNivel2Options))
+                            );
+                            chart.render();
+                        ">
+                        <div x-ignore>
+                            <div id="donut-nivel2-container" style="min-height: 340px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Cards de subdimensiones --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @foreach ($datosNivel2 as $sub)
+                    @php
+                        $badgeClass = $sub['puntaje'] >= 2.5
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : ($sub['puntaje'] >= 2.0
+                                ? 'bg-blue-100 text-blue-700'
+                                : ($sub['puntaje'] >= 1.5
+                                    ? 'bg-amber-100 text-amber-700'
+                                    : 'bg-red-100 text-red-700'));
+                        $badgeLabel = $sub['puntaje'] >= 2.5
+                            ? 'Excelente clima'
+                            : ($sub['puntaje'] >= 2.0
+                                ? 'Buen clima'
+                                : ($sub['puntaje'] >= 1.5
+                                    ? 'Regular'
+                                    : 'Deficiente'));
+                    @endphp
+                    <div wire:click="irNivel3({{ $sub['id'] }})"
+                        class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex items-center justify-between gap-4
+                               cursor-pointer hover:border-blue-300 hover:shadow-md transition-all duration-200">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-slate-900 font-semibold truncate">{{ $sub['nombre'] }}</p>
+                            <p class="text-slate-400 text-xs mt-0.5">Ver detalles</p>
+                        </div>
+                        <div class="flex items-center gap-3 shrink-0">
+                            <div class="text-right">
+                                <p class="text-xl font-bold text-slate-900">{{ number_format($sub['puntaje'], 2) }}</p>
+                                <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider {{ $badgeClass }}">
+                                    {{ $badgeLabel }}
+                                </span>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                                stroke="currentColor" class="w-4 h-4 text-blue-400 shrink-0">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                            </svg>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    @endif
+
     {{-- Nivel 3: issue #48 --}}
 
     @script
@@ -438,6 +565,186 @@
                     }
                 }));
             });
+
+            // ── Nivel 2: Barras horizontales ──────────────────────────────────
+            const barrasPaleta = [
+                '#2563eb',  // blue-600
+                '#6d28d9',  // violet-700
+                '#0891b2',  // cyan-600
+                '#1d4ed8',  // blue-700
+                '#7c3aed',  // violet-600
+                '#06b6d4',  // cyan-500
+            ];
+
+            window.barrasNivel2Datos = [];
+
+            window.barrasNivel2Options = {
+                chart: {
+                    type: 'bar',
+                    height: 340,
+                    fontFamily: 'DM Sans, sans-serif',
+                    toolbar: { show: false }
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: true,
+                        borderRadius: 6,
+                        distributed: true,
+                        dataLabels: { position: 'center' }
+                    }
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: val => val.toFixed(2),
+                    style: {
+                        fontSize: '11px',
+                        colors: ['#ffffff'],
+                        fontWeight: '600'
+                    },
+                    dropShadow: { enabled: false }
+                },
+                legend: { show: false },
+                series: [{ name: 'Puntaje', data: window.barrasNivel2Datos.map(d => d.puntaje) }],
+                xaxis: {
+                    categories: window.barrasNivel2Datos.map(d => d.nombre),
+                    min: 0,
+                    max: 3,
+                    tickAmount: 6,
+                    labels: {
+                        formatter: val => Number(val).toFixed(1),
+                        style: { colors: '#94a3b8', fontSize: '11px' }
+                    }
+                },
+                yaxis: {
+                    min: 0,
+                    max: 3,
+                    tickAmount: 6,
+                    labels: { style: { colors: '#64748b', fontSize: '12px' } }
+                },
+                colors: barrasPaleta,
+                states: {
+                    hover: {
+                        filter: { type: 'darken', value: 0.05 }
+                    },
+                    active: {
+                        filter: { type: 'darken', value: 0.10 }
+                    }
+                },
+                grid: { borderColor: '#f1f5f9', strokeDashArray: 4 },
+                tooltip: { y: { formatter: val => val.toFixed(2) + ' pts' } }
+            };
+
+            $wire.on('barras-nivel2-actualizadas', ({ datos }) => {
+                window.barrasNivel2Datos = datos;
+                window.barrasNivel2Options.series  = [{ name: 'Puntaje', data: datos.map(d => d.puntaje) }];
+                window.barrasNivel2Options.xaxis   = {
+                    categories: datos.map(d => d.nombre),
+                    labels: { formatter: val => Number(val).toFixed(1), style: { colors: '#94a3b8', fontSize: '11px' } }
+                };
+                window.barrasNivel2Options.yaxis   = {
+                    min: 0, max: 3, tickAmount: 6,
+                    labels: { style: { colors: '#64748b', fontSize: '12px' } }
+                };
+                window.dispatchEvent(new CustomEvent('barras-nivel2-update', { detail: { datos } }));
+            });
+
+            // ── Nivel 2: Donut distribución ───────────────────────────────────
+            window.donutNivel2Datos = [];
+
+            window.donutNivel2Options = {
+                chart: {
+                    type: 'donut',
+                    height: 340,
+                    fontFamily: 'DM Sans, sans-serif',
+                    toolbar: { show: false }
+                },
+                series: window.donutNivel2Datos.map(d => d.total),
+                labels: window.donutNivel2Datos.map(d => d.opcion),
+                colors: ['#ef4444', '#f59e0b', '#10b981', '#cbd5e1'],
+                legend: {
+                    position: 'bottom',
+                    fontSize: '12px',
+                    fontFamily: 'DM Sans, sans-serif',
+                    labels: { colors: '#64748b' }
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: (val) => val.toFixed(1) + '%',
+                    style: { fontSize: '12px', fontWeight: '600' }
+                },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '62%',
+                            labels: {
+                                show: true,
+                                total: {
+                                    show: true,
+                                    showAlways: true,
+                                    label: 'Respuestas',
+                                    fontSize: '13px',
+                                    color: '#64748b',
+                                    formatter: (w) => w.globals.seriesTotals.reduce((a, b) => a + b, 0)
+                                }
+                            }
+                        }
+                    }
+                },
+                states: {
+                    hover: {
+                        filter: { type: 'darken', value: 0.05 }
+                    },
+                    active: {
+                        filter: { type: 'darken', value: 0.10 }
+                    }
+                },
+                tooltip: { y: { formatter: val => val + ' respuestas' } }
+            };
+
+            $wire.on('donut-nivel2-actualizado', ({ datos }) => {
+                window.donutNivel2Datos = datos;
+                window.donutNivel2Options.series = datos.map(d => d.total);
+                window.donutNivel2Options.labels = datos.map(d => d.opcion);
+                window.dispatchEvent(new CustomEvent('donut-nivel2-update', { detail: { datos } }));
+            });
+
+            // ── CSS hover animations para elementos internos de los charts ─────
+            (function() {
+                const style = document.createElement('style');
+                style.textContent = `
+                    #barras-nivel2-container .apexcharts-bar-area {
+                        transition: transform 200ms cubic-bezier(0.4,0,0.2,1),
+                                    filter 200ms cubic-bezier(0.4,0,0.2,1);
+                        transform-box: fill-box;
+                        transform-origin: left center;
+                    }
+                    #barras-nivel2-container .apexcharts-bar-area:hover {
+                        transform: scaleX(1.04);
+                        filter: brightness(0.93);
+                    }
+                    #donut-nivel2-container .apexcharts-pie-area {
+                        transition: transform 200ms cubic-bezier(0.4,0,0.2,1),
+                                    filter 200ms cubic-bezier(0.4,0,0.2,1);
+                        transform-box: fill-box;
+                        transform-origin: center;
+                    }
+                    #donut-nivel2-container .apexcharts-pie-area:hover {
+                        transform: scale(1.05);
+                        filter: brightness(0.93);
+                    }
+                    /* Reordenar leyenda visualmente: Verdadero, A veces, Falso, No responde */
+                    /* rel="1"=Falso, rel="2"=A veces, rel="3"=Verdadero, rel="4"=No responde */
+                    #donut-nivel2-container .apexcharts-legend {
+                        display: flex;
+                        flex-wrap: wrap;
+                    }
+                    #donut-nivel2-container .apexcharts-legend-series[rel="3"] { order: 1; }
+                    #donut-nivel2-container .apexcharts-legend-series[rel="2"] { order: 2; }
+                    #donut-nivel2-container .apexcharts-legend-series[rel="1"] { order: 3; }
+                    #donut-nivel2-container .apexcharts-legend-series[rel="4"] { order: 4; }
+                `;
+                document.head.appendChild(style);
+            })();
         </script>
     @endscript
 </div>

@@ -28,11 +28,9 @@ class Reportes extends Component
     // Filtro empresa (solo super_admin)
     public string $filtroEmpresaId = '';
 
-    public function updated(): void
+    public function updated(string $property): void
     {
-        $this->nivel = 1;
-        $this->dimensionActivaId = null;
-        $this->subdimensionActivaId = null;
+        //
     }
 
     public function irNivel1(): void
@@ -147,6 +145,24 @@ class Reportes extends Component
         return round($result ?? 0, 2);
     }
 
+    public function getDistribucionAgregadaNivel2(): array
+    {
+        return (clone $this->getBaseQuery())
+            ->whereHas('pregunta.subdimension', fn($q) =>
+                $q->where('dimension_id', $this->dimensionActivaId)
+            )
+            ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
+            ->selectRaw('opciones_respuesta.id, opciones_respuesta.opcion as nombre, opciones_respuesta.orden, COUNT(*) as total')
+            ->groupBy('opciones_respuesta.id', 'opciones_respuesta.opcion', 'opciones_respuesta.orden')
+            ->orderBy('opciones_respuesta.orden')
+            ->get()
+            ->map(fn($row) => [
+                'opcion' => $row->nombre,
+                'total'  => (int) $row->total,
+            ])
+            ->toArray();
+    }
+
     public function getDatosNivel1(): array
     {
         return Dimension::orderBy('orden')->get()->map(fn($d) => [
@@ -171,22 +187,32 @@ class Reportes extends Component
     public function render()
     {
         $user = auth()->user();
-        $datosNivel1 = $this->nivel === 1 ? $this->getDatosNivel1() : [];
 
-        $this->dispatch('radar-datos-actualizados', datos: $datosNivel1);
+        $datosNivel1        = $this->nivel === 1 ? $this->getDatosNivel1() : [];
+        $datosNivel2        = $this->nivel === 2 ? $this->getDatosNivel2() : [];
+        $distribucionAgregada = $this->nivel === 2 ? $this->getDistribucionAgregadaNivel2() : [];
+
+        if ($this->nivel === 1) {
+            $this->dispatch('radar-datos-actualizados', datos: $datosNivel1);
+        } elseif ($this->nivel === 2) {
+            $this->dispatch('barras-nivel2-actualizadas', datos: $datosNivel2);
+            $this->dispatch('donut-nivel2-actualizado', datos: $distribucionAgregada);
+        }
+        // nivel 3: issue #48
 
         return view('livewire.admin.reportes', [
-            'edades'             => \App\Models\Edad::orderBy('orden')->get(),
-            'sexos'              => \App\Models\Sexo::orderBy('orden')->get(),
-            'cargos'             => \App\Models\Cargo::orderBy('orden')->get(),
-            'lugares'            => \App\Models\LugarTrabajo::orderBy('orden')->get(),
-            'grados'             => \App\Models\GradoAcademico::orderBy('orden')->get(),
-            'antiguedades'       => \App\Models\Antiguedad::orderBy('orden')->get(),
-            'empresas'           => $user->role === 'super_admin' ? Empresa::orderBy('nombre')->get() : collect(),
-            'dimensionActiva'    => $this->dimensionActivaId ? Dimension::find($this->dimensionActivaId) : null,
-            'subdimensionActiva' => $this->subdimensionActivaId ? Subdimension::find($this->subdimensionActivaId) : null,
-            'datosNivel1'        => $datosNivel1,
-            'datosNivel2'        => $this->nivel === 2 ? $this->getDatosNivel2() : [],
+            'edades'               => \App\Models\Edad::orderBy('orden')->get(),
+            'sexos'                => \App\Models\Sexo::orderBy('orden')->get(),
+            'cargos'               => \App\Models\Cargo::orderBy('orden')->get(),
+            'lugares'              => \App\Models\LugarTrabajo::orderBy('orden')->get(),
+            'grados'               => \App\Models\GradoAcademico::orderBy('orden')->get(),
+            'antiguedades'         => \App\Models\Antiguedad::orderBy('orden')->get(),
+            'empresas'             => $user->role === 'super_admin' ? Empresa::orderBy('nombre')->get() : collect(),
+            'dimensionActiva'      => $this->dimensionActivaId ? Dimension::find($this->dimensionActivaId) : null,
+            'subdimensionActiva'   => $this->subdimensionActivaId ? Subdimension::find($this->subdimensionActivaId) : null,
+            'datosNivel1'          => $datosNivel1,
+            'datosNivel2'          => $datosNivel2,
+            'distribucionAgregada' => $distribucionAgregada,
         ]);
     }
 }
