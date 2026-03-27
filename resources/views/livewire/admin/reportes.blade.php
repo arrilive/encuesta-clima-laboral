@@ -488,7 +488,94 @@
         @endif
     @endif
 
-    {{-- Nivel 3: issue #48 --}}
+    {{-- SECCIÓN 5 — Contenido nivel 3 --}}
+    @if ($nivel === 3)
+        @php
+            if (!function_exists('interpretacion')) {
+                function interpretacion(float $score): array {
+                    if ($score >= 2.5) return ['label' => 'Excelente',  'bg' => 'bg-emerald-100', 'text' => 'text-emerald-700'];
+                    if ($score >= 2.0) return ['label' => 'Buen clima', 'bg' => 'bg-blue-100',    'text' => 'text-blue-700'];
+                    if ($score >= 1.5) return ['label' => 'Regular',    'bg' => 'bg-amber-100',   'text' => 'text-amber-700'];
+                    return                   ['label' => 'Deficiente',  'bg' => 'bg-red-100',     'text' => 'text-red-700'];
+                }
+            }
+        @endphp
+
+        @if ($sinDatos)
+            <x-admin.empty-state
+                mensaje="No hay respuestas para los filtros seleccionados en esta subdimensión."
+            />
+        @elseif (empty($datosNivel3))
+            <x-admin.empty-state
+                mensaje="Esta subdimensión no tiene preguntas registradas."
+                :conBotonFiltros="false"
+            />
+        @else
+            <div class="space-y-3">
+                @foreach ($datosNivel3 as $index => $pregunta)
+                    @php
+                        $interp  = interpretacion($pregunta['puntaje']);
+                        $colorMap = [
+                            1 => '#ef4444',  // Falso — red
+                            2 => '#f59e0b',  // A veces — amber
+                            3 => '#10b981',  // Verdadero — green
+                            0 => '#cbd5e1',  // Prefiero no responder — gray
+                        ];
+                        $scoreColor = $pregunta['puntaje'] >= 2.5 ? '#059669'
+                            : ($pregunta['puntaje'] >= 2.0 ? '#2563eb'
+                            : ($pregunta['puntaje'] >= 1.5 ? '#d97706'
+                            : '#ef4444'));
+                    @endphp
+
+                    <div class="bg-white border border-slate-100 rounded-xl p-5 shadow-sm
+                                transition-shadow duration-200 hover:shadow-md">
+
+                        {{-- Fila superior: número + texto + score + badge --}}
+                        <div class="flex items-start justify-between gap-4 mb-4">
+                            <p class="text-sm font-medium text-slate-800 leading-relaxed">
+                                {{ $index + 1 }}. {{ $pregunta['texto'] }}
+                            </p>
+                            <div class="flex-shrink-0 text-right">
+                                <div class="text-2xl font-bold leading-none mb-1"
+                                     style="color: {{ $scoreColor }}">
+                                    {{ number_format($pregunta['puntaje'], 2) }}
+                                </div>
+                                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full
+                                             {{ $interp['bg'] }} {{ $interp['text'] }}">
+                                    {{ $interp['label'] }}
+                                </span>
+                            </div>
+                        </div>
+
+                        {{-- Stacked bar fusionada --}}
+                        <div class="flex h-2 rounded-full overflow-hidden mb-3">
+                            @foreach ($pregunta['distribucion'] as $segmento)
+                                <div
+                                    style="width: {{ $segmento['porcentaje'] }}%; background: {{ $colorMap[$segmento['valor_numerico']] ?? '#e2e8f0' }}"
+                                    title="{{ $segmento['opcion'] }}: {{ $segmento['porcentaje'] }}%"
+                                ></div>
+                            @endforeach
+                        </div>
+
+                        {{-- Leyenda: Opción: X% (N personas) --}}
+                        <div class="flex flex-wrap gap-x-5 gap-y-1.5">
+                            @foreach ($pregunta['distribucion'] as $segmento)
+                                <span class="flex items-center gap-1.5 text-xs text-slate-500">
+                                    <span class="w-2.5 h-2.5 rounded-sm flex-shrink-0"
+                                          style="background: {{ $colorMap[$segmento['valor_numerico']] ?? '#e2e8f0' }}"></span>
+                                    {{ $segmento['opcion'] }}:&nbsp;<span class="font-semibold text-slate-700">
+                                        {{ $segmento['porcentaje'] }}%
+                                    </span>
+                                    <span class="text-slate-400">({{ $segmento['total'] }} personas)</span>
+                                </span>
+                            @endforeach
+                        </div>
+
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    @endif
 
     @script
         <script>
@@ -708,7 +795,7 @@
                 window.dispatchEvent(new CustomEvent('donut-nivel2-update', { detail: { datos } }));
             });
 
-            // ── CSS hover animations para elementos internos de los charts ─────
+            // ── Nivel 2: CSS (Hover & Leyenda) ─────────────────────────────
             (function() {
                 const style = document.createElement('style');
                 style.textContent = `
@@ -732,8 +819,6 @@
                         transform: scale(1.05);
                         filter: brightness(0.93);
                     }
-                    /* Reordenar leyenda visualmente: Verdadero, A veces, Falso, No responde */
-                    /* rel="1"=Falso, rel="2"=A veces, rel="3"=Verdadero, rel="4"=No responde */
                     #donut-nivel2-container .apexcharts-legend {
                         display: flex;
                         flex-wrap: wrap;
