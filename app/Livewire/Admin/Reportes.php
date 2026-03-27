@@ -115,6 +115,17 @@ class Reportes extends Component
         return $query;
     }
 
+    // ── NIVEL 1: DIMENSIONES ──────────────────────────────────────────────
+
+    public function getDatosNivel1(): array
+    {
+        return Dimension::orderBy('orden')->get()->map(fn($d) => [
+            'id'      => $d->id,
+            'nombre'  => $d->nombre,
+            'puntaje' => $this->calcularPuntajeDimension($d->id),
+        ])->toArray();
+    }
+
     protected function calcularPuntajeDimension(int $dimensionId): float
     {
         $result = (clone $this->getBaseQuery())
@@ -130,19 +141,18 @@ class Reportes extends Component
         return round($result ?? 0, 2);
     }
 
-    protected function calcularPuntajeSubdimension(int $subdimensionId): float
-    {
-        $result = (clone $this->getBaseQuery())
-            ->whereHas('pregunta', fn($q) =>
-                $q->where('subdimension_id', $subdimensionId)
-            )
-            ->whereHas('opcionRespuesta', fn($q) =>
-                $q->where('valor_numerico', '!=', 0)
-            )
-            ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
-            ->avg('opciones_respuesta.valor_numerico');
+    // ── NIVEL 2: SUBDIMENSIONES ───────────────────────────────────────────
 
-        return round($result ?? 0, 2);
+    public function getDatosNivel2(): array
+    {
+        return Subdimension::where('dimension_id', $this->dimensionActivaId)
+            ->orderBy('orden')
+            ->get()
+            ->map(fn($s) => [
+                'id'      => $s->id,
+                'nombre'  => $s->nombre,
+                'puntaje' => $this->calcularPuntajeSubdimension($s->id),
+            ])->toArray();
     }
 
     public function getDistribucionAgregadaNivel2(): array
@@ -163,34 +173,76 @@ class Reportes extends Component
             ->toArray();
     }
 
-    public function getDatosNivel1(): array
+    protected function calcularPuntajeSubdimension(int $subdimensionId): float
     {
-        return Dimension::orderBy('orden')->get()->map(fn($d) => [
-            'id'      => $d->id,
-            'nombre'  => $d->nombre,
-            'puntaje' => $this->calcularPuntajeDimension($d->id),
-        ])->toArray();
+        $result = (clone $this->getBaseQuery())
+            ->whereHas('pregunta', fn($q) =>
+                $q->where('subdimension_id', $subdimensionId)
+            )
+            ->whereHas('opcionRespuesta', fn($q) =>
+                $q->where('valor_numerico', '!=', 0)
+            )
+            ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
+            ->avg('opciones_respuesta.valor_numerico');
+
+        return round($result ?? 0, 2);
     }
 
-    public function getDatosNivel2(): array
+    // ── NIVEL 3: PREGUNTAS INDIVIDUALES ──────────────────────────────────
+
+    public function getDatosNivel3(): array
     {
-        return Subdimension::where('dimension_id', $this->dimensionActivaId)
+        if (!$this->subdimensionActivaId) return [];
+
+        return \App\Models\Pregunta::where('subdimension_id', $this->subdimensionActivaId)
             ->orderBy('orden')
             ->get()
-            ->map(fn($s) => [
-                'id'      => $s->id,
-                'nombre'  => $s->nombre,
-                'puntaje' => $this->calcularPuntajeSubdimension($s->id),
-            ])->toArray();
+            ->map(function ($pregunta) {
+                $baseQuery = clone $this->getBaseQuery();
+
+                // Distribución: todas las opciones incluyendo "No responde" (valor_numerico = 0)
+                $distribucion = (clone $baseQuery)
+                    ->where('pregunta_id', $pregunta->id)
+                    ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
+                    ->selectRaw('opciones_respuesta.id, opciones_respuesta.opcion, opciones_respuesta.valor_numerico, COUNT(*) as total')
+                    ->groupBy('opciones_respuesta.id', 'opciones_respuesta.opcion', 'opciones_respuesta.valor_numerico')
+                    ->orderBy('opciones_respuesta.orden')
+                    ->get();
+
+                $totalRespuestas = $distribucion->sum('total');
+
+                // Puntaje: excluye valor_numerico = 0
+                $puntaje = (clone $baseQuery)
+                    ->where('pregunta_id', $pregunta->id)
+                    ->whereHas('opcionRespuesta', fn($q) => $q->where('valor_numerico', '!=', 0))
+                    ->join('opciones_respuesta as or2', 'respuestas.opcion_respuesta_id', '=', 'or2.id')
+                    ->avg('or2.valor_numerico');
+
+                return [
+                    'id'      => $pregunta->id,
+                    'texto'   => $pregunta->texto,
+                    'puntaje' => round($puntaje ?? 0, 2),
+                    'total'   => $totalRespuestas,
+                    'distribucion' => $distribucion->map(fn($op) => [
+                        'opcion'         => $op->opcion,
+                        'valor_numerico' => $op->valor_numerico,
+                        'total'          => $op->total,
+                        'porcentaje'     => $totalRespuestas > 0
+                                            ? round($op->total / $totalRespuestas * 100)
+                                            : 0,
+                    ])->toArray(),
+                ];
+            })->toArray();
     }
 
     public function render()
     {
         $user = auth()->user();
 
-        $datosNivel1        = $this->nivel === 1 ? $this->getDatosNivel1() : [];
-        $datosNivel2        = $this->nivel === 2 ? $this->getDatosNivel2() : [];
+        $datosNivel1          = $this->nivel === 1 ? $this->getDatosNivel1() : [];
+        $datosNivel2          = $this->nivel === 2 ? $this->getDatosNivel2() : [];
         $distribucionAgregada = $this->nivel === 2 ? $this->getDistribucionAgregadaNivel2() : [];
+        $datosNivel3          = $this->nivel === 3 ? $this->getDatosNivel3() : [];
 
         if ($this->nivel === 1) {
             $this->dispatch('radar-datos-actualizados', datos: $datosNivel1);
@@ -198,7 +250,6 @@ class Reportes extends Component
             $this->dispatch('barras-nivel2-actualizadas', datos: $datosNivel2);
             $this->dispatch('donut-nivel2-actualizado', datos: $distribucionAgregada);
         }
-        // nivel 3: issue #48
 
         return view('livewire.admin.reportes', [
             'edades'               => \App\Models\Edad::orderBy('orden')->get(),
@@ -213,6 +264,7 @@ class Reportes extends Component
             'datosNivel1'          => $datosNivel1,
             'datosNivel2'          => $datosNivel2,
             'distribucionAgregada' => $distribucionAgregada,
+            'datosNivel3'          => $datosNivel3,
         ]);
     }
 }
