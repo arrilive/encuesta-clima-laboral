@@ -7,9 +7,9 @@ use App\Http\Controllers\Admin\ExportController;
 
 Route::redirect('/', 'encuesta');
 
-Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+Route::get('dashboard', function () {
+    return redirect()->route('admin.dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::view('profile', 'profile')
     ->middleware(['auth'])
