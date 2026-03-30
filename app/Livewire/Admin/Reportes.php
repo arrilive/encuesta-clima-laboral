@@ -31,6 +31,9 @@ class Reportes extends Component
     // Comparativas demográficas
     public string $campoComparativa = 'sexo';
 
+    public ?string $hashDatosNivel1 = null;
+    public ?string $hashComparativas = null;
+
     public function updated(string $property): void
     {
         //
@@ -315,8 +318,17 @@ class Reportes extends Component
         $datosNivel3          = $this->nivel === 3 ? $this->getDatosNivel3() : [];
 
         if ($this->nivel === 1) {
-            $this->dispatch('radar-datos-actualizados', datos: $datosNivel1);
-            $this->dispatch('comparativas-actualizadas', comparativas: $this->comparativas);
+            $nuevoHashRadar = md5(json_encode($datosNivel1));
+            if ($this->hashDatosNivel1 !== $nuevoHashRadar) {
+                $this->dispatch('radar-datos-actualizados', datos: $datosNivel1);
+                $this->hashDatosNivel1 = $nuevoHashRadar;
+            }
+
+            $nuevoHashComparativas = md5(json_encode($this->comparativas));
+            if ($this->hashComparativas !== $nuevoHashComparativas) {
+                $this->dispatch('comparativas-actualizadas', comparativas: $this->comparativas);
+                $this->hashComparativas = $nuevoHashComparativas;
+            }
         } elseif ($this->nivel === 2) {
             $this->dispatch('barras-nivel2-actualizadas', datos: $datosNivel2);
             $this->dispatch('donut-nivel2-actualizado', datos: $distribucionAgregada);
