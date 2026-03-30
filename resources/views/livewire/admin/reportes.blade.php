@@ -224,18 +224,18 @@
                                     ? array_sum(array_column($datosNivel1, 'puntaje')) / count($datosNivel1)
                                     : 0;
                             $colorBadge =
-                                $promedioGral >= 2.5
+                                $promedioGral >= 80
                                     ? 'bg-emerald-50 text-emerald-600'
-                                    : ($promedioGral >= 2.0
+                                    : ($promedioGral >= 51
                                         ? 'bg-blue-50 text-blue-600'
-                                        : ($promedioGral >= 1.5
+                                        : ($promedioGral >= 25
                                             ? 'bg-amber-50 text-amber-600'
                                             : 'bg-red-50 text-red-600'));
                         @endphp
                         <h3 class="text-2xl font-bold text-slate-900">{{ number_format($promedioGral, 2) }}</h3>
                         <span
                             class="px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider {{ $colorBadge }}">
-                            {{ $promedioGral >= 2.5 ? 'Excelente' : ($promedioGral >= 2.0 ? 'Bueno' : ($promedioGral >= 1.5 ? 'Regular' : 'Crítico')) }}
+                            {{ $promedioGral >= 80 ? 'Excelente' : ($promedioGral >= 51 ? 'Bueno' : ($promedioGral >= 25 ? 'Regular' : 'Crítico')) }}
                         </span>
                     </div>
                 </div>
@@ -334,19 +334,19 @@
                                         <td class="py-3">
                                             @php
                                                 $badge =
-                                                    $item['puntaje'] >= 2.5
+                                                    $item['puntaje'] >= 80
                                                         ? 'bg-emerald-50 text-emerald-600'
-                                                        : ($item['puntaje'] >= 2.0
+                                                        : ($item['puntaje'] >= 51
                                                             ? 'bg-blue-50 text-blue-600'
-                                                            : ($item['puntaje'] >= 1.5
+                                                            : ($item['puntaje'] >= 25
                                                                 ? 'bg-amber-50 text-amber-600'
                                                                 : 'bg-red-50 text-red-600'));
                                                 $label =
-                                                    $item['puntaje'] >= 2.5
+                                                    $item['puntaje'] >= 80
                                                         ? 'Excelente'
-                                                        : ($item['puntaje'] >= 2.0
+                                                        : ($item['puntaje'] >= 51
                                                             ? 'Buen clima'
-                                                            : ($item['puntaje'] >= 1.5
+                                                            : ($item['puntaje'] >= 25
                                                                 ? 'Regular'
                                                                 : 'Deficiente'));
                                             @endphp
@@ -448,18 +448,18 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @foreach ($datosNivel2 as $sub)
                     @php
-                        $badgeClass = $sub['puntaje'] >= 2.5
+                        $badgeClass = $sub['puntaje'] >= 80
                             ? 'bg-emerald-100 text-emerald-700'
-                            : ($sub['puntaje'] >= 2.0
+                            : ($sub['puntaje'] >= 51
                                 ? 'bg-blue-100 text-blue-700'
-                                : ($sub['puntaje'] >= 1.5
+                                : ($sub['puntaje'] >= 25
                                     ? 'bg-amber-100 text-amber-700'
                                     : 'bg-red-100 text-red-700'));
-                        $badgeLabel = $sub['puntaje'] >= 2.5
+                        $badgeLabel = $sub['puntaje'] >= 80
                             ? 'Excelente clima'
-                            : ($sub['puntaje'] >= 2.0
+                            : ($sub['puntaje'] >= 51
                                 ? 'Buen clima'
-                                : ($sub['puntaje'] >= 1.5
+                                : ($sub['puntaje'] >= 25
                                     ? 'Regular'
                                     : 'Deficiente'));
                     @endphp
@@ -493,9 +493,9 @@
         @php
             if (!function_exists('interpretacion')) {
                 function interpretacion(float $score): array {
-                    if ($score >= 2.5) return ['label' => 'Excelente',  'bg' => 'bg-emerald-100', 'text' => 'text-emerald-700'];
-                    if ($score >= 2.0) return ['label' => 'Buen clima', 'bg' => 'bg-blue-100',    'text' => 'text-blue-700'];
-                    if ($score >= 1.5) return ['label' => 'Regular',    'bg' => 'bg-amber-100',   'text' => 'text-amber-700'];
+                    if ($score >= 80) return ['label' => 'Excelente',  'bg' => 'bg-emerald-100', 'text' => 'text-emerald-700'];
+                    if ($score >= 51) return ['label' => 'Buen clima', 'bg' => 'bg-blue-100',    'text' => 'text-blue-700'];
+                    if ($score >= 25) return ['label' => 'Regular',    'bg' => 'bg-amber-100',   'text' => 'text-amber-700'];
                     return                   ['label' => 'Deficiente',  'bg' => 'bg-red-100',     'text' => 'text-red-700'];
                 }
             }
@@ -521,9 +521,9 @@
                             3 => '#10b981',  // Verdadero — green
                             0 => '#cbd5e1',  // Prefiero no responder — gray
                         ];
-                        $scoreColor = $pregunta['puntaje'] >= 2.5 ? '#059669'
-                            : ($pregunta['puntaje'] >= 2.0 ? '#2563eb'
-                            : ($pregunta['puntaje'] >= 1.5 ? '#d97706'
+                        $scoreColor = $pregunta['puntaje'] >= 80 ? '#059669'
+                            : ($pregunta['puntaje'] >= 51 ? '#2563eb'
+                            : ($pregunta['puntaje'] >= 25 ? '#d97706'
                             : '#ef4444'));
                     @endphp
 
@@ -611,8 +611,8 @@
                     }
                 },
                 yaxis: {
-                    min: 1,
-                    max: 3,
+                    min: 0,
+                    max: 100,
                     tickAmount: 4,
                     labels: {
                         formatter: val => val.toFixed(1)
@@ -695,8 +695,8 @@
                 xaxis: {
                     categories: window.barrasNivel2Datos.map(d => d.nombre),
                     min: 0,
-                    max: 3,
-                    tickAmount: 6,
+                    max: 100,
+                    tickAmount: 5,
                     labels: {
                         formatter: val => Number(val).toFixed(1),
                         style: { colors: '#94a3b8', fontSize: '11px' }
@@ -704,8 +704,8 @@
                 },
                 yaxis: {
                     min: 0,
-                    max: 3,
-                    tickAmount: 6,
+                    max: 100,
+                    tickAmount: 5,
                     labels: { style: { colors: '#64748b', fontSize: '12px' } }
                 },
                 colors: barrasPaleta,
@@ -729,7 +729,7 @@
                     labels: { formatter: val => Number(val).toFixed(1), style: { colors: '#94a3b8', fontSize: '11px' } }
                 };
                 window.barrasNivel2Options.yaxis   = {
-                    min: 0, max: 3, tickAmount: 6,
+                    min: 0, max: 100, tickAmount: 5,
                     labels: { style: { colors: '#64748b', fontSize: '12px' } }
                 };
                 window.dispatchEvent(new CustomEvent('barras-nivel2-update', { detail: { datos } }));
