@@ -28,11 +28,7 @@ class Reportes extends Component
     // Filtro empresa (solo super_admin)
     public string $filtroEmpresaId = '';
 
-    // Comparativas demográficas
-    public string $campoComparativa = 'sexo';
-
     public ?string $hashDatosNivel1 = null;
-    public ?string $hashComparativas = null;
 
     public function updated(string $property): void
     {
@@ -148,71 +144,6 @@ class Reportes extends Component
         return round((($result - 1) / 2) * 100, 1);
     }
 
-    private function getDatosComparativas(): array
-    {
-        $mapaCampos = [
-            'sexo' => ['tabla' => 'sexos', 'fk' => 'sexo_id'],
-            'cargo' => ['tabla' => 'cargos', 'fk' => 'cargo_id'],
-            'edad' => ['tabla' => 'edades', 'fk' => 'edad_id'],
-            'antiguedad' => ['tabla' => 'antiguedades', 'fk' => 'antiguedad_id'],
-            'lugar_trabajo' => ['tabla' => 'lugares_trabajo', 'fk' => 'lugar_trabajo_id'],
-            'grado_academico' => ['tabla' => 'grados_academicos', 'fk' => 'grado_academico_id'],
-        ];
-
-        if (!array_key_exists($this->campoComparativa, $mapaCampos)) {
-            return ['categorias' => [], 'series' => []];
-        }
-
-        $config = $mapaCampos[$this->campoComparativa];
-        $tablaDemografica = $config['tabla'];
-        $fk = $config['fk'];
-
-        $dimensiones = Dimension::orderBy('orden')->get();
-        $categorias = $dimensiones->pluck('nombre')->toArray();
-
-        $labelsDemograficos = \Illuminate\Support\Facades\DB::table($tablaDemografica)->orderBy('orden')->get();
-
-        $seriesData = [];
-
-        foreach ($labelsDemograficos as $labelObj) {
-            $puntajes = [];
-            $hasData = false;
-
-            foreach ($dimensiones as $dimension) {
-                $result = (clone $this->getBaseQuery())
-                    ->whereHas('pregunta.subdimension', fn($q) => $q->where('dimension_id', $dimension->id))
-                    ->whereHas('encuesta.datoDemografico', fn($q) => $q->where($fk, $labelObj->id))
-                    ->whereHas('opcionRespuesta', fn($q) => $q->where('valor_numerico', '!=', 0))
-                    ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
-                    ->avg('opciones_respuesta.valor_numerico');
-
-                if ($result !== null) {
-                    $puntajes[] = round((($result - 1) / 2) * 100, 1);
-                    $hasData = true;
-                } else {
-                    $puntajes[] = 0.0;
-                }
-            }
-
-            if ($hasData) {
-                $seriesData[] = [
-                    'name' => $labelObj->opcion,
-                    'data' => $puntajes,
-                ];
-            }
-        }
-
-        return [
-            'categorias' => $categorias,
-            'series' => $seriesData,
-        ];
-    }
-
-    public function getComparativasProperty(): array
-    {
-        return $this->getDatosComparativas();
-    }
-
     // ── NIVEL 2: SUBDIMENSIONES ───────────────────────────────────────────
 
     public function getDatosNivel2(): array
@@ -322,12 +253,6 @@ class Reportes extends Component
             if ($this->hashDatosNivel1 !== $nuevoHashRadar) {
                 $this->dispatch('radar-datos-actualizados', datos: $datosNivel1);
                 $this->hashDatosNivel1 = $nuevoHashRadar;
-            }
-
-            $nuevoHashComparativas = md5(json_encode($this->comparativas));
-            if ($this->hashComparativas !== $nuevoHashComparativas) {
-                $this->dispatch('comparativas-actualizadas', comparativas: $this->comparativas);
-                $this->hashComparativas = $nuevoHashComparativas;
             }
         } elseif ($this->nivel === 2) {
             $this->dispatch('barras-nivel2-actualizadas', datos: $datosNivel2);
