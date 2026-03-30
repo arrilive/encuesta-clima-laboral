@@ -25,7 +25,7 @@
             </button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 @if(auth()->user()->role === 'super_admin') lg:grid-cols-4 @endif gap-3">
+        <div class="grid grid-cols-1 md:grid-cols-3 @if (auth()->user()->role === 'super_admin') lg:grid-cols-4 @endif gap-3">
             {{-- Edad --}}
             <div class="space-y-1.5">
                 <label class="text-slate-500 text-sm font-medium">Edad</label>
@@ -183,10 +183,7 @@
             )
             ->when(
                 $filtroAntiguedadId,
-                fn($q) => $q->whereHas(
-                    'datoDemografico',
-                    fn($q2) => $q2->where('antiguedad_id', $filtroAntiguedadId),
-                ),
+                fn($q) => $q->whereHas('datoDemografico', fn($q2) => $q2->where('antiguedad_id', $filtroAntiguedadId)),
             )
             ->count();
 
@@ -207,200 +204,203 @@
     {{-- SECCIÓN 3 — Contenido nivel 1 --}}
     @if ($nivel === 1)
         @if ($sinDatos || empty($datosNivel1))
-            <x-admin.empty-state 
-                mensaje="No hay encuestas completadas que coincidan con los filtros seleccionados."
-            />
+            <x-admin.empty-state mensaje="No hay encuestas completadas que coincidan con los filtros seleccionados." />
         @else
             <div class="space-y-6">
-            {{-- 3a. KPIs --}}
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {{-- Promedio General --}}
-                <div class="bg-white rounded-2xl shadow-sm p-4">
-                    <p class="text-slate-500 text-sm mb-1">Promedio General</p>
-                    <div class="flex items-end justify-between">
+                {{-- 3a. KPIs --}}
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {{-- Promedio General --}}
+                    <div class="bg-white rounded-2xl shadow-sm p-4">
+                        <p class="text-slate-500 text-sm mb-1">Promedio General</p>
+                        <div class="flex items-end justify-between">
+                            @php
+                                $promedioGral =
+                                    count($datosNivel1) > 0
+                                        ? array_sum(array_column($datosNivel1, 'puntaje')) / count($datosNivel1)
+                                        : 0;
+                                $colorBadge =
+                                    $promedioGral >= 80
+                                        ? 'bg-emerald-50 text-emerald-600'
+                                        : ($promedioGral >= 51
+                                            ? 'bg-blue-50 text-blue-600'
+                                            : ($promedioGral >= 25
+                                                ? 'bg-amber-50 text-amber-600'
+                                                : 'bg-red-50 text-red-600'));
+                            @endphp
+                            <h3 class="text-2xl font-bold text-slate-900">{{ number_format($promedioGral, 2) }}</h3>
+                            <span
+                                class="px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider {{ $colorBadge }}">
+                                {{ $promedioGral >= 80 ? 'Excelente' : ($promedioGral >= 51 ? 'Bueno' : ($promedioGral >= 25 ? 'Regular' : 'Crítico')) }}
+                            </span>
+                        </div>
+                    </div>
+
+                    {{-- Encuestas Completadas --}}
+                    <div class="bg-white rounded-2xl shadow-sm p-4">
+                        <p class="text-slate-500 text-sm mb-1">Completadas</p>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-2xl font-bold text-slate-900">{{ $completadasFiltradas }}</h3>
+                                <p class="text-slate-400 text-[10px]">de {{ $completadasTotal }} totales</p>
+                            </div>
+                            <div class="p-2 bg-blue-50 rounded-xl">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke-width="2" stroke="currentColor" class="w-5 h-5 text-blue-600">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Dimensión más alta --}}
+                    <div class="bg-white rounded-2xl shadow-sm p-4">
+                        <p class="text-slate-500 text-sm mb-1">Más alto</p>
                         @php
-                            $promedioGral =
-                                count($datosNivel1) > 0
-                                    ? array_sum(array_column($datosNivel1, 'puntaje')) / count($datosNivel1)
-                                    : 0;
-                            $colorBadge =
-                                $promedioGral >= 80
-                                    ? 'bg-emerald-50 text-emerald-600'
-                                    : ($promedioGral >= 51
-                                        ? 'bg-blue-50 text-blue-600'
-                                        : ($promedioGral >= 25
-                                            ? 'bg-amber-50 text-amber-600'
-                                            : 'bg-red-50 text-red-600'));
+                            $maxDim =
+                                count($datosNivel1) > 0 ? collect($datosNivel1)->sortByDesc('puntaje')->first() : null;
                         @endphp
-                        <h3 class="text-2xl font-bold text-slate-900">{{ number_format($promedioGral, 2) }}</h3>
-                        <span
-                            class="px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider {{ $colorBadge }}">
-                            {{ $promedioGral >= 80 ? 'Excelente' : ($promedioGral >= 51 ? 'Bueno' : ($promedioGral >= 25 ? 'Regular' : 'Crítico')) }}
-                        </span>
+                        <h3 class="text-lg font-bold text-slate-900 truncate"
+                            title="{{ $maxDim['nombre'] ?? 'N/A' }}">
+                            {{ $maxDim['nombre'] ?? 'N/A' }}
+                        </h3>
+                        <p class="text-emerald-600 text-sm font-bold">{{ number_format($maxDim['puntaje'] ?? 0, 2) }}
+                            pts
+                        </p>
+                    </div>
+
+                    {{-- Dimensión más baja --}}
+                    <div class="bg-white rounded-2xl shadow-sm p-4">
+                        <p class="text-slate-500 text-sm mb-1">Más bajo</p>
+                        @php
+                            $minDim =
+                                count($datosNivel1) > 0 ? collect($datosNivel1)->sortBy('puntaje')->first() : null;
+                        @endphp
+                        <h3 class="text-lg font-bold text-slate-900 truncate"
+                            title="{{ $minDim['nombre'] ?? 'N/A' }}">
+                            {{ $minDim['nombre'] ?? 'N/A' }}
+                        </h3>
+                        <p class="text-red-500 text-sm font-bold">{{ number_format($minDim['puntaje'] ?? 0, 2) }} pts
+                        </p>
                     </div>
                 </div>
 
-                {{-- Encuestas Completadas --}}
-                <div class="bg-white rounded-2xl shadow-sm p-4">
-                    <p class="text-slate-500 text-sm mb-1">Completadas</p>
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h3 class="text-2xl font-bold text-slate-900">{{ $completadasFiltradas }}</h3>
-                            <p class="text-slate-400 text-[10px]">de {{ $completadasTotal }} totales</p>
-                        </div>
-                        <div class="p-2 bg-blue-50 rounded-xl">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke-width="2" stroke="currentColor" class="w-5 h-5 text-blue-600">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Dimensión más alta --}}
-                <div class="bg-white rounded-2xl shadow-sm p-4">
-                    <p class="text-slate-500 text-sm mb-1">Más alto</p>
-                    @php
-                        $maxDim =
-                            count($datosNivel1) > 0 ? collect($datosNivel1)->sortByDesc('puntaje')->first() : null;
-                    @endphp
-                    <h3 class="text-lg font-bold text-slate-900 truncate" title="{{ $maxDim['nombre'] ?? 'N/A' }}">
-                        {{ $maxDim['nombre'] ?? 'N/A' }}
-                    </h3>
-                    <p class="text-emerald-600 text-sm font-bold">{{ number_format($maxDim['puntaje'] ?? 0, 2) }} pts
-                    </p>
-                </div>
-
-                {{-- Dimensión más baja --}}
-                <div class="bg-white rounded-2xl shadow-sm p-4">
-                    <p class="text-slate-500 text-sm mb-1">Más bajo</p>
-                    @php
-                        $minDim = count($datosNivel1) > 0 ? collect($datosNivel1)->sortBy('puntaje')->first() : null;
-                    @endphp
-                    <h3 class="text-lg font-bold text-slate-900 truncate" title="{{ $minDim['nombre'] ?? 'N/A' }}">
-                        {{ $minDim['nombre'] ?? 'N/A' }}
-                    </h3>
-                    <p class="text-red-500 text-sm font-bold">{{ number_format($minDim['puntaje'] ?? 0, 2) }} pts</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-[55fr_45fr] gap-6 items-start">
-                {{-- 3b. Radar chart --}}
-                <div class="bg-white rounded-2xl shadow-sm p-3">
-                    <h2 class="text-slate-900 font-semibold mb-4">Mapa de clima laboral</h2>
-                    <div class="flex-1 min-h-[480px]" x-data="{ chart: null }" x-init="if (chart) { chart.destroy(); }
-                    chart = new ApexCharts($el.querySelector('#radar-chart'), JSON.parse(JSON.stringify(window.radarOptions)));
-                    chart.render();"
-                        x-on:radar-update.window="
+                <div class="grid grid-cols-1 lg:grid-cols-[55fr_45fr] gap-6 items-start">
+                    {{-- 3b. Radar chart --}}
+                    <div class="bg-white rounded-2xl shadow-sm p-3">
+                        <h2 class="text-slate-900 font-semibold mb-4">Mapa de clima laboral</h2>
+                        <div class="flex-1 min-h-[480px]" x-data="{ chart: null }" x-init="if (chart) { chart.destroy(); }
+                        chart = new ApexCharts($el.querySelector('#radar-chart'), JSON.parse(JSON.stringify(window.radarOptions)));
+                        chart.render();"
+                            x-on:radar-update.window="
                                 if (chart) { chart.destroy(); }
                                 window.radarOptions.series = [{ name: 'Puntaje', data: $event.detail.datos.map(d => d.puntaje) }];
                                 window.radarOptions.xaxis = { categories: $event.detail.datos.map(d => d.nombre), labels: { style: { colors: $event.detail.datos.map(() => '#64748b'), fontSize: '12px' } } };
                                 chart = new ApexCharts($el.querySelector('#radar-chart'), JSON.parse(JSON.stringify(window.radarOptions)));
                                 chart.render();
                             ">
-                        <div x-ignore>
-                            <div id="radar-chart" style="height: 480px"></div>
+                            <div x-ignore>
+                                <div id="radar-chart" style="height: 480px"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- 3c. Ranking --}}
+                    <div class="bg-white rounded-2xl shadow-sm p-4 flex flex-col">
+                        <h2 class="text-slate-900 font-semibold mb-4">Ranking de Bloques</h2>
+                        <div>
+                            <table class="w-full text-sm text-left">
+                                <thead>
+                                    <tr class="text-slate-400 border-b border-slate-100">
+                                        <th class="pb-3 font-medium px-2">#</th>
+                                        <th class="pb-3 font-medium">Bloque</th>
+                                        <th class="pb-3 font-medium text-center">Puntaje</th>
+                                        <th class="pb-3 font-medium">Interpretación</th>
+                                        <th class="pb-3 font-medium text-right"></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-50">
+                                    @php
+                                        $ranking = collect($datosNivel1)->sortByDesc('puntaje');
+                                    @endphp
+                                    @foreach ($ranking as $item)
+                                        <tr class="group hover:bg-slate-50/50 transition-colors">
+                                            <td class="py-3 px-2 text-slate-400">{{ $loop->iteration }}</td>
+                                            <td class="py-3 font-medium text-slate-900">{{ $item['nombre'] }}</td>
+                                            <td class="py-3 text-center">
+                                                <span
+                                                    class="font-bold text-slate-700">{{ number_format($item['puntaje'], 2) }}</span>
+                                            </td>
+                                            <td class="py-3">
+                                                @php
+                                                    $badge =
+                                                        $item['puntaje'] >= 80
+                                                            ? 'bg-emerald-50 text-emerald-600'
+                                                            : ($item['puntaje'] >= 51
+                                                                ? 'bg-blue-50 text-blue-600'
+                                                                : ($item['puntaje'] >= 25
+                                                                    ? 'bg-amber-50 text-amber-600'
+                                                                    : 'bg-red-50 text-red-600'));
+                                                    $label =
+                                                        $item['puntaje'] >= 80
+                                                            ? 'Excelente'
+                                                            : ($item['puntaje'] >= 51
+                                                                ? 'Buen clima'
+                                                                : ($item['puntaje'] >= 25
+                                                                    ? 'Regular'
+                                                                    : 'Deficiente'));
+                                                @endphp
+                                                <span
+                                                    class="px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider {{ $badge }}">
+                                                    {{ $label }}
+                                                </span>
+                                            </td>
+                                            <td class="py-3 text-right">
+                                                <button wire:click="irNivel2({{ $item['id'] }})"
+                                                    class="text-blue-600 hover:text-blue-700 inline-flex items-center group-hover:translate-x-1 transition-transform p-1">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                        viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"
+                                                        class="w-4 h-4">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                                                    </svg>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
 
-                {{-- 3c. Ranking --}}
-                <div class="bg-white rounded-2xl shadow-sm p-4 flex flex-col">
-                    <h2 class="text-slate-900 font-semibold mb-4">Ranking de Bloques</h2>
-                    <div>
-                        <table class="w-full text-sm text-left">
-                            <thead>
-                                <tr class="text-slate-400 border-b border-slate-100">
-                                    <th class="pb-3 font-medium px-2">#</th>
-                                    <th class="pb-3 font-medium">Bloque</th>
-                                    <th class="pb-3 font-medium text-center">Puntaje</th>
-                                    <th class="pb-3 font-medium">Interpretación</th>
-                                    <th class="pb-3 font-medium text-right"></th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-50">
-                                @php
-                                    $ranking = collect($datosNivel1)->sortByDesc('puntaje');
-                                @endphp
-                                @foreach ($ranking as $item)
-                                    <tr class="group hover:bg-slate-50/50 transition-colors">
-                                        <td class="py-3 px-2 text-slate-400">{{ $loop->iteration }}</td>
-                                        <td class="py-3 font-medium text-slate-900">{{ $item['nombre'] }}</td>
-                                        <td class="py-3 text-center">
-                                            <span
-                                                class="font-bold text-slate-700">{{ number_format($item['puntaje'], 2) }}</span>
-                                        </td>
-                                        <td class="py-3">
-                                            @php
-                                                $badge =
-                                                    $item['puntaje'] >= 80
-                                                        ? 'bg-emerald-50 text-emerald-600'
-                                                        : ($item['puntaje'] >= 51
-                                                            ? 'bg-blue-50 text-blue-600'
-                                                            : ($item['puntaje'] >= 25
-                                                                ? 'bg-amber-50 text-amber-600'
-                                                                : 'bg-red-50 text-red-600'));
-                                                $label =
-                                                    $item['puntaje'] >= 80
-                                                        ? 'Excelente'
-                                                        : ($item['puntaje'] >= 51
-                                                            ? 'Buen clima'
-                                                            : ($item['puntaje'] >= 25
-                                                                ? 'Regular'
-                                                                : 'Deficiente'));
-                                            @endphp
-                                            <span
-                                                class="px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider {{ $badge }}">
-                                                {{ $label }}
-                                            </span>
-                                        </td>
-                                        <td class="py-3 text-right">
-                                            <button wire:click="irNivel2({{ $item['id'] }})"
-                                                class="text-blue-600 hover:text-blue-700 inline-flex items-center group-hover:translate-x-1 transition-transform p-1">
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                                    stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                                                </svg>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                {{-- 3d. Comparativas demográficas --}}
+                <div class="bg-white rounded-2xl shadow-sm p-4 mt-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                        <div>
+                            <h2 class="text-slate-900 font-semibold mb-1">Comparativas demográficas</h2>
+                            <p class="text-slate-500 text-sm">Puntaje promedio en cada bloque según el grupo
+                                seleccionado</p>
+                        </div>
+                        <select wire:model.live="campoComparativa"
+                            class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm min-w-[200px] hover:border-blue-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-colors cursor-pointer">
+                            <option value="sexo">Sexo</option>
+                            <option value="cargo">Cargo</option>
+                            <option value="edad">Edad</option>
+                            <option value="antiguedad">Antigüedad</option>
+                            <option value="lugar_trabajo">Lugar de trabajo</option>
+                            <option value="grado_academico">Grado académico</option>
+                        </select>
                     </div>
-                </div>
-            </div>
 
-            {{-- 3d. Comparativas demográficas --}}
-            <div class="bg-white rounded-2xl shadow-sm p-4 mt-6">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                    <div>
-                        <h2 class="text-slate-900 font-semibold mb-1">Comparativas demográficas</h2>
-                        <p class="text-slate-500 text-sm">Puntaje promedio en cada bloque según el grupo seleccionado</p>
-                    </div>
-                    <select wire:model.live="campoComparativa"
-                        class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm min-w-[200px] hover:border-blue-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-colors cursor-pointer">
-                        <option value="sexo">Sexo</option>
-                        <option value="cargo">Cargo</option>
-                        <option value="edad">Edad</option>
-                        <option value="antiguedad">Antigüedad</option>
-                        <option value="lugar_trabajo">Lugar de trabajo</option>
-                        <option value="grado_academico">Grado académico</option>
-                    </select>
-                </div>
-
-                <div x-data="{ chart: null }"
-                    x-init="
-                        let initialData = @js($this->comparativas);
-                        if (chart) { chart.destroy(); }
-                        let opts = JSON.parse(JSON.stringify(window.comparativasOptions));
-                        opts.series = initialData.series;
-                        opts.xaxis.categories = initialData.categorias;
-                        chart = new ApexCharts($el.querySelector('#comparativas-chart'), opts);
-                        chart.render();
-                    "
-                    x-on:comparativas-actualizadas.window="
+                    <div x-data="{ chart: null }" x-init="let initialData = @js($this->comparativas);
+                    if (chart) { chart.destroy(); }
+                    let opts = JSON.parse(JSON.stringify(window.comparativasOptions));
+                    opts.series = initialData.series;
+                    opts.xaxis.categories = initialData.categorias;
+                    chart = new ApexCharts($el.querySelector('#comparativas-chart'), opts);
+                    chart.render();"
+                        x-on:comparativas-actualizadas.window="
                         if (chart) { chart.destroy(); }
                         let opts = JSON.parse(JSON.stringify(window.comparativasOptions));
                         opts.series = $event.detail.comparativas.series;
@@ -408,21 +408,23 @@
                         chart = new ApexCharts($el.querySelector('#comparativas-chart'), opts);
                         chart.render();
                     ">
-                    <div x-ignore>
-                        <div id="comparativas-chart" style="min-height: 400px"></div>
+                        <div x-ignore>
+                            <div id="comparativas-chart" style="min-height: 400px"></div>
+                        </div>
                     </div>
                 </div>
+
+                {{-- 3e. Respuestas abiertas --}}
+                <livewire:admin.respuestas-abiertas :filtro-edad-id="$filtroEdadId" :filtro-sexo-id="$filtroSexoId" :filtro-cargo-id="$filtroCargoId"
+                    :filtro-lugar-trabajo-id="$filtroLugarTrabajoId" :filtro-grado-academico-id="$filtroGradoAcademicoId" :filtro-antiguedad-id="$filtroAntiguedadId" :filtro-empresa-id="$filtroEmpresaId" />
             </div>
-        </div>
         @endif
     @endif
 
     {{-- SECCIÓN 4 — Contenido nivel 2 --}}
     @if ($nivel === 2)
         @if ($sinDatos)
-            <x-admin.empty-state 
-                mensaje="No hay subdimensiones con datos para los filtros seleccionados."
-            />
+            <x-admin.empty-state mensaje="No hay subdimensiones con datos para los filtros seleccionados." />
         @else
             {{-- Grid 55/45: barras + donut --}}
             <div class="grid grid-cols-1 lg:grid-cols-[55fr_45fr] gap-6 items-start">
@@ -430,16 +432,13 @@
                 {{-- Chart de barras horizontales --}}
                 <div class="bg-white rounded-2xl shadow-sm p-4">
                     <h2 class="text-slate-900 font-semibold mb-4">Puntaje por Subdimensión</h2>
-                    <div x-data="{ chart: null }"
-                        x-init="
-                            window.barrasNivel2Datos = @js($datosNivel2);
-                            if (chart) { chart.destroy(); }
-                            chart = new ApexCharts(
-                                $el.querySelector('#barras-nivel2-container'),
-                                JSON.parse(JSON.stringify(window.barrasNivel2Options))
-                            );
-                            chart.render();
-                        "
+                    <div x-data="{ chart: null }" x-init="window.barrasNivel2Datos = @js($datosNivel2);
+                    if (chart) { chart.destroy(); }
+                    chart = new ApexCharts(
+                        $el.querySelector('#barras-nivel2-container'),
+                        JSON.parse(JSON.stringify(window.barrasNivel2Options))
+                    );
+                    chart.render();"
                         x-on:barras-nivel2-update.window="
                             if (chart) { chart.destroy(); }
                             window.barrasNivel2Options.series = [{ name: 'Puntaje', data: $event.detail.datos.map(d => d.puntaje) }];
@@ -459,16 +458,13 @@
                 {{-- Chart donut distribución --}}
                 <div class="bg-white rounded-2xl shadow-sm p-4">
                     <h2 class="text-slate-900 font-semibold mb-4">Distribución de Respuestas</h2>
-                    <div x-data="{ chart: null }"
-                        x-init="
-                            window.donutNivel2Datos = @js($distribucionAgregada);
-                            if (chart) { chart.destroy(); }
-                            chart = new ApexCharts(
-                                $el.querySelector('#donut-nivel2-container'),
-                                JSON.parse(JSON.stringify(window.donutNivel2Options))
-                            );
-                            chart.render();
-                        "
+                    <div x-data="{ chart: null }" x-init="window.donutNivel2Datos = @js($distribucionAgregada);
+                    if (chart) { chart.destroy(); }
+                    chart = new ApexCharts(
+                        $el.querySelector('#donut-nivel2-container'),
+                        JSON.parse(JSON.stringify(window.donutNivel2Options))
+                    );
+                    chart.render();"
                         x-on:donut-nivel2-update.window="
                             if (chart) { chart.destroy(); }
                             window.donutNivel2Options.series  = $event.detail.datos.map(d => d.total);
@@ -490,20 +486,22 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @foreach ($datosNivel2 as $sub)
                     @php
-                        $badgeClass = $sub['puntaje'] >= 80
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : ($sub['puntaje'] >= 51
-                                ? 'bg-blue-100 text-blue-700'
-                                : ($sub['puntaje'] >= 25
-                                    ? 'bg-amber-100 text-amber-700'
-                                    : 'bg-red-100 text-red-700'));
-                        $badgeLabel = $sub['puntaje'] >= 80
-                            ? 'Excelente clima'
-                            : ($sub['puntaje'] >= 51
-                                ? 'Buen clima'
-                                : ($sub['puntaje'] >= 25
-                                    ? 'Regular'
-                                    : 'Deficiente'));
+                        $badgeClass =
+                            $sub['puntaje'] >= 80
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : ($sub['puntaje'] >= 51
+                                    ? 'bg-blue-100 text-blue-700'
+                                    : ($sub['puntaje'] >= 25
+                                        ? 'bg-amber-100 text-amber-700'
+                                        : 'bg-red-100 text-red-700'));
+                        $badgeLabel =
+                            $sub['puntaje'] >= 80
+                                ? 'Excelente clima'
+                                : ($sub['puntaje'] >= 51
+                                    ? 'Buen clima'
+                                    : ($sub['puntaje'] >= 25
+                                        ? 'Regular'
+                                        : 'Deficiente'));
                     @endphp
                     <div wire:click="irNivel3({{ $sub['id'] }})"
                         class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex items-center justify-between gap-4
@@ -514,13 +512,15 @@
                         </div>
                         <div class="flex items-center gap-3 shrink-0">
                             <div class="text-right">
-                                <p class="text-xl font-bold text-slate-900">{{ number_format($sub['puntaje'], 2) }}</p>
-                                <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider {{ $badgeClass }}">
+                                <p class="text-xl font-bold text-slate-900">{{ number_format($sub['puntaje'], 2) }}
+                                </p>
+                                <span
+                                    class="px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider {{ $badgeClass }}">
                                     {{ $badgeLabel }}
                                 </span>
                             </div>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
-                                stroke="currentColor" class="w-4 h-4 text-blue-400 shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke-width="2.5" stroke="currentColor" class="w-4 h-4 text-blue-400 shrink-0">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                             </svg>
                         </div>
@@ -534,42 +534,49 @@
     @if ($nivel === 3)
         @php
             if (!function_exists('interpretacion')) {
-                function interpretacion(float $score): array {
-                    if ($score >= 80) return ['label' => 'Excelente',  'bg' => 'bg-emerald-100', 'text' => 'text-emerald-700'];
-                    if ($score >= 51) return ['label' => 'Buen clima', 'bg' => 'bg-blue-100',    'text' => 'text-blue-700'];
-                    if ($score >= 25) return ['label' => 'Regular',    'bg' => 'bg-amber-100',   'text' => 'text-amber-700'];
-                    return                   ['label' => 'Deficiente',  'bg' => 'bg-red-100',     'text' => 'text-red-700'];
+                function interpretacion(float $score): array
+                {
+                    if ($score >= 80) {
+                        return ['label' => 'Excelente', 'bg' => 'bg-emerald-100', 'text' => 'text-emerald-700'];
+                    }
+                    if ($score >= 51) {
+                        return ['label' => 'Buen clima', 'bg' => 'bg-blue-100', 'text' => 'text-blue-700'];
+                    }
+                    if ($score >= 25) {
+                        return ['label' => 'Regular', 'bg' => 'bg-amber-100', 'text' => 'text-amber-700'];
+                    }
+                    return ['label' => 'Deficiente', 'bg' => 'bg-red-100', 'text' => 'text-red-700'];
                 }
             }
         @endphp
 
         @if ($sinDatos)
-            <x-admin.empty-state
-                mensaje="No hay respuestas para los filtros seleccionados en esta subdimensión."
-            />
+            <x-admin.empty-state mensaje="No hay respuestas para los filtros seleccionados en esta subdimensión." />
         @elseif (empty($datosNivel3))
-            <x-admin.empty-state
-                mensaje="Esta subdimensión no tiene preguntas registradas."
-                :conBotonFiltros="false"
-            />
+            <x-admin.empty-state mensaje="Esta subdimensión no tiene preguntas registradas." :conBotonFiltros="false" />
         @else
             <div class="space-y-3">
                 @foreach ($datosNivel3 as $index => $pregunta)
                     @php
-                        $interp  = interpretacion($pregunta['puntaje']);
+                        $interp = interpretacion($pregunta['puntaje']);
                         $colorMap = [
-                            1 => '#ef4444',  // Falso — red
-                            2 => '#f59e0b',  // A veces — amber
-                            3 => '#10b981',  // Verdadero — green
-                            0 => '#cbd5e1',  // Prefiero no responder — gray
+                            1 => '#ef4444', // Falso — red
+                            2 => '#f59e0b', // A veces — amber
+                            3 => '#10b981', // Verdadero — green
+                            0 => '#cbd5e1', // Prefiero no responder — gray
                         ];
-                        $scoreColor = $pregunta['puntaje'] >= 80 ? '#059669'
-                            : ($pregunta['puntaje'] >= 51 ? '#2563eb'
-                            : ($pregunta['puntaje'] >= 25 ? '#d97706'
-                            : '#ef4444'));
+                        $scoreColor =
+                            $pregunta['puntaje'] >= 80
+                                ? '#059669'
+                                : ($pregunta['puntaje'] >= 51
+                                    ? '#2563eb'
+                                    : ($pregunta['puntaje'] >= 25
+                                        ? '#d97706'
+                                        : '#ef4444'));
                     @endphp
 
-                    <div class="bg-white border border-slate-100 rounded-xl p-5 shadow-sm
+                    <div
+                        class="bg-white border border-slate-100 rounded-xl p-5 shadow-sm
                                 transition-shadow duration-200 hover:shadow-md">
 
                         {{-- Fila superior: número + texto + score + badge --}}
@@ -578,11 +585,11 @@
                                 {{ $index + 1 }}. {{ $pregunta['texto'] }}
                             </p>
                             <div class="flex-shrink-0 text-right">
-                                <div class="text-2xl font-bold leading-none mb-1"
-                                     style="color: {{ $scoreColor }}">
+                                <div class="text-2xl font-bold leading-none mb-1" style="color: {{ $scoreColor }}">
                                     {{ number_format($pregunta['puntaje'], 2) }}
                                 </div>
-                                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full
+                                <span
+                                    class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full
                                              {{ $interp['bg'] }} {{ $interp['text'] }}">
                                     {{ $interp['label'] }}
                                 </span>
@@ -592,10 +599,8 @@
                         {{-- Stacked bar fusionada --}}
                         <div class="flex h-2 rounded-full overflow-hidden mb-3">
                             @foreach ($pregunta['distribucion'] as $segmento)
-                                <div
-                                    style="width: {{ $segmento['porcentaje'] }}%; background: {{ $colorMap[$segmento['valor_numerico']] ?? '#e2e8f0' }}"
-                                    title="{{ $segmento['opcion'] }}: {{ $segmento['porcentaje'] }}%"
-                                ></div>
+                                <div style="width: {{ $segmento['porcentaje'] }}%; background: {{ $colorMap[$segmento['valor_numerico']] ?? '#e2e8f0' }}"
+                                    title="{{ $segmento['opcion'] }}: {{ $segmento['porcentaje'] }}%"></div>
                             @endforeach
                         </div>
 
@@ -604,7 +609,7 @@
                             @foreach ($pregunta['distribucion'] as $segmento)
                                 <span class="flex items-center gap-1.5 text-xs text-slate-500">
                                     <span class="w-2.5 h-2.5 rounded-sm flex-shrink-0"
-                                          style="background: {{ $colorMap[$segmento['valor_numerico']] ?? '#e2e8f0' }}"></span>
+                                        style="background: {{ $colorMap[$segmento['valor_numerico']] ?? '#e2e8f0' }}"></span>
                                     {{ $segmento['opcion'] }}:&nbsp;<span class="font-semibold text-slate-700">
                                         {{ $segmento['porcentaje'] }}%
                                     </span>
@@ -703,57 +708,85 @@
                     type: 'bar',
                     height: 400,
                     fontFamily: 'DM Sans, sans-serif',
-                    toolbar: { show: false }
+                    toolbar: {
+                        show: false
+                    }
                 },
                 plotOptions: {
                     bar: {
                         horizontal: false,
                         columnWidth: '55%',
                         borderRadius: 4,
-                        dataLabels: { position: 'top' }
+                        dataLabels: {
+                            position: 'top'
+                        }
                     }
                 },
                 dataLabels: {
-                    enabled: false, /* Las agrupadas muchas veces se enciman, mejor tooltip o disabled por defecto pero activo en hover si se pudiera. Desactivamos por limpieza visual, que era standard en ApexCharts y Tooltips hacen el trabajo */
+                    enabled: false,
+                    /* Las agrupadas muchas veces se enciman, mejor tooltip o disabled por defecto pero activo en hover si se pudiera. Desactivamos por limpieza visual, que era standard en ApexCharts y Tooltips hacen el trabajo */
                     formatter: val => val.toFixed(1),
                     offsetY: -20,
-                    style: { fontSize: '10px', colors: ['#64748b'] }
+                    style: {
+                        fontSize: '10px',
+                        colors: ['#64748b']
+                    }
                 },
                 series: window.comparativasDatos.series,
                 xaxis: {
                     categories: window.comparativasDatos.categorias,
-                    labels: { style: { colors: '#64748b', fontSize: '12px' } }
+                    labels: {
+                        style: {
+                            colors: '#64748b',
+                            fontSize: '12px'
+                        }
+                    }
                 },
                 yaxis: {
                     min: 0,
                     max: 100,
                     tickAmount: 5,
-                    labels: { style: { colors: '#64748b', fontSize: '12px' }, formatter: val => val.toFixed(1) }
+                    labels: {
+                        style: {
+                            colors: '#64748b',
+                            fontSize: '12px'
+                        },
+                        formatter: val => val.toFixed(1)
+                    }
                 },
                 legend: {
                     position: 'top',
                     horizontalAlign: 'right',
                     fontSize: '13px',
                     fontFamily: 'DM Sans, sans-serif',
-                    markers: { radius: 12 }
+                    markers: {
+                        radius: 12
+                    }
                 },
                 stroke: {
                     show: true,
                     width: 2,
                     colors: ['transparent']
                 },
-                grid: { borderColor: '#f1f5f9', strokeDashArray: 4 },
-                tooltip: { y: { formatter: val => val.toFixed(2) + ' pts' } }
+                grid: {
+                    borderColor: '#f1f5f9',
+                    strokeDashArray: 4
+                },
+                tooltip: {
+                    y: {
+                        formatter: val => val.toFixed(2) + ' pts'
+                    }
+                }
             };
 
             // ── Nivel 2: Barras horizontales ──────────────────────────────────
             const barrasPaleta = [
-                '#2563eb',  // blue-600
-                '#6d28d9',  // violet-700
-                '#0891b2',  // cyan-600
-                '#1d4ed8',  // blue-700
-                '#7c3aed',  // violet-600
-                '#06b6d4',  // cyan-500
+                '#2563eb', // blue-600
+                '#6d28d9', // violet-700
+                '#0891b2', // cyan-600
+                '#1d4ed8', // blue-700
+                '#7c3aed', // violet-600
+                '#06b6d4', // cyan-500
             ];
 
             window.barrasNivel2Datos = [];
@@ -763,14 +796,18 @@
                     type: 'bar',
                     height: 340,
                     fontFamily: 'DM Sans, sans-serif',
-                    toolbar: { show: false }
+                    toolbar: {
+                        show: false
+                    }
                 },
                 plotOptions: {
                     bar: {
                         horizontal: true,
                         borderRadius: 6,
                         distributed: true,
-                        dataLabels: { position: 'center' }
+                        dataLabels: {
+                            position: 'center'
+                        }
                     }
                 },
                 dataLabels: {
@@ -781,10 +818,17 @@
                         colors: ['#ffffff'],
                         fontWeight: '600'
                     },
-                    dropShadow: { enabled: false }
+                    dropShadow: {
+                        enabled: false
+                    }
                 },
-                legend: { show: false },
-                series: [{ name: 'Puntaje', data: window.barrasNivel2Datos.map(d => d.puntaje) }],
+                legend: {
+                    show: false
+                },
+                series: [{
+                    name: 'Puntaje',
+                    data: window.barrasNivel2Datos.map(d => d.puntaje)
+                }],
                 xaxis: {
                     categories: window.barrasNivel2Datos.map(d => d.nombre),
                     min: 0,
@@ -792,40 +836,83 @@
                     tickAmount: 5,
                     labels: {
                         formatter: val => Number(val).toFixed(1),
-                        style: { colors: '#94a3b8', fontSize: '11px' }
+                        style: {
+                            colors: '#94a3b8',
+                            fontSize: '11px'
+                        }
                     }
                 },
                 yaxis: {
                     min: 0,
                     max: 100,
                     tickAmount: 5,
-                    labels: { style: { colors: '#64748b', fontSize: '12px' } }
+                    labels: {
+                        style: {
+                            colors: '#64748b',
+                            fontSize: '12px'
+                        }
+                    }
                 },
                 colors: barrasPaleta,
                 states: {
                     hover: {
-                        filter: { type: 'darken', value: 0.05 }
+                        filter: {
+                            type: 'darken',
+                            value: 0.05
+                        }
                     },
                     active: {
-                        filter: { type: 'darken', value: 0.10 }
+                        filter: {
+                            type: 'darken',
+                            value: 0.10
+                        }
                     }
                 },
-                grid: { borderColor: '#f1f5f9', strokeDashArray: 4 },
-                tooltip: { y: { formatter: val => val.toFixed(2) + ' pts' } }
+                grid: {
+                    borderColor: '#f1f5f9',
+                    strokeDashArray: 4
+                },
+                tooltip: {
+                    y: {
+                        formatter: val => val.toFixed(2) + ' pts'
+                    }
+                }
             };
 
-            $wire.on('barras-nivel2-actualizadas', ({ datos }) => {
+            $wire.on('barras-nivel2-actualizadas', ({
+                datos
+            }) => {
                 window.barrasNivel2Datos = datos;
-                window.barrasNivel2Options.series  = [{ name: 'Puntaje', data: datos.map(d => d.puntaje) }];
-                window.barrasNivel2Options.xaxis   = {
+                window.barrasNivel2Options.series = [{
+                    name: 'Puntaje',
+                    data: datos.map(d => d.puntaje)
+                }];
+                window.barrasNivel2Options.xaxis = {
                     categories: datos.map(d => d.nombre),
-                    labels: { formatter: val => Number(val).toFixed(1), style: { colors: '#94a3b8', fontSize: '11px' } }
+                    labels: {
+                        formatter: val => Number(val).toFixed(1),
+                        style: {
+                            colors: '#94a3b8',
+                            fontSize: '11px'
+                        }
+                    }
                 };
-                window.barrasNivel2Options.yaxis   = {
-                    min: 0, max: 100, tickAmount: 5,
-                    labels: { style: { colors: '#64748b', fontSize: '12px' } }
+                window.barrasNivel2Options.yaxis = {
+                    min: 0,
+                    max: 100,
+                    tickAmount: 5,
+                    labels: {
+                        style: {
+                            colors: '#64748b',
+                            fontSize: '12px'
+                        }
+                    }
                 };
-                window.dispatchEvent(new CustomEvent('barras-nivel2-update', { detail: { datos } }));
+                window.dispatchEvent(new CustomEvent('barras-nivel2-update', {
+                    detail: {
+                        datos
+                    }
+                }));
             });
 
             // ── Nivel 2: Donut distribución ───────────────────────────────────
@@ -836,7 +923,9 @@
                     type: 'donut',
                     height: 340,
                     fontFamily: 'DM Sans, sans-serif',
-                    toolbar: { show: false }
+                    toolbar: {
+                        show: false
+                    }
                 },
                 series: window.donutNivel2Datos.map(d => d.total),
                 labels: window.donutNivel2Datos.map(d => d.opcion),
@@ -845,12 +934,17 @@
                     position: 'bottom',
                     fontSize: '12px',
                     fontFamily: 'DM Sans, sans-serif',
-                    labels: { colors: '#64748b' }
+                    labels: {
+                        colors: '#64748b'
+                    }
                 },
                 dataLabels: {
                     enabled: true,
                     formatter: (val) => val.toFixed(1) + '%',
-                    style: { fontSize: '12px', fontWeight: '600' }
+                    style: {
+                        fontSize: '12px',
+                        fontWeight: '600'
+                    }
                 },
                 plotOptions: {
                     pie: {
@@ -872,20 +966,36 @@
                 },
                 states: {
                     hover: {
-                        filter: { type: 'darken', value: 0.05 }
+                        filter: {
+                            type: 'darken',
+                            value: 0.05
+                        }
                     },
                     active: {
-                        filter: { type: 'darken', value: 0.10 }
+                        filter: {
+                            type: 'darken',
+                            value: 0.10
+                        }
                     }
                 },
-                tooltip: { y: { formatter: val => val + ' respuestas' } }
+                tooltip: {
+                    y: {
+                        formatter: val => val + ' respuestas'
+                    }
+                }
             };
 
-            $wire.on('donut-nivel2-actualizado', ({ datos }) => {
+            $wire.on('donut-nivel2-actualizado', ({
+                datos
+            }) => {
                 window.donutNivel2Datos = datos;
                 window.donutNivel2Options.series = datos.map(d => d.total);
                 window.donutNivel2Options.labels = datos.map(d => d.opcion);
-                window.dispatchEvent(new CustomEvent('donut-nivel2-update', { detail: { datos } }));
+                window.dispatchEvent(new CustomEvent('donut-nivel2-update', {
+                    detail: {
+                        datos
+                    }
+                }));
             });
 
             // ── Nivel 2: CSS (Hover & Leyenda) ─────────────────────────────
