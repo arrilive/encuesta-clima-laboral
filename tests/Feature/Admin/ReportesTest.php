@@ -48,7 +48,7 @@ it('el puntaje de dimensión es 3.0 cuando todas las respuestas son Verdadero', 
     $datosNivel1 = $component->instance()->getDatosNivel1();
     $puntaje     = collect($datosNivel1)->firstWhere('id', $dimension->id)['puntaje'];
 
-    expect($puntaje)->toBe(3.0);
+    expect($puntaje)->toBe(100.0);
 });
 
 it('prefiero no responder (valor_numerico = 0) se excluye del cálculo', function () {

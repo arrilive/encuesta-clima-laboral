@@ -138,7 +138,8 @@ class Reportes extends Component
             ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
             ->avg('opciones_respuesta.valor_numerico');
 
-        return round($result ?? 0, 2);
+        if ($result === null) return 0.0;
+        return round((($result - 1) / 2) * 100, 1);
     }
 
     // ── NIVEL 2: SUBDIMENSIONES ───────────────────────────────────────────
@@ -185,7 +186,8 @@ class Reportes extends Component
             ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
             ->avg('opciones_respuesta.valor_numerico');
 
-        return round($result ?? 0, 2);
+        if ($result === null) return 0.0;
+        return round((($result - 1) / 2) * 100, 1);
     }
 
     // ── NIVEL 3: PREGUNTAS INDIVIDUALES ──────────────────────────────────
@@ -221,7 +223,7 @@ class Reportes extends Component
                 return [
                     'id'      => $pregunta->id,
                     'texto'   => $pregunta->texto,
-                    'puntaje' => round($puntaje ?? 0, 2),
+                    'puntaje' => $puntaje !== null ? round((($puntaje - 1) / 2) * 100, 1) : 0.0,
                     'total'   => $totalRespuestas,
                     'distribucion' => $distribucion->map(fn($op) => [
                         'opcion'         => $op->opcion,
