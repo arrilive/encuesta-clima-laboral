@@ -29,6 +29,7 @@ class Reportes extends Component
     public string $filtroEmpresaId = '';
 
     public ?string $hashDatosNivel1 = null;
+    public array $pdfSvgs = [];
 
     public function updated(string $property): void
     {
@@ -65,6 +66,12 @@ class Reportes extends Component
         $this->filtroAntiguedadId = '';
         $this->filtroEmpresaId = '';
         $this->irNivel1();
+    }
+
+    public function prepararExportacion(array $svgs, string $alcance, int $limite = 25): void
+    {
+        session(['pdf_svgs' => $svgs]);
+        $this->dispatch('pdf-listo', alcance: $alcance, limite: $limite);
     }
 
     protected function getBaseQuery()
