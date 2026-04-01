@@ -68,7 +68,7 @@ class EncuestaController extends Controller
             return back()->withErrors(['token' => 'Código no encontrado, favor verificar que sea correcto.']);
         }
 
-        return redirect()->route('encuesta.demograficos', $encuesta->token);
+        return redirect()->route('encuesta.dimensiones', $encuesta->token);
     }
 
     // Opción B: primera vez — asignar un token nuevo y mostrarlo
@@ -202,8 +202,10 @@ class EncuestaController extends Controller
             }
         }
 
+        $todasDimensionesCompletas = $disponibleOrden > $dimensiones->count();
+
         return response()
-            ->view('encuesta.dimensiones', compact('token', 'dimensiones', 'disponibleOrden'))
+            ->view('encuesta.dimensiones', compact('token', 'dimensiones', 'disponibleOrden', 'todasDimensionesCompletas'))
             ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
             ->header('Pragma', 'no-cache')
             ->header('Expires', '0');

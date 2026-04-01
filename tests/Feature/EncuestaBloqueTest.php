@@ -97,6 +97,15 @@ test('la ruta encuesta.demograficos carga con token válido sin sesión de empre
         ->assertOk();
 });
 
+test('la ruta encuesta.reanudar redirige a dimensiones con token válido', function () {
+    seedEncuesta();
+
+    $encuesta = Encuesta::factory()->asignada()->create();
+
+    $this->post(route('encuesta.reanudar'), ['token' => $encuesta->token])
+        ->assertRedirect(route('encuesta.dimensiones', $encuesta->token));
+});
+
 test('la ruta encuesta.dimensiones redirige a demograficos si no hay datos demográficos', function () {
     seedEncuesta();
 
@@ -105,6 +114,30 @@ test('la ruta encuesta.dimensiones redirige a demograficos si no hay datos demog
     $this->withSession(['empresa_id' => $encuesta->empresa_id])
         ->get(route('encuesta.dimensiones', $encuesta->token))
         ->assertRedirect(route('encuesta.demograficos', $encuesta->token));
+});
+
+test('la ruta encuesta.dimensiones muestra botón a abiertas cuando todas las dimensiones están completadas', function () {
+    seedEncuesta();
+
+    $encuesta = Encuesta::factory()->create(['estado' => 'en_progreso']);
+    $preguntas = Pregunta::all();
+    $opcion = OpcionRespuesta::first();
+
+    \App\Models\DatoDemografico::factory()->create([
+        'encuesta_id' => $encuesta->id,
+    ]);
+
+    foreach ($preguntas as $pregunta) {
+        Respuesta::create([
+            'encuesta_id' => $encuesta->id,
+            'pregunta_id' => $pregunta->id,
+            'opcion_respuesta_id' => $opcion->id,
+        ]);
+    }
+
+    $this->get(route('encuesta.dimensiones', $encuesta->token))
+        ->assertOk()
+        ->assertSee('Ir a preguntas finales');
 });
 
 test('la ruta encuesta.abiertas no permite acceso cuando no están completas todas las dimensiones', function () {

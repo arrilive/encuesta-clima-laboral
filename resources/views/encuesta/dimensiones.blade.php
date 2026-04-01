@@ -196,5 +196,19 @@
         @endforeach
     </div>
 
+    @if (isset($todasDimensionesCompletas) && $todasDimensionesCompletas)
+        <div class="mt-8 text-center">
+            <a href="{{ route('encuesta.abiertas', $token) }}"
+                class="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700
+                       text-white font-semibold text-sm px-6 py-3 rounded-xl
+                       transition-all duration-200 hover:-translate-y-px
+                       hover:shadow-[0_4px_16px_rgba(37,99,235,.25)]
+                       active:translate-y-0 active:shadow-none">
+                Ir a preguntas finales
+                <span class="ml-1">→</span>
+            </a>
+        </div>
+    @endif
+
     </div>
 </x-layouts.encuesta>
