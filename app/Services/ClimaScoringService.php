@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Dimension;
+use App\Models\Subdimension;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
@@ -24,6 +25,21 @@ class ClimaScoringService
             'id'      => $d->id,
             'nombre'  => $d->nombre,
             'puntaje' => $this->calcularPuntajeDimension($baseQuery, $d->id),
+        ])->values();
+    }
+
+    /**
+     * Calcula el puntaje (0–100) para cada subdimensión sobre el conjunto
+     * de respuestas representado por $baseQuery.
+     *
+     * @return Collection<array{id: int, nombre: string, puntaje: float}>
+     */
+    public function scoresPorSubdimension(Builder $baseQuery): Collection
+    {
+        return Subdimension::orderBy('orden')->get()->map(fn(Subdimension $s) => [
+            'id'      => $s->id,
+            'nombre'  => $s->nombre,
+            'puntaje' => $this->calcularPuntajeSubdimension($baseQuery, $s->id),
         ])->values();
     }
 
@@ -62,6 +78,21 @@ class ClimaScoringService
     {
         $result = (clone $baseQuery)
             ->whereHas('pregunta.subdimension', fn(Builder $q) => $q->where('dimension_id', $dimensionId))
+            ->whereHas('opcionRespuesta', fn(Builder $q) => $q->where('valor_numerico', '!=', 0))
+            ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
+            ->avg('opciones_respuesta.valor_numerico');
+
+        if ($result === null) {
+            return 0.0;
+        }
+
+        return round((($result - 1) / 2) * 100, 1);
+    }
+
+    private function calcularPuntajeSubdimension(Builder $baseQuery, int $subdimensionId): float
+    {
+        $result = (clone $baseQuery)
+            ->whereHas('pregunta', fn(Builder $q) => $q->where('subdimension_id', $subdimensionId))
             ->whereHas('opcionRespuesta', fn(Builder $q) => $q->where('valor_numerico', '!=', 0))
             ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
             ->avg('opciones_respuesta.valor_numerico');

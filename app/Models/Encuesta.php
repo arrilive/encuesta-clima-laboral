@@ -72,6 +72,12 @@ class Encuesta extends Model
         return $query->where('estado', 'disponible');
     }
 
+    public function scopeEnRiesgo(Builder $query, int $dias = 7): Builder
+    {
+        return $query->where('estado', 'asignado')
+                     ->where('fecha_asignacion', '<', now()->subDays($dias));
+    }
+
     // -------------------------------------------------------------------------
     // Métodos de negocio
     // -------------------------------------------------------------------------
