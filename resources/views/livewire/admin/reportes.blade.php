@@ -613,7 +613,8 @@
     @endif
 
     {{-- Modal Exportar PDF --}}
-    <div x-data="{
+    <template x-teleport="body">
+        <div x-data="{
                  abierto: false, 
                  alcance: 'dimensiones', 
                  limite: 25,
@@ -718,7 +719,7 @@
             </div>
             
         </div>
-    </div>
+    </template>
 
     @script
         <script>
