@@ -6,6 +6,7 @@ use App\Models\Dimension;
 use App\Models\Empresa;
 use App\Models\Respuesta;
 use App\Models\Subdimension;
+use App\Services\ClimaScoringService;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -128,27 +129,9 @@ class Reportes extends Component
 
     public function getDatosNivel1(): array
     {
-        return Dimension::orderBy('orden')->get()->map(fn($d) => [
-            'id'      => $d->id,
-            'nombre'  => $d->nombre,
-            'puntaje' => $this->calcularPuntajeDimension($d->id),
-        ])->toArray();
-    }
-
-    protected function calcularPuntajeDimension(int $dimensionId): float
-    {
-        $result = (clone $this->getBaseQuery())
-            ->whereHas('pregunta.subdimension', fn($q) =>
-                $q->where('dimension_id', $dimensionId)
-            )
-            ->whereHas('opcionRespuesta', fn($q) =>
-                $q->where('valor_numerico', '!=', 0)
-            )
-            ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
-            ->avg('opciones_respuesta.valor_numerico');
-
-        if ($result === null) return 0.0;
-        return round((($result - 1) / 2) * 100, 1);
+        $scoringService = app(ClimaScoringService::class);
+        $baseQuery = $this->getBaseQuery();
+        return $scoringService->scoresPorDimension($baseQuery)->toArray();
     }
 
     // ── NIVEL 2: SUBDIMENSIONES ───────────────────────────────────────────
