@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EncuestaController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ExportController;
+use App\Http\Controllers\Admin\PdfController;
 
 Route::redirect('/', 'encuesta');
 
@@ -35,6 +36,9 @@ Route::prefix('admin')
 
         Route::get('/reportes', \App\Livewire\Admin\Reportes::class)
              ->name('reportes');
+
+        Route::get('/reportes/pdf', [PdfController::class, 'reportePDF'])
+             ->name('reportes.pdf');
 
         // Solo super_admin
         Route::middleware('role:super_admin')->group(function () {
