@@ -1,8 +1,8 @@
 <?php
 
 use App\Livewire\Encuesta\EncuestaBloque;
-use App\Livewire\Encuesta\PreguntasAbiertas;
 use App\Livewire\Encuesta\PreguntaCerrada;
+use App\Livewire\Encuesta\PreguntasAbiertas;
 use App\Models\Dimension;
 use App\Models\Encuesta;
 use App\Models\OpcionRespuesta;
@@ -49,7 +49,7 @@ function seedEncuesta(): void
 test('la ruta encuesta.bloque carga correctamente con token válido', function () {
     seedEncuesta();
 
-    $encuesta  = Encuesta::factory()->asignada()->create();
+    $encuesta = Encuesta::factory()->asignada()->create();
     $dimension = Dimension::where('orden', 1)->first();
 
     \App\Models\DatoDemografico::factory()->create([
@@ -57,17 +57,17 @@ test('la ruta encuesta.bloque carga correctamente con token válido', function (
     ]);
 
     $this->get(route('encuesta.bloque', [
-        'token'     => $encuesta->token,
+        'token' => $encuesta->token,
         'dimension' => $dimension->orden,
     ]))->assertOk()
-       ->assertSeeLivewire(EncuestaBloque::class);
+        ->assertSeeLivewire(EncuestaBloque::class);
 });
 
 test('la ruta encuesta.bloque retorna 404 con token inválido', function () {
     seedEncuesta();
 
     $this->get(route('encuesta.bloque', [
-        'token'     => 'token-falso',
+        'token' => 'token-falso',
         'dimension' => 1,
     ]))->assertNotFound();
 });
@@ -78,9 +78,63 @@ test('la ruta encuesta.bloque retorna 404 con encuesta completada', function () 
     $encuesta = Encuesta::factory()->completada()->create();
 
     $this->get(route('encuesta.bloque', [
-        'token'     => $encuesta->token,
+        'token' => $encuesta->token,
         'dimension' => 1,
     ]))->assertNotFound();
+});
+
+test('la ruta encuesta.mostrar-acceso redirige a bienvenida sin sesión de empresa', function () {
+    $this->get(route('encuesta.mostrar-acceso'))
+        ->assertRedirect(route('encuesta.bienvenida'));
+});
+
+test('la ruta encuesta.demograficos carga con token válido sin sesión de empresa', function () {
+    seedEncuesta();
+
+    $encuesta = Encuesta::factory()->asignada()->create();
+
+    $this->get(route('encuesta.demograficos', $encuesta->token))
+        ->assertOk();
+});
+
+test('la ruta encuesta.dimensiones redirige a demograficos si no hay datos demográficos', function () {
+    seedEncuesta();
+
+    $encuesta = Encuesta::factory()->asignada()->create();
+
+    $this->withSession(['empresa_id' => $encuesta->empresa_id])
+        ->get(route('encuesta.dimensiones', $encuesta->token))
+        ->assertRedirect(route('encuesta.demograficos', $encuesta->token));
+});
+
+test('la ruta encuesta.abiertas no permite acceso cuando no están completas todas las dimensiones', function () {
+    seedEncuesta();
+
+    $encuesta = Encuesta::factory()->create(['estado' => 'en_progreso']);
+
+    $this->withSession(['empresa_id' => $encuesta->empresa_id])
+        ->get(route('encuesta.abiertas', $encuesta->token))
+        ->assertRedirect(route('encuesta.dimensiones', $encuesta->token));
+});
+
+test('la ruta encuesta.gracias solo permite token completado', function () {
+    seedEncuesta();
+
+    $encuesta = Encuesta::factory()->completada()->create();
+
+    $this->withSession(['empresa_id' => $encuesta->empresa_id])
+        ->get(route('encuesta.gracias', $encuesta->token))
+        ->assertOk();
+});
+
+test('la ruta encuesta.gracias no permite token en progreso', function () {
+    seedEncuesta();
+
+    $encuesta = Encuesta::factory()->create(['estado' => 'en_progreso']);
+
+    $this->withSession(['empresa_id' => $encuesta->empresa_id])
+        ->get(route('encuesta.gracias', $encuesta->token))
+        ->assertNotFound();
 });
 
 // ---------------------------------------------------------------------------
@@ -92,7 +146,7 @@ test('seleccionar una opción guarda la respuesta en BD', function () {
 
     $encuesta = Encuesta::factory()->asignada()->create();
     $pregunta = Pregunta::first();
-    $opcion   = OpcionRespuesta::first();
+    $opcion = OpcionRespuesta::first();
 
     Livewire::test(PreguntaCerrada::class, [
         'encuesta' => $encuesta,
@@ -140,36 +194,35 @@ test('siguienteBloque agrega error si hay preguntas sin responder', function () 
     $encuesta = Encuesta::factory()->asignada()->create();
 
     Livewire::test(EncuestaBloque::class, [
-        'token'     => $encuesta->token,
+        'token' => $encuesta->token,
         'dimension' => 1,
     ])->call('siguienteBloque')
-      ->assertHasErrors('bloque');
+        ->assertHasErrors('bloque');
 });
 
 test('siguienteBloque redirige si todas las preguntas están respondidas', function () {
     seedEncuesta();
 
-    $encuesta  = Encuesta::factory()->asignada()->create();
+    $encuesta = Encuesta::factory()->asignada()->create();
     $dimension = Dimension::where('orden', 1)->first();
-    $preguntas = Pregunta::whereHas('subdimension', fn ($q) =>
-        $q->where('dimension_id', $dimension->id)
+    $preguntas = Pregunta::whereHas('subdimension', fn ($q) => $q->where('dimension_id', $dimension->id)
     )->get();
     $opcion = OpcionRespuesta::first();
 
     foreach ($preguntas as $pregunta) {
         Respuesta::create([
-            'encuesta_id'         => $encuesta->id,
-            'pregunta_id'         => $pregunta->id,
+            'encuesta_id' => $encuesta->id,
+            'pregunta_id' => $pregunta->id,
             'opcion_respuesta_id' => $opcion->id,
         ]);
     }
 
     Livewire::test(EncuestaBloque::class, [
-        'token'     => $encuesta->token,
+        'token' => $encuesta->token,
         'dimension' => 1,
     ])->call('siguienteBloque')
-      ->assertHasNoErrors()
-      ->assertRedirect();
+        ->assertHasNoErrors()
+        ->assertRedirect();
 });
 
 // ---------------------------------------------------------------------------
@@ -182,7 +235,7 @@ test('calcularProgreso retorna 0 cuando no hay respuestas', function () {
     $encuesta = Encuesta::factory()->asignada()->create();
 
     Livewire::test(EncuestaBloque::class, [
-        'token'     => $encuesta->token,
+        'token' => $encuesta->token,
         'dimension' => 1,
     ])->assertSee('0%');
 });
@@ -190,23 +243,22 @@ test('calcularProgreso retorna 0 cuando no hay respuestas', function () {
 test('calcularProgreso retorna 100 cuando el bloque está completo', function () {
     seedEncuesta();
 
-    $encuesta  = Encuesta::factory()->asignada()->create();
+    $encuesta = Encuesta::factory()->asignada()->create();
     $dimension = Dimension::where('orden', 1)->first();
-    $preguntas = Pregunta::whereHas('subdimension', fn ($q) =>
-        $q->where('dimension_id', $dimension->id)
+    $preguntas = Pregunta::whereHas('subdimension', fn ($q) => $q->where('dimension_id', $dimension->id)
     )->get();
     $opcion = OpcionRespuesta::first();
 
     foreach ($preguntas as $pregunta) {
         Respuesta::create([
-            'encuesta_id'         => $encuesta->id,
-            'pregunta_id'         => $pregunta->id,
+            'encuesta_id' => $encuesta->id,
+            'pregunta_id' => $pregunta->id,
             'opcion_respuesta_id' => $opcion->id,
         ]);
     }
 
     Livewire::test(EncuestaBloque::class, [
-        'token'     => $encuesta->token,
+        'token' => $encuesta->token,
         'dimension' => 1,
     ])->assertSee('100%');
 });
