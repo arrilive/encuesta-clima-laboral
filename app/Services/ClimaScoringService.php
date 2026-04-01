@@ -1,0 +1,75 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\Dimension;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
+
+class ClimaScoringService
+{
+    /**
+     * Calcula el puntaje (0–100) para cada dimensión sobre el conjunto
+     * de respuestas representado por $baseQuery.
+     *
+     * El consumidor construye y scope-a la query base (por rol, por filtros
+     * demográficos, etc.). El servicio no la modifica: clona internamente
+     * antes de agregar constraints propios.
+     *
+     * @return Collection<array{id: int, nombre: string, puntaje: float}>
+     */
+    public function scoresPorDimension(Builder $baseQuery): Collection
+    {
+        return Dimension::orderBy('orden')->get()->map(fn(Dimension $d) => [
+            'id'      => $d->id,
+            'nombre'  => $d->nombre,
+            'puntaje' => $this->calcularPuntajeDimension($baseQuery, $d->id),
+        ])->values();
+    }
+
+    /**
+     * Calcula el promedio general de clima (0–100) sobre todas las
+     * dimensiones juntas, excluyendo respuestas con valor_numerico = 0.
+     *
+     * Retorna 0.0 cuando no hay respuestas con valor numérico válido.
+     */
+    public function promedioGeneral(Builder $baseQuery): float
+    {
+        $result = (clone $baseQuery)
+            ->whereHas('opcionRespuesta', fn(Builder $q) => $q->where('valor_numerico', '!=', 0))
+            ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
+            ->avg('opciones_respuesta.valor_numerico');
+
+        if ($result === null) {
+            return 0.0;
+        }
+
+        return round((($result - 1) / 2) * 100, 1);
+    }
+
+    // -------------------------------------------------------------------------
+    // Implementación interna
+    // -------------------------------------------------------------------------
+
+    /**
+     * Puntaje normalizado (0–100) para una dimensión específica.
+     *
+     * Privado: es un detalle de implementación de scoresPorDimension.
+     * El consumidor siempre quiere la colección completa; nunca necesita
+     * este cálculo de forma aislada.
+     */
+    private function calcularPuntajeDimension(Builder $baseQuery, int $dimensionId): float
+    {
+        $result = (clone $baseQuery)
+            ->whereHas('pregunta.subdimension', fn(Builder $q) => $q->where('dimension_id', $dimensionId))
+            ->whereHas('opcionRespuesta', fn(Builder $q) => $q->where('valor_numerico', '!=', 0))
+            ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
+            ->avg('opciones_respuesta.valor_numerico');
+
+        if ($result === null) {
+            return 0.0;
+        }
+
+        return round((($result - 1) / 2) * 100, 1);
+    }
+}
