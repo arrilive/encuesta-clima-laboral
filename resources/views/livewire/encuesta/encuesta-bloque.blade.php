@@ -4,7 +4,7 @@
         <div class="max-w-2xl mx-auto">
             <div class="flex justify-between text-xs text-slate-500 mb-1.5">
                 <span class="font-medium text-slate-700">
-                    Bloque {{ $dimensionActual }} de {{ $totalDimensiones }}: {{ $dimensionNombre }}
+                    Dimensión {{ $dimensionActual }} de {{ $totalDimensiones }}: {{ $dimensionNombre }}
                 </span>
                 <span>{{ $progreso }}% completado</span>
             </div>
@@ -62,7 +62,7 @@
                     <path d="M12 2a10 10 0 0 1 10 10" />
                 </svg>
                 <span wire:loading.remove wire:target="siguienteBloque">
-                    {{ $dimensionActual < $totalDimensiones ? 'Siguiente bloque' : 'Continuar' }}
+                    {{ $dimensionActual < $totalDimensiones ? 'Siguiente dimensión' : 'Continuar' }}
                     <span class="ml-1">→</span>
                 </span>
                 <span wire:loading wire:target="siguienteBloque">Guardando…</span>
@@ -81,7 +81,7 @@
                     // Pequeño delay para asegurar que Livewire aplicó las clases rojas
                     setTimeout(() => {
                         const y = el.getBoundingClientRect().top + window.scrollY -
-                        100; // offset por el header sticky
+                            100; // offset por el header sticky
                         window.scrollTo({
                             top: y,
                             behavior: 'smooth'

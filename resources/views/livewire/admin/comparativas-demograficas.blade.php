@@ -2,7 +2,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
         <div>
             <h2 class="text-slate-900 font-semibold mb-1">Comparativas demográficas</h2>
-            <p class="text-slate-500 text-sm">Puntaje promedio en cada bloque según el grupo seleccionado</p>
+            <p class="text-slate-500 text-sm">Puntaje promedio en cada dimensión según el grupo seleccionado</p>
         </div>
         <select wire:model.live="campoComparativa"
             class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm min-w-[200px]
@@ -17,16 +17,13 @@
         </select>
     </div>
 
-    <div x-data="{ chart: null }"
-        x-init="
-            let initialData = @js($comparativas);
-            if (chart) { chart.destroy(); }
-            let opts = JSON.parse(JSON.stringify(window.comparativasOptions));
-            opts.series = initialData.series;
-            opts.xaxis.categories = initialData.categorias;
-            chart = new ApexCharts($el.querySelector('#comparativas-chart'), opts);
-            chart.render();
-        "
+    <div x-data="{ chart: null }" x-init="let initialData = @js($comparativas);
+    if (chart) { chart.destroy(); }
+    let opts = JSON.parse(JSON.stringify(window.comparativasOptions));
+    opts.series = initialData.series;
+    opts.xaxis.categories = initialData.categorias;
+    chart = new ApexCharts($el.querySelector('#comparativas-chart'), opts);
+    chart.render();"
         x-on:comparativas-actualizadas.window="
             if (chart) { chart.destroy(); }
             let opts = JSON.parse(JSON.stringify(window.comparativasOptions));
@@ -49,33 +46,48 @@
                     type: 'bar',
                     height: 400,
                     fontFamily: 'DM Sans, sans-serif',
-                    toolbar: { show: false }
+                    toolbar: {
+                        show: false
+                    }
                 },
                 plotOptions: {
                     bar: {
                         horizontal: false,
                         columnWidth: '55%',
                         borderRadius: 4,
-                        dataLabels: { position: 'top' }
+                        dataLabels: {
+                            position: 'top'
+                        }
                     }
                 },
                 dataLabels: {
                     enabled: false,
                     formatter: val => val.toFixed(1),
                     offsetY: -20,
-                    style: { fontSize: '10px', colors: ['#64748b'] }
+                    style: {
+                        fontSize: '10px',
+                        colors: ['#64748b']
+                    }
                 },
                 series: window.comparativasDatos.series,
                 xaxis: {
                     categories: window.comparativasDatos.categorias,
-                    labels: { style: { colors: '#64748b', fontSize: '12px' } }
+                    labels: {
+                        style: {
+                            colors: '#64748b',
+                            fontSize: '12px'
+                        }
+                    }
                 },
                 yaxis: {
                     min: 0,
                     max: 100,
                     tickAmount: 5,
                     labels: {
-                        style: { colors: '#64748b', fontSize: '12px' },
+                        style: {
+                            colors: '#64748b',
+                            fontSize: '12px'
+                        },
                         formatter: val => val.toFixed(1)
                     }
                 },
@@ -84,20 +96,33 @@
                     horizontalAlign: 'right',
                     fontSize: '13px',
                     fontFamily: 'DM Sans, sans-serif',
-                    markers: { radius: 12 }
+                    markers: {
+                        radius: 12
+                    }
                 },
                 stroke: {
                     show: true,
                     width: 2,
                     colors: ['transparent']
                 },
-                grid: { borderColor: '#f1f5f9', strokeDashArray: 4 },
-                tooltip: { y: { formatter: val => val.toFixed(2) + ' pts' } }
+                grid: {
+                    borderColor: '#f1f5f9',
+                    strokeDashArray: 4
+                },
+                tooltip: {
+                    y: {
+                        formatter: val => val.toFixed(2) + ' pts'
+                    }
+                }
             };
 
-            $wire.on('comparativas-actualizadas', ({ comparativas }) => {
+            $wire.on('comparativas-actualizadas', ({
+                comparativas
+            }) => {
                 window.dispatchEvent(new CustomEvent('comparativas-actualizadas', {
-                    detail: { comparativas }
+                    detail: {
+                        comparativas
+                    }
                 }));
             });
         </script>
