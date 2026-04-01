@@ -288,16 +288,16 @@
 
     {{-- SIEMPRE MOSTRAR BLOQUES --}}
     <div class="section">
-        <h2 class="section-title">Resultados por Bloque</h2>
+        <h2 class="section-title">Resultados por Dimensión</h2>
         <p style="font-size: 12px; color: #64748b; margin-bottom: 20px;">Este apartado presenta el desempeño general
-            agrupado por los principales bloques de la encuesta. Un puntaje cercano a 100 indica un clima laboral
-            excelente en ese bloque.</p>
+            agrupado por las principales dimensiones de la encuesta. Un puntaje cercano a 100 indica un clima laboral
+            excelente en esa dimensión.</p>
 
         <table>
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>Bloque</th>
+                    <th>Dimensión</th>
                     <th class="text-center">Puntaje</th>
                     <th>Interpretación</th>
                 </tr>
@@ -326,9 +326,9 @@
     @if (in_array($alcance, ['subdimensiones', 'completo']) && !empty($datosSubdimensiones))
         <div class="page-break"></div>
         <div class="section">
-            <h2 class="section-title">Resultados por Sección</h2>
-            <p style="font-size: 12px; color: #64748b; margin-bottom: 20px;">Desglose detallado de cada bloque en sus
-                distintas secciones.</p>
+            <h2 class="section-title">Resultados por Subdimensión</h2>
+            <p style="font-size: 12px; color: #64748b; margin-bottom: 20px;">Desglose detallado de cada dimensión en sus
+                distintas subdimensiones.</p>
 
             @foreach ($datosSubdimensiones as $dimensionNombre => $subdimensiones)
                 <div class="subdimension-group">
@@ -336,7 +336,7 @@
                     <table>
                         <thead>
                             <tr>
-                                <th width="35%">Sección</th>
+                                <th width="35%">Subdimensión</th>
                                 <th width="10%" class="text-center">Puntaje</th>
                                 <th width="55%">Distribución</th>
                             </tr>

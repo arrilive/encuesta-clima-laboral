@@ -20,12 +20,12 @@
                 @if ($siguienteDimension)
                     @php
                         $frases = [
-                            'Excelente, cada bloque cuenta.',
+                            'Excelente, cada dimensión cuenta.',
                             '¡Vas muy bien! Tu opinión hace la diferencia.',
                             '¡Genial! Sigue así, cada respuesta suma.',
                             '¡Buen trabajo! Tu participación es muy valiosa.',
                             '¡Avanzando con todo! Gracias por tu tiempo.',
-                            '¡Muy bien! Tu opinión es importante en cada bloque.',
+                            '¡Muy bien! Tu opinión es importante en cada dimensión.',
                             '¡Excelente progreso! Tu opinión nos ayuda a mejorar.',
                         ];
                     @endphp
@@ -71,7 +71,7 @@
                             </svg>
                         </div>
                         <div>
-                            <p class="text-white/70 text-xs font-medium mb-0.5">Siguiente bloque</p>
+                            <p class="text-white/70 text-xs font-medium mb-0.5">Siguiente dimensión</p>
                             <h3 class="text-white font-bold text-base leading-snug">
                                 {{ $siguienteDimension->nombre }}
                             </h3>

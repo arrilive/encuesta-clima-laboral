@@ -3,25 +3,25 @@
     <div class="bg-white rounded-2xl shadow-sm p-4">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
             <h2 class="text-slate-900 font-semibold">Filtros</h2>
-            
+
             <div class="flex items-center gap-3">
                 <button wire:click="limpiarFiltros" wire:loading.attr="disabled"
                     class="text-blue-600 hover:text-blue-700 text-sm font-semibold flex items-center gap-2
                            transition-all duration-200 hover:-translate-y-px active:translate-y-0
                            disabled:opacity-50 disabled:cursor-not-allowed">
-    
+
                     <svg wire:loading wire:target="limpiarFiltros" class="animate-spin w-4 h-4" viewBox="0 0 24 24"
                         fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                         <circle cx="12" cy="12" r="10" stroke-opacity="0.25" />
                         <path d="M12 2a10 10 0 0 1 10 10" />
                     </svg>
-    
-                    <svg wire:loading.remove wire:target="limpiarFiltros" xmlns="http://www.w3.org/2000/svg" fill="none"
-                        viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+
+                    <svg wire:loading.remove wire:target="limpiarFiltros" xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
                         <path stroke-linecap="round" stroke-linejoin="round"
                             d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
                     </svg>
-    
+
                     <span wire:loading.remove wire:target="limpiarFiltros">Limpiar filtros</span>
                     <span wire:loading wire:target="limpiarFiltros">Limpiando...</span>
                 </button>
@@ -30,7 +30,8 @@
 
                 <button @click="$dispatch('abrir-modal-pdf')"
                     class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-all duration-200 hover:-translate-y-px active:translate-y-0 whitespace-nowrap">
-                    <svg class="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <svg class="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                         <polyline points="7 10 12 15 17 10" />
                         <line x1="12" y1="15" x2="12" y2="3" />
@@ -132,10 +133,10 @@
     {{-- SECCIÓN 2 — Breadcrumb --}}
     <nav class="flex items-center gap-2 px-1 text-xs">
         @if ($nivel === 1)
-            <span class="text-slate-400 font-medium uppercase tracking-wider">Bloques</span>
+            <span class="text-slate-400 font-medium uppercase tracking-wider">Dimensiones</span>
         @else
             <button wire:click="irNivel1"
-                class="text-blue-600 hover:text-blue-700 font-medium uppercase tracking-wider transition-colors">Bloques</button>
+                class="text-blue-600 hover:text-blue-700 font-medium uppercase tracking-wider transition-colors">Dimensiones</button>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
                 stroke="currentColor" class="w-3 h-3 text-slate-400">
                 <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
@@ -324,13 +325,13 @@
 
                     {{-- 3c. Ranking --}}
                     <div class="bg-white rounded-2xl shadow-sm p-4 flex flex-col">
-                        <h2 class="text-slate-900 font-semibold mb-4">Ranking de Bloques</h2>
+                        <h2 class="text-slate-900 font-semibold mb-4">Ranking de Dimensiones</h2>
                         <div>
                             <table class="w-full text-sm text-left">
                                 <thead>
                                     <tr class="text-slate-400 border-b border-slate-100">
                                         <th class="pb-3 font-medium px-2">#</th>
-                                        <th class="pb-3 font-medium">Bloque</th>
+                                        <th class="pb-3 font-medium">Dimensión</th>
                                         <th class="pb-3 font-medium text-center">Puntaje</th>
                                         <th class="pb-3 font-medium">Interpretación</th>
                                         <th class="pb-3 font-medium text-right"></th>
@@ -392,15 +393,8 @@
                 </div>
 
                 {{-- 3d. Comparativas demográficas --}}
-                <livewire:admin.comparativas-demograficas
-                    :filtro-edad-id="$filtroEdadId"
-                    :filtro-sexo-id="$filtroSexoId"
-                    :filtro-cargo-id="$filtroCargoId"
-                    :filtro-lugar-trabajo-id="$filtroLugarTrabajoId"
-                    :filtro-grado-academico-id="$filtroGradoAcademicoId"
-                    :filtro-antiguedad-id="$filtroAntiguedadId"
-                    :filtro-empresa-id="$filtroEmpresaId"
-                />
+                <livewire:admin.comparativas-demograficas :filtro-edad-id="$filtroEdadId" :filtro-sexo-id="$filtroSexoId" :filtro-cargo-id="$filtroCargoId"
+                    :filtro-lugar-trabajo-id="$filtroLugarTrabajoId" :filtro-grado-academico-id="$filtroGradoAcademicoId" :filtro-antiguedad-id="$filtroAntiguedadId" :filtro-empresa-id="$filtroEmpresaId" />
 
                 {{-- 3e. Respuestas abiertas --}}
                 <livewire:admin.respuestas-abiertas :filtro-edad-id="$filtroEdadId" :filtro-sexo-id="$filtroSexoId" :filtro-cargo-id="$filtroCargoId"
@@ -419,7 +413,7 @@
 
                 {{-- Chart de barras horizontales --}}
                 <div class="bg-white rounded-2xl shadow-sm p-4">
-                    <h2 class="text-slate-900 font-semibold mb-4">Puntaje por Sección</h2>
+                    <h2 class="text-slate-900 font-semibold mb-4">Puntaje por Subdimensión</h2>
                     <div x-data="{ chart: null }" x-init="window.barrasNivel2Datos = @js($datosNivel2);
                     if (chart) { chart.destroy(); }
                     chart = new ApexCharts(
@@ -539,9 +533,9 @@
         @endphp
 
         @if ($sinDatos)
-            <x-admin.empty-state mensaje="No hay respuestas para los filtros seleccionados en esta sección." />
+            <x-admin.empty-state mensaje="No hay respuestas para los filtros seleccionados en esta subdimensión." />
         @elseif (empty($datosNivel3))
-            <x-admin.empty-state mensaje="Esta sección no tiene preguntas registradas." :conBotonFiltros="false" />
+            <x-admin.empty-state mensaje="Esta subdimensión no tiene preguntas registradas." :conBotonFiltros="false" />
         @else
             <div class="space-y-3">
                 @foreach ($datosNivel3 as $index => $pregunta)
@@ -615,110 +609,127 @@
     {{-- Modal Exportar PDF --}}
     <template x-teleport="body">
         <div x-data="{
-                 abierto: false, 
-                 alcance: 'dimensiones', 
-                 limite: 25,
-                 exporting: false,
-                 capturarYExportar() {
-                     if ({{ $completadasFiltradas }} === 0) {
-                         alert('No hay encuestas completadas con los filtros actuales.');
-                         return;
-                     }
-                     this.exporting = true;
-                     let svgs = {};
-                     let radarEl = document.querySelector('#radar-chart svg');
-                     if (radarEl) svgs.radar = radarEl.outerHTML;
-                     $wire.prepararExportacion(svgs, this.alcance, this.limite);
-                     setTimeout(() => { this.exporting = false; }, 2500);
-                 }
-             }"
-             x-on:abrir-modal-pdf.window="abierto = true"
-             x-on:keyup.escape.window="abierto = false"
-             x-cloak
-             x-show="abierto"
-             class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
-         
-        <div x-show="abierto" x-transition.opacity class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" @click="abierto = false"></div>
-        
-        <div x-show="abierto" 
-             x-transition:enter="transition ease-out duration-300" 
-             x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
-             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" 
-             x-transition:leave="transition ease-in duration-200" 
-             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" 
-             x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-             class="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden ring-1 ring-slate-900/5">
-             
-            <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
-                <h3 class="text-base font-semibold text-slate-900">Exportar Reporte a PDF</h3>
-                <button @click="abierto = false" class="text-slate-400 hover:text-slate-500 transition-colors">
-                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                    </svg>
-                </button>
-            </div>
-            
-            <div class="p-6 space-y-5">
-                <div class="space-y-3">
-                    <label class="block text-sm font-medium text-slate-700">Alcance del reporte</label>
-                    
-                    <label class="flex items-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors" :class="{'bg-blue-50/50 border-blue-200': alcance === 'dimensiones'}">
-                        <input type="radio" x-model="alcance" value="dimensiones" class="h-4 w-4 text-blue-600 focus:ring-blue-600 border-slate-300">
-                        <span class="ml-3 block text-sm font-medium text-slate-900">Solo Bloques</span>
-                    </label>
-                    
-                    <label class="flex items-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors" :class="{'bg-blue-50/50 border-blue-200': alcance === 'subdimensiones'}">
-                        <input type="radio" x-model="alcance" value="subdimensiones" class="h-4 w-4 text-blue-600 focus:ring-blue-600 border-slate-300">
-                        <span class="ml-3 block text-sm font-medium text-slate-900">Bloques + Secciones</span>
-                    </label>
+            abierto: false,
+            alcance: 'dimensiones',
+            limite: 25,
+            exporting: false,
+            capturarYExportar() {
+                if ({{ $completadasFiltradas }} === 0) {
+                    alert('No hay encuestas completadas con los filtros actuales.');
+                    return;
+                }
+                this.exporting = true;
+                let svgs = {};
+                let radarEl = document.querySelector('#radar-chart svg');
+                if (radarEl) svgs.radar = radarEl.outerHTML;
+                $wire.prepararExportacion(svgs, this.alcance, this.limite);
+                setTimeout(() => { this.exporting = false; }, 2500);
+            }
+        }" x-on:abrir-modal-pdf.window="abierto = true"
+            x-on:keyup.escape.window="abierto = false" x-cloak x-show="abierto"
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
 
-                    <label class="flex items-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors" :class="{'bg-blue-50/50 border-blue-200': alcance === 'respuestas_abiertas'}">
-                        <input type="radio" x-model="alcance" value="respuestas_abiertas" class="h-4 w-4 text-blue-600 focus:ring-blue-600 border-slate-300">
-                        <span class="ml-3 block text-sm font-medium text-slate-900">Solo Preguntas Abiertas</span>
-                    </label>
-                    
-                    <label class="flex items-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors" :class="{'bg-blue-50/50 border-blue-200': alcance === 'completo'}">
-                        <input type="radio" x-model="alcance" value="completo" class="h-4 w-4 text-blue-600 focus:ring-blue-600 border-slate-300">
-                        <span class="ml-3 block text-sm font-medium text-slate-900">Reporte Completo</span>
-                    </label>
+            <div x-show="abierto" x-transition.opacity class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"
+                @click="abierto = false"></div>
+
+            <div x-show="abierto" x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                class="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden ring-1 ring-slate-900/5">
+
+                <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+                    <h3 class="text-base font-semibold text-slate-900">Exportar Reporte a PDF</h3>
+                    <button @click="abierto = false" class="text-slate-400 hover:text-slate-500 transition-colors">
+                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </button>
                 </div>
-                
-                <div x-show="['respuestas_abiertas', 'completo'].includes(alcance)" x-collapse>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Máximo de respuestas por pregunta</label>
-                    <input type="number" x-model.number="limite" min="10" max="100" class="w-full border border-slate-300 rounded-xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
-                    <p class="mt-1 text-xs text-slate-500">Valor recomendado: 25</p>
+
+                <div class="p-6 space-y-5">
+                    <div class="space-y-3">
+                        <label class="block text-sm font-medium text-slate-700">Alcance del reporte</label>
+
+                        <label
+                            class="flex items-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors"
+                            :class="{ 'bg-blue-50/50 border-blue-200': alcance === 'dimensiones' }">
+                            <input type="radio" x-model="alcance" value="dimensiones"
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-600 border-slate-300">
+                            <span class="ml-3 block text-sm font-medium text-slate-900">Solo Dimensiones</span>
+                        </label>
+
+                        <label
+                            class="flex items-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors"
+                            :class="{ 'bg-blue-50/50 border-blue-200': alcance === 'subdimensiones' }">
+                            <input type="radio" x-model="alcance" value="subdimensiones"
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-600 border-slate-300">
+                            <span class="ml-3 block text-sm font-medium text-slate-900">Dimensiones +
+                                Subdimensiones</span>
+                        </label>
+
+                        <label
+                            class="flex items-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors"
+                            :class="{ 'bg-blue-50/50 border-blue-200': alcance === 'respuestas_abiertas' }">
+                            <input type="radio" x-model="alcance" value="respuestas_abiertas"
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-600 border-slate-300">
+                            <span class="ml-3 block text-sm font-medium text-slate-900">Solo Preguntas Abiertas</span>
+                        </label>
+
+                        <label
+                            class="flex items-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors"
+                            :class="{ 'bg-blue-50/50 border-blue-200': alcance === 'completo' }">
+                            <input type="radio" x-model="alcance" value="completo"
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-600 border-slate-300">
+                            <span class="ml-3 block text-sm font-medium text-slate-900">Reporte Completo</span>
+                        </label>
+                    </div>
+
+                    <div x-show="['respuestas_abiertas', 'completo'].includes(alcance)" x-collapse>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Máximo de respuestas por
+                            pregunta</label>
+                        <input type="number" x-model.number="limite" min="10" max="100"
+                            class="w-full border border-slate-300 rounded-xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+                        <p class="mt-1 text-xs text-slate-500">Valor recomendado: 25</p>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-                <button @click="abierto = false" type="button" class="px-4 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
-                    Cancelar
-                </button>
-                <button @click="capturarYExportar()" type="button" 
+
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                    <button @click="abierto = false" type="button"
+                        class="px-4 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
+                        Cancelar
+                    </button>
+                    <button @click="capturarYExportar()" type="button"
                         :disabled="exporting || {{ $completadasFiltradas }} === 0"
-                        :class="{ 
+                        :class="{
                             'opacity-50 cursor-not-allowed': exporting || {{ $completadasFiltradas }} === 0,
-                            'hover:bg-blue-700': !exporting && {{ $completadasFiltradas }} > 0 
+                            'hover:bg-blue-700': !exporting && {{ $completadasFiltradas }} > 0
                         }"
                         class="px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl transition-colors flex items-center gap-2">
-                    <svg x-show="exporting" class="animate-spin w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                        <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
-                        <path d="M12 2a10 10 0 0 1 10 10"/>
-                    </svg>
+                        <svg x-show="exporting" class="animate-spin w-4 h-4 text-white" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                            <circle cx="12" cy="12" r="10" stroke-opacity="0.25" />
+                            <path d="M12 2a10 10 0 0 1 10 10" />
+                        </svg>
 
-                    <svg x-show="!exporting" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                         stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                    
-                    <span x-show="!exporting">Descargar PDF</span>
-                    <span x-show="exporting">Generando PDF...</span>
-                </button>
+                        <svg x-show="!exporting" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
+                            stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+
+                        <span x-show="!exporting">Descargar PDF</span>
+                        <span x-show="exporting">Generando PDF...</span>
+                    </button>
+                </div>
+
             </div>
-            
-        </div>
     </template>
 
     @script
@@ -798,11 +809,14 @@
             });
 
             // Preparación de exportación de PDF
-            $wire.on('pdf-listo', ({ alcance, limite }) => {
+            $wire.on('pdf-listo', ({
+                alcance,
+                limite
+            }) => {
                 const params = new URLSearchParams();
                 params.append('alcance', alcance);
                 params.append('limite', limite);
-                
+
                 // Agregar filtros activos
                 const filtros = {
                     empresa_id: $wire.filtroEmpresaId,
@@ -813,11 +827,11 @@
                     lugar_trabajo_id: $wire.filtroLugarTrabajoId,
                     grado_academico_id: $wire.filtroGradoAcademicoId,
                 };
-                
+
                 Object.entries(filtros).forEach(([key, value]) => {
                     if (value) params.append(key, value);
                 });
-                
+
                 window.open(`/admin/reportes/pdf?${params.toString()}`, '_blank');
             });
 

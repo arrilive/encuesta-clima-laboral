@@ -7,7 +7,7 @@
                 Tu encuesta
             </h1>
             <p class="text-sm text-slate-500 leading-relaxed">
-                Completa cada bloque en orden. Todas tus respuestas se guardan automáticamente.
+                Completa cada dimensión en orden. Todas tus respuestas se guardan automáticamente.
             </p>
         </div>
 
@@ -16,20 +16,20 @@
             @php
                 $gradientes = [
                     1 => 'from-blue-600 to-blue-500',
-                    2 => 'from-green-600 to-green-500', 
+                    2 => 'from-green-600 to-green-500',
                     3 => 'from-amber-500 to-amber-400',
-                    4 => 'from-red-600 to-red-500', 
-                    5 => 'from-purple-600 to-purple-500', 
-                    6 => 'from-cyan-500 to-cyan-400', 
+                    4 => 'from-red-600 to-red-500',
+                    5 => 'from-purple-600 to-purple-500',
+                    6 => 'from-cyan-500 to-cyan-400',
                 ];
 
                 $glowColors = [
-                    1 => 'rgba(37,99,235,0.35)', 
-                    2 => 'rgba(22,163,74,0.35)', 
-                    3 => 'rgba(245,158,11,0.35)', 
-                    4 => 'rgba(220,38,38,0.35)', 
-                    5 => 'rgba(147,51,234,0.35)', 
-                    6 => 'rgba(6,182,212,0.35)', 
+                    1 => 'rgba(37,99,235,0.35)',
+                    2 => 'rgba(22,163,74,0.35)',
+                    3 => 'rgba(245,158,11,0.35)',
+                    4 => 'rgba(220,38,38,0.35)',
+                    5 => 'rgba(147,51,234,0.35)',
+                    6 => 'rgba(6,182,212,0.35)',
                 ];
 
                 $iconPaths = [
@@ -186,7 +186,7 @@
                                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                                 <path d="M7 11V7a5 5 0 0110 0v4" />
                             </svg>
-                            Completa el bloque anterior para desbloquear
+                            Completa la dimensión anterior para desbloquear
                         </p>
                     </div>
                 </div>
