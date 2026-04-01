@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DatoDemografico;
+use App\Models\Dimension;
 use App\Models\Empresa;
 use App\Models\Encuesta;
-use Illuminate\Http\Request;
-use App\Models\Dimension;
 use App\Models\Pregunta;
 use App\Models\Respuesta;
-use App\Models\DatoDemografico;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class EncuestaController extends Controller
@@ -41,7 +41,18 @@ class EncuestaController extends Controller
     // Muestra la pantalla de elección (continuar con token vs generar nuevo)
     public function mostrarAcceso()
     {
+        if (! session()->has('empresa_id')) {
+            return redirect()->route('encuesta.bienvenida');
+        }
+
         return view('encuesta.acceso');
+    }
+
+    private function obtenerEncuestaValida(string $token, array $estados = ['asignado', 'en_progreso']): Encuesta
+    {
+        return Encuesta::whereIn('estado', $estados)
+            ->where('token', $token)
+            ->firstOrFail();
     }
 
     // Opción A: el participante ya tiene un token y quiere retomarlo
@@ -51,7 +62,6 @@ class EncuestaController extends Controller
 
         $encuesta = Encuesta::whereIn('estado', ['asignado', 'en_progreso'])
             ->where('token', $request->token)
-            ->where('empresa_id', session('empresa_id'))
             ->first();
 
         if (! $encuesta) {
@@ -86,18 +96,14 @@ class EncuestaController extends Controller
 
     public function demograficos(string $token)
     {
-        Encuesta::whereIn('estado', ['asignado', 'en_progreso'])
-            ->where('token', $token)
-            ->firstOrFail();
+        $this->obtenerEncuestaValida($token, ['asignado', 'en_progreso']);
 
         return view('encuesta.demografico', compact('token'));
     }
 
     public function bloque(string $token, int $dimension)
     {
-        $encuesta = Encuesta::whereIn('estado', ['asignado', 'en_progreso'])
-            ->where('token', $token)
-            ->firstOrFail();
+        $encuesta = $this->obtenerEncuestaValida($token, ['asignado', 'en_progreso']);
 
         if ($dimension < 1 || $dimension > 6) {
             abort(404);
@@ -106,7 +112,7 @@ class EncuestaController extends Controller
         // Verificar que demográficos estén completos
         $tieneDemograficos = DatoDemografico::where('encuesta_id', $encuesta->id)->exists();
         if (! $tieneDemograficos) {
-            return redirect()->route('encuesta.mostrar-acceso');
+            return redirect()->route('encuesta.demograficos', $token);
         }
 
         // Verificar orden secuencial — no puede adelantarse
@@ -129,12 +135,10 @@ class EncuestaController extends Controller
         $ultima = 0;
 
         foreach ($dimensiones as $dim) {
-            $total = Pregunta::whereHas('subdimension', fn ($q) =>
-                $q->where('dimension_id', $dim->id)
+            $total = Pregunta::whereHas('subdimension', fn ($q) => $q->where('dimension_id', $dim->id)
             )->count();
 
-            $respondidas = Respuesta::whereHas('pregunta.subdimension', fn ($q) =>
-                $q->where('dimension_id', $dim->id)
+            $respondidas = Respuesta::whereHas('pregunta.subdimension', fn ($q) => $q->where('dimension_id', $dim->id)
             )->where('encuesta_id', $encuesta->id)->count();
 
             if ($respondidas >= $total && $total > 0) {
@@ -149,40 +153,40 @@ class EncuestaController extends Controller
 
     public function abiertas(string $token)
     {
-        $encuesta = Encuesta::where('estado', 'en_progreso')
-            ->where('token', $token)
-            ->firstOrFail();
+        $encuesta = $this->obtenerEncuestaValida($token, ['en_progreso']);
+
+        if ($this->ultimaDimensionCompletada($encuesta) !== Dimension::count()) {
+            return redirect()->route('encuesta.dimensiones', $token);
+        }
 
         return view('encuesta.abiertas', compact('token'));
     }
 
     public function gracias(string $token)
     {
-        Encuesta::whereIn('estado', ['en_progreso', 'completado'])
-            ->where('token', $token)
-            ->firstOrFail();
+        $this->obtenerEncuestaValida($token, ['completado']);
 
         return view('encuesta.gracias');
     }
 
-   public function dimensiones(string $token)
+    public function dimensiones(string $token)
     {
-        $encuesta = Encuesta::whereIn('estado', ['asignado', 'en_progreso'])
-            ->where('token', $token)
-            ->firstOrFail();
+        $encuesta = $this->obtenerEncuestaValida($token, ['asignado', 'en_progreso']);
+
+        if (! DatoDemografico::where('encuesta_id', $encuesta->id)->exists()) {
+            return redirect()->route('encuesta.demograficos', $token);
+        }
 
         $dimensiones = Dimension::with('subdimensiones')->orderBy('orden')->get()->map(function ($dimension) use ($encuesta) {
-            $totalPreguntas = Pregunta::whereHas('subdimension', fn ($q) =>
-                $q->where('dimension_id', $dimension->id)
+            $totalPreguntas = Pregunta::whereHas('subdimension', fn ($q) => $q->where('dimension_id', $dimension->id)
             )->count();
 
-            $respondidas = Respuesta::whereHas('pregunta.subdimension', fn ($q) =>
-                $q->where('dimension_id', $dimension->id)
+            $respondidas = Respuesta::whereHas('pregunta.subdimension', fn ($q) => $q->where('dimension_id', $dimension->id)
             )->where('encuesta_id', $encuesta->id)->count();
 
-            $dimension->total    = $totalPreguntas;
+            $dimension->total = $totalPreguntas;
             $dimension->respondidas = $respondidas;
-            $dimension->completada  = $respondidas >= $totalPreguntas && $totalPreguntas > 0;
+            $dimension->completada = $respondidas >= $totalPreguntas && $totalPreguntas > 0;
 
             return $dimension;
         });
@@ -207,15 +211,17 @@ class EncuestaController extends Controller
 
     public function completado(string $token, int $dimension)
     {
-        $encuesta = Encuesta::whereIn('estado', ['asignado', 'en_progreso'])
-            ->where('token', $token)
-            ->firstOrFail();
+        $encuesta = $this->obtenerEncuestaValida($token, ['asignado', 'en_progreso']);
 
         if ($dimension < 1 || $dimension > 6) {
             abort(404);
         }
 
-        $dimensionActual  = Dimension::where('orden', $dimension)->firstOrFail();
+        if ($this->ultimaDimensionCompletada($encuesta) !== $dimension) {
+            return redirect()->route('encuesta.dimensiones', $token);
+        }
+
+        $dimensionActual = Dimension::where('orden', $dimension)->firstOrFail();
         $siguienteDimension = Dimension::where('orden', $dimension + 1)->first();
 
         return view('encuesta.completado', compact(
