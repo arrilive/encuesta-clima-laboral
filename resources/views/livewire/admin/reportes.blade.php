@@ -441,6 +441,15 @@
                 <div class="bg-white rounded-2xl shadow-sm p-4">
                     <h2 class="text-slate-900 font-semibold mb-4">Distribución de Respuestas</h2>
                     <div x-data="{ chart: null }" x-init="window.donutNivel2Datos = @js($distribucionAgregada);
+                    const colorMap = {
+                        'Verdadero':                        '#10b981',
+                        'A veces falso/a veces verdadero':  '#f59e0b',
+                        'Falso':                            '#ef4444',
+                        'Prefiero no responder':            '#cbd5e1',
+                    };
+                    window.donutNivel2Options.series = window.donutNivel2Datos.map(d => d.total);
+                    window.donutNivel2Options.labels = window.donutNivel2Datos.map(d => d.opcion);
+                    window.donutNivel2Options.colors = window.donutNivel2Datos.map(d => colorMap[d.opcion] ?? '#94a3b8');
                     if (chart) { chart.destroy(); }
                     chart = new ApexCharts(
                         $el.querySelector('#donut-nivel2-container'),
@@ -448,9 +457,16 @@
                     );
                     chart.render();"
                         x-on:donut-nivel2-update.window="
+                            const colorMap = {
+                                'Verdadero':                        '#10b981',
+                                'A veces falso/a veces verdadero':  '#f59e0b',
+                                'Falso':                            '#ef4444',
+                                'Prefiero no responder':            '#cbd5e1',
+                            };
                             if (chart) { chart.destroy(); }
                             window.donutNivel2Options.series  = $event.detail.datos.map(d => d.total);
                             window.donutNivel2Options.labels  = $event.detail.datos.map(d => d.opcion);
+                            window.donutNivel2Options.colors  = $event.detail.datos.map(d => colorMap[d.opcion] ?? '#94a3b8');
                             chart = new ApexCharts(
                                 $el.querySelector('#donut-nivel2-container'),
                                 JSON.parse(JSON.stringify(window.donutNivel2Options))
@@ -985,7 +1001,7 @@
                 },
                 series: window.donutNivel2Datos.map(d => d.total),
                 labels: window.donutNivel2Datos.map(d => d.opcion),
-                colors: ['#ef4444', '#f59e0b', '#10b981', '#cbd5e1'],
+                colors: [],
                 legend: {
                     position: 'bottom',
                     fontSize: '12px',
