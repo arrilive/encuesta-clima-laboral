@@ -7,7 +7,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-#[Layout('components.layouts.admin')]
+#[Layout('components.layouts.admin', ['heading' => 'Encuestas'])]
 class EncuestasTable extends Component
 {
     use WithPagination;
