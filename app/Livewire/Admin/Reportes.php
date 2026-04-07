@@ -233,18 +233,17 @@ class Reportes extends Component
     {
         $user = auth()->user();
 
-        $datosNivel1          = $this->nivel === 1 ? $this->getDatosNivel1() : [];
+        $datosNivel1          = $this->getDatosNivel1();
         $datosNivel2          = $this->nivel === 2 ? $this->getDatosNivel2() : [];
         $distribucionAgregada = $this->nivel === 2 ? $this->getDistribucionAgregadaNivel2() : [];
         $datosNivel3          = $this->nivel === 3 ? $this->getDatosNivel3() : [];
+        $nuevoHashRadar = md5(json_encode($datosNivel1));
+        if ($this->hashDatosNivel1 !== $nuevoHashRadar) {
+            $this->dispatch('radar-datos-actualizados', datos: $datosNivel1);
+            $this->hashDatosNivel1 = $nuevoHashRadar;
+        }
 
-        if ($this->nivel === 1) {
-            $nuevoHashRadar = md5(json_encode($datosNivel1));
-            if ($this->hashDatosNivel1 !== $nuevoHashRadar) {
-                $this->dispatch('radar-datos-actualizados', datos: $datosNivel1);
-                $this->hashDatosNivel1 = $nuevoHashRadar;
-            }
-        } elseif ($this->nivel === 2) {
+        if ($this->nivel === 2) {
             $this->dispatch('barras-nivel2-actualizadas', datos: $datosNivel2);
             $this->dispatch('donut-nivel2-actualizado', datos: $distribucionAgregada);
         }
