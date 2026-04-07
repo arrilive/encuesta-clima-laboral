@@ -305,18 +305,28 @@
                     {{-- 3b. Radar chart --}}
                     <div class="bg-white rounded-2xl shadow-sm p-3">
                         <h2 class="text-slate-900 font-semibold mb-4">Mapa de clima laboral</h2>
-                        <div class="flex-1 min-h-[480px]" x-data="{ chart: null }" x-init="if (chart) { chart.destroy(); }
-                        chart = new ApexCharts($el.querySelector('#radar-chart'), JSON.parse(JSON.stringify(window.radarOptions)));
-                        window.radarChartInstance = chart;
-                        chart.render();"
-                            x-on:radar-update.window="
+                        <div class="flex-1 min-h-[480px]"
+                            x-data="{ chart: null }"
+                            x-init="
+                                const datosActuales = @js($datosNivel1);
+                                window.radarDatos = datosActuales;
+                                window.radarOptions.series = [{ name: 'Puntaje', data: datosActuales.map(d => d.puntaje) }];
+                                window.radarOptions.xaxis = {
+                                    categories: datosActuales.map(d => d.nombre),
+                                    labels: { style: { colors: datosActuales.map(() => '#64748b'), fontSize: '12px' } }
+                                };
                                 if (chart) { chart.destroy(); }
+                                chart = new ApexCharts($el.querySelector('#radar-chart'), window.radarOptions);
+                                window.radarChartInstance = chart;
+                                chart.render();"
+                            x-on:radar-update.window="
+                                window.radarDatos = $event.detail.datos;
                                 window.radarOptions.series = [{ name: 'Puntaje', data: $event.detail.datos.map(d => d.puntaje) }];
                                 window.radarOptions.xaxis = { categories: $event.detail.datos.map(d => d.nombre), labels: { style: { colors: $event.detail.datos.map(() => '#64748b'), fontSize: '12px' } } };
-                                chart = new ApexCharts($el.querySelector('#radar-chart'), JSON.parse(JSON.stringify(window.radarOptions)));
+                                if (chart) { chart.destroy(); }
+                                chart = new ApexCharts($el.querySelector('#radar-chart'), window.radarOptions);
                                 window.radarChartInstance = chart;
-                                chart.render();
-                            ">
+                                chart.render();">
                             <div x-ignore>
                                 <div id="radar-chart" style="height: 480px"></div>
                             </div>
@@ -418,7 +428,7 @@
                     if (chart) { chart.destroy(); }
                     chart = new ApexCharts(
                         $el.querySelector('#barras-nivel2-container'),
-                        JSON.parse(JSON.stringify(window.barrasNivel2Options))
+                        window.barrasNivel2Options
                     );
                     chart.render();"
                         x-on:barras-nivel2-update.window="
@@ -427,7 +437,7 @@
                             window.barrasNivel2Options.xaxis = { categories: $event.detail.datos.map(d => d.nombre) };
                             chart = new ApexCharts(
                                 $el.querySelector('#barras-nivel2-container'),
-                                JSON.parse(JSON.stringify(window.barrasNivel2Options))
+                                window.barrasNivel2Options
                             );
                             chart.render();
                         ">
@@ -442,10 +452,10 @@
                     <h2 class="text-slate-900 font-semibold mb-4">Distribución de Respuestas</h2>
                     <div x-data="{ chart: null }" x-init="window.donutNivel2Datos = @js($distribucionAgregada);
                     const colorMap = {
-                        'Verdadero':                        '#10b981',
-                        'A veces falso/a veces verdadero':  '#f59e0b',
-                        'Falso':                            '#ef4444',
-                        'Prefiero no responder':            '#cbd5e1',
+                        'Verdadero': '#10b981',
+                        'A veces falso/a veces verdadero': '#f59e0b',
+                        'Falso': '#ef4444',
+                        'Prefiero no responder': '#cbd5e1',
                     };
                     window.donutNivel2Options.series = window.donutNivel2Datos.map(d => d.total);
                     window.donutNivel2Options.labels = window.donutNivel2Datos.map(d => d.opcion);
@@ -453,7 +463,7 @@
                     if (chart) { chart.destroy(); }
                     chart = new ApexCharts(
                         $el.querySelector('#donut-nivel2-container'),
-                        JSON.parse(JSON.stringify(window.donutNivel2Options))
+                        window.donutNivel2Options
                     );
                     chart.render();"
                         x-on:donut-nivel2-update.window="
@@ -469,7 +479,7 @@
                             window.donutNivel2Options.colors  = $event.detail.datos.map(d => colorMap[d.opcion] ?? '#94a3b8');
                             chart = new ApexCharts(
                                 $el.querySelector('#donut-nivel2-container'),
-                                JSON.parse(JSON.stringify(window.donutNivel2Options))
+                                window.donutNivel2Options
                             );
                             chart.render();
                         ">
@@ -761,10 +771,11 @@
                         show: false
                     },
                     events: {
-                        dataPointSelection: function(event, chartContext, config) {
-                            const idx = config.dataPointIndex;
-                            const dimensionId = window.radarDatos[idx].id;
-                            $wire.irNivel2(dimensionId);
+                        click: function(event, chartContext, config) {
+                            if (config.dataPointIndex !== -1) {
+                                const dimensionId = window.radarDatos[config.dataPointIndex].id;
+                                $wire.irNivel2(dimensionId);
+                            }
                         }
                     }
                 },
@@ -786,7 +797,7 @@
                     max: 100,
                     tickAmount: 4,
                     labels: {
-                        formatter: val => val.toFixed(1)
+                        formatter: val => val.toFixed(0)
                     }
                 },
                 fill: {
@@ -802,7 +813,10 @@
                     size: 4,
                     colors: ['#2563eb'],
                     strokeColor: '#fff',
-                    strokeWidth: 2
+                    strokeWidth: 2,
+                    hover: {
+                        size: 7,
+                    }
                 },
                 colors: ['#2563eb'],
                 tooltip: {
@@ -870,6 +884,14 @@
                     fontFamily: 'DM Sans, sans-serif',
                     toolbar: {
                         show: false
+                    },
+                    events: {
+                        click: function(event, chartContext, config) {
+                            if (config.dataPointIndex !== -1) {
+                                const subdimensionId = window.barrasNivel2Datos[config.dataPointIndex].id;
+                                $wire.irNivel3(subdimensionId);
+                            }
+                        }
                     }
                 },
                 plotOptions: {
@@ -1102,6 +1124,16 @@
                     #donut-nivel2-container .apexcharts-legend-series[rel="2"] { order: 2; }
                     #donut-nivel2-container .apexcharts-legend-series[rel="1"] { order: 3; }
                     #donut-nivel2-container .apexcharts-legend-series[rel="4"] { order: 4; }
+
+                    /* Feedback estable para gráficos */
+                    #radar-chart .apexcharts-radar-series path,
+                    #radar-chart .apexcharts-marker {
+                        cursor: pointer;
+                    }
+
+                    #barras-nivel2-container .apexcharts-bar-area {
+                        cursor: pointer;
+                    }
                 `;
                 document.head.appendChild(style);
             })();
