@@ -17,7 +17,7 @@ class EncuestaFactory extends Factory
     public function definition(): array
     {
         return [
-            'token'              => Str::uuid(),
+            'token'              => (string) Str::uuid(),
             'empresa_id'         => Empresa::factory(),
             'estado'             => 'disponible',
             'fecha_asignacion'   => null,

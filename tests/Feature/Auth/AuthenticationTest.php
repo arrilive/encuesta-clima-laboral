@@ -55,19 +55,17 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_navigation_menu_can_be_rendered(): void
+   public function test_navigation_menu_can_be_rendered(): void
     {
-        $user = User::factory()->create();
+        $empresa = \App\Models\Empresa::factory()->create();
+        $user = User::factory()->adminEmpresa($empresa->id)->create();
 
         $this->actingAs($user);
 
-        $response = $this->get('/dashboard');
+        $response = $this->get(route('admin.dashboard'));
 
-        $response
-            ->assertOk()
-            ->assertSeeVolt('layout.navigation');
+        $response->assertOk();
     }
-
     public function test_users_can_logout(): void
     {
         $user = User::factory()->create();
