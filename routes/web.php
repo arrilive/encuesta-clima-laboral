@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EncuestaController;
-use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\PdfController;
 
@@ -22,7 +21,7 @@ Route::prefix('admin')
     ->name('admin.')
     ->group(function () {
 
-        Route::get('/dashboard', [DashboardController::class, 'index'])
+        Route::get('/dashboard', \App\Livewire\Admin\Dashboard::class)
              ->name('dashboard');
 
         Route::get('/encuestas/exportar', [ExportController::class, 'encuestasCSV'])

@@ -1,4 +1,3 @@
-<x-layouts.admin title="Dashboard" heading="Dashboard">
     <div class="space-y-8">
 
         @if(auth()->user()->role === 'admin_empresa')
@@ -207,4 +206,3 @@
         @endif
 
     </div>
-</x-layouts.admin>
