@@ -52,7 +52,7 @@ class Dashboard extends Component
             ? round($completadas / $totalTokens * 100, 1)
             : 0.0;
 
-        $alertaTokens = $totalTokens > 0 && ($disponibles / $totalTokens) < 0.10;
+        $alertaTokens = $totalTokens === 0 || ($disponibles / $totalTokens) < 0.10;
 
         $kpis = [
             'total_tokens'       => $totalTokens,
