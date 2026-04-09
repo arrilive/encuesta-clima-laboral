@@ -41,7 +41,8 @@ Route::prefix('admin')
 
         // Solo super_admin
         Route::middleware('role:super_admin')->group(function () {
-            // Aquí irán las rutas exclusivas de super_admin en sprints futuros
+            Route::get('/empresas', \App\Livewire\Admin\EmpresasTable::class)
+                 ->name('empresas');
         });
     });
 
