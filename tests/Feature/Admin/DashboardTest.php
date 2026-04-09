@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Admin\Dashboard;
 use App\Models\Empresa;
 use App\Models\Encuesta;
 use App\Models\OpcionRespuesta;
@@ -10,6 +11,7 @@ use Database\Seeders\DimensionesSeeder;
 use Database\Seeders\OpcionesRespuestaSeeder;
 use Database\Seeders\PreguntasSeeder;
 use Database\Seeders\SubdimensionesSeeder;
+use Livewire\Livewire;
 
 it('super_admin puede acceder al dashboard', function () {
     $admin = User::factory()->superAdmin()->create();
@@ -42,13 +44,13 @@ it('los KPIs del super_admin incluyen todas las empresas', function () {
 
     $admin = User::factory()->superAdmin()->create();
 
-    $response = $this->actingAs($admin)->get(route('admin.dashboard'));
+    $this->actingAs($admin);
 
-    $response->assertViewHas('kpis', fn($kpis) =>
-        $kpis['total_tokens'] === 5 &&
-        $kpis['completadas'] === 3 &&
-        $kpis['disponibles'] === 2
-    );
+    $kpis = Livewire::test(Dashboard::class)->viewData('kpis');
+
+    expect($kpis['total_tokens'])->toBe(5)
+        ->and($kpis['completadas'])->toBe(3)
+        ->and($kpis['disponibles'])->toBe(2);
 });
 
 it('los KPIs del admin_empresa solo incluyen su empresa', function () {
@@ -60,85 +62,102 @@ it('los KPIs del admin_empresa solo incluyen su empresa', function () {
 
     $admin = User::factory()->adminEmpresa($empresa1->id)->create();
 
-    $response = $this->actingAs($admin)->get(route('admin.dashboard'));
+    $this->actingAs($admin);
 
-    $response->assertViewHas('kpis', fn($kpis) => $kpis['total_tokens'] === 3);
+    $kpis = Livewire::test(Dashboard::class)->viewData('kpis');
+
+    expect($kpis['total_tokens'])->toBe(3);
 });
 
 // ── Nuevos tests: KPIs avanzados ─────────────────────────────────────────────
 
-it('alerta_tokens es false cuando no hay tokens', function () {
+it('alerta_tokens es true cuando no hay tokens', function () {
     $empresa = Empresa::factory()->create();
     $admin = User::factory()->adminEmpresa($empresa->id)->create();
 
-    $response = $this->actingAs($admin)->get(route('admin.dashboard'));
+    $this->actingAs($admin);
 
-    $response->assertViewHas('kpis', fn($kpis) => $kpis['alerta_tokens'] === false);
+    $kpis = Livewire::test(Dashboard::class)->viewData('kpis');
+
+    expect($kpis['alerta_tokens'])->toBeTrue();
 });
 
 it('alerta_tokens se activa cuando disponibles son menos del 10% del total', function () {
     $empresa = Empresa::factory()->create();
     $admin = User::factory()->adminEmpresa($empresa->id)->create();
 
-    // 10% exacto (1 de 10 disponible) → NO activa
     Encuesta::factory()->count(9)->create(['empresa_id' => $empresa->id, 'estado' => 'completado']);
     Encuesta::factory()->create(['empresa_id' => $empresa->id, 'estado' => 'disponible']);
 
-    $response = $this->actingAs($admin)->get(route('admin.dashboard'));
-    $response->assertViewHas('kpis', fn($kpis) =>
-        $kpis['alerta_tokens'] === false &&
-        $kpis['tasa_participacion'] === 90.0
-    );
+    $this->actingAs($admin);
 
-    // 0 disponibles de 10 → SÍ activa (0% < 10%)
+    $kpis = Livewire::test(Dashboard::class)->viewData('kpis');
+
+    expect($kpis['alerta_tokens'])->toBeFalse()
+        ->and($kpis['tasa_participacion'])->toBe(90.0);
+
     Encuesta::where('empresa_id', $empresa->id)->where('estado', 'disponible')
         ->update(['estado' => 'completado']);
 
-    $response = $this->actingAs($admin)->get(route('admin.dashboard'));
-    $response->assertViewHas('kpis', fn($kpis) => $kpis['alerta_tokens'] === true);
+    $kpis = Livewire::test(Dashboard::class)->viewData('kpis');
+
+    expect($kpis['alerta_tokens'])->toBeTrue();
 });
 
-it('en_riesgo cuenta tokens asignados hace más de 7 días', function () {
+it('en_riesgo y en_advertencia cuentan tokens asignados basados en 14 y 7 días', function () {
     $empresa = Empresa::factory()->create();
     $admin = User::factory()->adminEmpresa($empresa->id)->create();
 
-    // En riesgo: asignado hace 8 días
+    // En riesgo: asignado hace 15 días
+    Encuesta::factory()->create([
+        'empresa_id'       => $empresa->id,
+        'estado'           => 'asignado',
+        'fecha_asignacion' => now()->subDays(15),
+    ]);
+
+    // En advertencia: asignado hace 8 días
     Encuesta::factory()->create([
         'empresa_id'       => $empresa->id,
         'estado'           => 'asignado',
         'fecha_asignacion' => now()->subDays(8),
     ]);
 
-    // No en riesgo: asignado hace 3 días
+    // No en riesgo ni advertencia: asignado hace 3 días
     Encuesta::factory()->create([
         'empresa_id'       => $empresa->id,
         'estado'           => 'asignado',
         'fecha_asignacion' => now()->subDays(3),
     ]);
 
-    $response = $this->actingAs($admin)->get(route('admin.dashboard'));
+    $this->actingAs($admin);
 
-    $response->assertViewHas('kpis', fn($kpis) => $kpis['en_riesgo'] === 1);
+    $kpis = Livewire::test(Dashboard::class)->viewData('kpis');
+
+    expect($kpis['en_riesgo'])->toBe(1)
+        ->and($kpis['en_advertencia'])->toBe(1);
 });
 
 // ── Nuevos tests: visibilidad por rol ────────────────────────────────────────
 
 it('clima solo se pasa a la vista para admin_empresa', function () {
-    $empresa = Empresa::factory()->create();
     $admin = User::factory()->superAdmin()->create();
 
-    $response = $this->actingAs($admin)->get(route('admin.dashboard'));
+    $this->actingAs($admin);
 
-    $response->assertViewHas('clima', fn($c) => empty($c));
+    $clima = Livewire::test(Dashboard::class)->viewData('clima');
+
+    expect($clima)->toBeEmpty();
 });
 
 it('rankingEmpresas está vacío para admin_empresa', function () {
     $empresa = Empresa::factory()->create();
     $admin = User::factory()->adminEmpresa($empresa->id)->create();
 
-    $response = $this->actingAs($admin)->get(route('admin.dashboard'));
+    $this->actingAs($admin);
 
-    $response->assertViewHas('rankingEmpresas', fn($r) => $r->isEmpty());
+    $rankingEmpresas = Livewire::test(Dashboard::class)->viewData('rankingEmpresas');
+
+    expect($rankingEmpresas)->toBeEmpty();
 });
 
 it('clima contiene promedio_general para admin_empresa cuando hay respuestas', function () {
@@ -159,7 +178,9 @@ it('clima contiene promedio_general para admin_empresa cuando hay respuestas', f
         ]);
     }
 
-    $response = $this->actingAs($admin)->get(route('admin.dashboard'));
+    $this->actingAs($admin);
 
-    $response->assertViewHas('clima', fn($c) => $c['promedio_general'] === 100.0);
+    $clima = Livewire::test(Dashboard::class)->viewData('clima');
+
+    expect($clima['promedio_general'])->toBe(100.0);
 });

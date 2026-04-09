@@ -1,4 +1,3 @@
-<x-layouts.admin title="Dashboard" heading="Dashboard">
     <div class="space-y-8">
 
         @if(auth()->user()->role === 'admin_empresa')
@@ -117,18 +116,65 @@
                     </div>
                 </div>
 
-                {{-- Tokens en riesgo —alerta cuando hay pendientes viejos --}}
-                <div class="bg-white rounded-2xl border p-6 {{ $kpis['en_riesgo'] > 0 ? 'border-red-200 bg-red-50' : 'border-slate-200' }}">
-                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
-                        En riesgo <span class="normal-case font-normal">(+7 días)</span>
-                    </p>
-                    <p class="text-3xl font-bold tabular-nums {{ $kpis['en_riesgo'] > 0 ? 'text-red-500' : 'text-slate-300' }}">
-                        {{ $kpis['en_riesgo'] }}
-                    </p>
-                    @if($kpis['en_riesgo'] > 0)
-                        <p class="text-xs text-red-500 font-medium mt-1">Requieren seguimiento</p>
-                    @endif
-                </div>
+                {{-- Tokens sin actividad — advertencia progresiva --}}
+                @if($kpis['en_riesgo'] > 0)
+                    {{-- Riesgo rojo: 14+ días — acción disponible --}}
+                    <div x-data="{ confirmar: false }"
+                         class="rounded-2xl border border-red-200 bg-red-50 p-6">
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
+                            En riesgo <span class="normal-case font-normal">(+14 días)</span>
+                        </p>
+                        <p class="text-3xl font-bold text-red-500 tabular-nums mb-2">
+                            {{ $kpis['en_riesgo'] }}
+                        </p>
+                        <div x-show="!confirmar">
+                            <p class="text-xs text-red-500 font-medium mb-3">Llevan más de 14 días sin actividad</p>
+                            <button x-on:click="confirmar = true"
+                                    class="inline-flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all duration-200">
+                                Liberar tokens
+                            </button>
+                        </div>
+                        <div x-show="confirmar" x-cloak class="space-y-2">
+                            <p class="text-xs text-red-700 font-medium">¿Confirmas liberar {{ $kpis['en_riesgo'] }} token(s)?</p>
+                            <div class="flex gap-2">
+                                <button wire:click="liberarTokens"
+                                        wire:loading.attr="disabled"
+                                        class="inline-flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all duration-200 disabled:opacity-75">
+                                    <svg wire:loading wire:target="liberarTokens" class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+                                        <path d="M12 2a10 10 0 0 1 10 10"/>
+                                    </svg>
+                                    <span wire:loading.remove wire:target="liberarTokens">Sí, liberar</span>
+                                    <span wire:loading wire:target="liberarTokens">Liberando…</span>
+                                </button>
+                                <button x-on:click="confirmar = false"
+                                        class="text-xs font-medium text-slate-500 hover:text-slate-700 px-3 py-2 rounded-xl transition-colors">
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                @elseif($kpis['en_advertencia'] > 0)
+                    {{-- Advertencia amarilla: 7-13 días — solo informativo --}}
+                    <div class="rounded-2xl border border-amber-200 bg-amber-50 p-6">
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
+                            Sin actividad <span class="normal-case font-normal">(+7 días)</span>
+                        </p>
+                        <p class="text-3xl font-bold text-amber-500 tabular-nums mb-1">
+                            {{ $kpis['en_advertencia'] }}
+                        </p>
+                        <p class="text-xs text-amber-600 font-medium">Monitorear — aún no requieren acción</p>
+                    </div>
+                @else
+                    {{-- Todo en orden --}}
+                    <div class="rounded-2xl border border-slate-200 bg-white p-6">
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
+                            Sin actividad
+                        </p>
+                        <p class="text-3xl font-bold text-slate-300 tabular-nums mb-1">0</p>
+                        <p class="text-xs text-slate-400 font-medium">Todos los tokens activos</p>
+                    </div>
+                @endif
 
             </div>
         </div>
@@ -159,23 +205,29 @@
                     <p class="text-3xl font-bold text-amber-500 tabular-nums">{{ $kpis['asignados'] }}</p>
                 </div>
 
-                <div class="bg-white rounded-xl border p-5 {{ $kpis['alerta_tokens'] ? 'border-amber-300 bg-amber-50' : 'border-slate-200' }}">
-                    <p class="text-sm text-slate-400 mb-1">Disponibles</p>
-                    <p class="text-3xl font-bold tabular-nums {{ $kpis['alerta_tokens'] ? 'text-amber-500' : 'text-slate-500' }}">
-                        {{ $kpis['disponibles'] }}
-                    </p>
-                    @if($kpis['alerta_tokens'])
-                        <div class="flex flex-col">
-                            <p class="text-xs text-amber-600 font-medium mt-1">⚠ Pocos disponibles</p>
-                            <a href="{{ route('admin.tokens') }}"
-                               class="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 hover:text-amber-700 transition-colors mt-1">
-                                Generar tokens
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <polyline points="9 18 15 12 9 6"/>
-                                </svg>
-                            </a>
+                <div class="bg-white rounded-xl border p-5 h-full {{ $kpis['alerta_tokens'] ? 'border-amber-300 bg-amber-50' : 'border-slate-200' }}">
+                    <div class="flex justify-between h-full">
+                        <div class="flex flex-col justify-between">
+                            <p class="text-sm text-slate-400 mb-1">Disponibles</p>
+                            <p class="text-3xl font-bold tabular-nums {{ $kpis['alerta_tokens'] ? 'text-amber-500' : 'text-slate-500' }}">
+                                {{ $kpis['disponibles'] }}
+                            </p>
                         </div>
-                    @endif
+                        @if($kpis['alerta_tokens'])
+                            <div class="flex flex-col items-end justify-between text-right">
+                                <span class="text-xs text-amber-600 font-medium">
+                                    ⚠ Pocos disponibles
+                                </span>
+                                <a href="{{ route('admin.tokens') }}"
+                                   class="inline-flex items-center text-sm font-bold text-amber-600 hover:text-amber-700 transition-colors mt-auto">
+                                    Generar
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <polyline points="9 18 15 12 9 6"/>
+                                    </svg>
+                                </a>
+                            </div>
+                        @endif
+                    </div>
                 </div>
 
             </div>
@@ -207,4 +259,3 @@
         @endif
 
     </div>
-</x-layouts.admin>
