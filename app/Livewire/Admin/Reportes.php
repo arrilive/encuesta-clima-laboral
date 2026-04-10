@@ -32,6 +32,23 @@ class Reportes extends Component
     public ?string $hashDatosNivel1 = null;
     public array $pdfSvgs = [];
 
+    public $edades;
+    public $sexos;
+    public $cargos;
+    public $lugares;
+    public $grados;
+    public $antiguedades;
+
+    public function mount(): void
+    {
+        $this->edades       = \App\Models\Edad::orderBy('orden')->get();
+        $this->sexos        = \App\Models\Sexo::orderBy('orden')->get();
+        $this->cargos       = \App\Models\Cargo::orderBy('orden')->get();
+        $this->lugares      = \App\Models\LugarTrabajo::orderBy('orden')->get();
+        $this->grados       = \App\Models\GradoAcademico::orderBy('orden')->get();
+        $this->antiguedades = \App\Models\Antiguedad::orderBy('orden')->get();
+    }
+
     public function updated(string $property): void
     {
         //
@@ -120,6 +137,43 @@ class Reportes extends Component
             $query->whereHas('encuesta.datoDemografico', fn($q) =>
                 $q->where('antiguedad_id', $this->filtroAntiguedadId)
             );
+        }
+
+        return $query;
+    }
+
+    protected function getEncuestasBaseQuery(bool $soloSinFiltrosDemograficos = false)
+    {
+        $user = auth()->user();
+        $query = \App\Models\Encuesta::where('estado', 'completado');
+
+        if ($user->role === 'admin_empresa') {
+            $query->where('empresa_id', $user->empresa_id);
+        } elseif ($this->filtroEmpresaId) {
+            $query->where('empresa_id', $this->filtroEmpresaId);
+        }
+
+        if ($soloSinFiltrosDemograficos) {
+            return $query;
+        }
+
+        if ($this->filtroEdadId) {
+            $query->whereHas('datoDemografico', fn($q) => $q->where('edad_id', $this->filtroEdadId));
+        }
+        if ($this->filtroSexoId) {
+            $query->whereHas('datoDemografico', fn($q) => $q->where('sexo_id', $this->filtroSexoId));
+        }
+        if ($this->filtroCargoId) {
+            $query->whereHas('datoDemografico', fn($q) => $q->where('cargo_id', $this->filtroCargoId));
+        }
+        if ($this->filtroLugarTrabajoId) {
+            $query->whereHas('datoDemografico', fn($q) => $q->where('lugar_trabajo_id', $this->filtroLugarTrabajoId));
+        }
+        if ($this->filtroGradoAcademicoId) {
+            $query->whereHas('datoDemografico', fn($q) => $q->where('grado_academico_id', $this->filtroGradoAcademicoId));
+        }
+        if ($this->filtroAntiguedadId) {
+            $query->whereHas('datoDemografico', fn($q) => $q->where('antiguedad_id', $this->filtroAntiguedadId));
         }
 
         return $query;
@@ -248,13 +302,12 @@ class Reportes extends Component
             $this->dispatch('donut-nivel2-actualizado', datos: $distribucionAgregada);
         }
 
+        $completadasFiltradas = $this->getEncuestasBaseQuery()->count();
+
         return view('livewire.admin.reportes', [
-            'edades'               => \App\Models\Edad::orderBy('orden')->get(),
-            'sexos'                => \App\Models\Sexo::orderBy('orden')->get(),
-            'cargos'               => \App\Models\Cargo::orderBy('orden')->get(),
-            'lugares'              => \App\Models\LugarTrabajo::orderBy('orden')->get(),
-            'grados'               => \App\Models\GradoAcademico::orderBy('orden')->get(),
-            'antiguedades'         => \App\Models\Antiguedad::orderBy('orden')->get(),
+            'completadasFiltradas' => $completadasFiltradas,
+            'completadasTotal'     => $this->getEncuestasBaseQuery(soloSinFiltrosDemograficos: true)->count(),
+            'sinDatos'             => $completadasFiltradas === 0,
             'empresas'             => $user->role === 'super_admin' ? Empresa::orderBy('nombre')->get() : collect(),
             'dimensionActiva'      => $this->dimensionActivaId ? Dimension::find($this->dimensionActivaId) : null,
             'subdimensionActiva'   => $this->subdimensionActivaId ? Subdimension::find($this->subdimensionActivaId) : null,

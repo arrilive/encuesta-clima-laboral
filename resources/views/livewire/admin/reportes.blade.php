@@ -160,63 +160,6 @@
         @endif
     </nav>
 
-    {{-- Lógica de Estado Vacío Global --}}
-    @php
-        $completadasFiltradas = \App\Models\Encuesta::where('estado', 'completado')
-            ->when(
-                auth()->user()->role === 'admin_empresa',
-                fn($q) => $q->where('empresa_id', auth()->user()->empresa_id),
-            )
-            ->when(
-                auth()->user()->role === 'super_admin' && $filtroEmpresaId,
-                fn($q) => $q->where('empresa_id', $filtroEmpresaId),
-            )
-            ->when(
-                $filtroEdadId,
-                fn($q) => $q->whereHas('datoDemografico', fn($q2) => $q2->where('edad_id', $filtroEdadId)),
-            )
-            ->when(
-                $filtroSexoId,
-                fn($q) => $q->whereHas('datoDemografico', fn($q2) => $q2->where('sexo_id', $filtroSexoId)),
-            )
-            ->when(
-                $filtroCargoId,
-                fn($q) => $q->whereHas('datoDemografico', fn($q2) => $q2->where('cargo_id', $filtroCargoId)),
-            )
-            ->when(
-                $filtroLugarTrabajoId,
-                fn($q) => $q->whereHas(
-                    'datoDemografico',
-                    fn($q2) => $q2->where('lugar_trabajo_id', $filtroLugarTrabajoId),
-                ),
-            )
-            ->when(
-                $filtroGradoAcademicoId,
-                fn($q) => $q->whereHas(
-                    'datoDemografico',
-                    fn($q2) => $q2->where('grado_academico_id', $filtroGradoAcademicoId),
-                ),
-            )
-            ->when(
-                $filtroAntiguedadId,
-                fn($q) => $q->whereHas('datoDemografico', fn($q2) => $q2->where('antiguedad_id', $filtroAntiguedadId)),
-            )
-            ->count();
-
-        $completadasTotal = \App\Models\Encuesta::where('estado', 'completado')
-            ->when(
-                auth()->user()->role === 'admin_empresa',
-                fn($q) => $q->where('empresa_id', auth()->user()->empresa_id),
-            )
-            ->when(
-                auth()->user()->role === 'super_admin' && $filtroEmpresaId,
-                fn($q) => $q->where('empresa_id', $filtroEmpresaId),
-            )
-            ->count();
-
-        $sinDatos = $completadasFiltradas === 0;
-    @endphp
-
     {{-- SECCIÓN 3 — Contenido nivel 1 --}}
     @if ($nivel === 1)
         @if ($sinDatos || empty($datosNivel1))
