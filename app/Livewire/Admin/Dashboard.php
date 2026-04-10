@@ -9,7 +9,7 @@ use App\Services\ClimaScoringService;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 
-#[Layout('components.layouts.admin')]
+#[Layout('components.layouts.admin', ['heading' => 'Dashboard'])]
 
 
 class Dashboard extends Component

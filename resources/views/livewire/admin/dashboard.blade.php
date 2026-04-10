@@ -121,58 +121,85 @@
                     {{-- Riesgo rojo: 14+ días — acción disponible --}}
                     <div x-data="{ confirmar: false }"
                          class="rounded-2xl border border-red-200 bg-red-50 p-6">
-                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
-                            En riesgo <span class="normal-case font-normal">(+14 días)</span>
-                        </p>
-                        <p class="text-3xl font-bold text-red-500 tabular-nums mb-2">
-                            {{ $kpis['en_riesgo'] }}
-                        </p>
-                        <div x-show="!confirmar">
-                            <p class="text-xs text-red-500 font-medium mb-3">Llevan más de 14 días sin actividad</p>
-                            <button x-on:click="confirmar = true"
-                                    class="inline-flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all duration-200">
-                                Liberar tokens
-                            </button>
-                        </div>
-                        <div x-show="confirmar" x-cloak class="space-y-2">
-                            <p class="text-xs text-red-700 font-medium">¿Confirmas liberar {{ $kpis['en_riesgo'] }} token(s)?</p>
-                            <div class="flex gap-2">
-                                <button wire:click="liberarTokens"
-                                        wire:loading.attr="disabled"
-                                        class="inline-flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all duration-200 disabled:opacity-75">
-                                    <svg wire:loading wire:target="liberarTokens" class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                        <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
-                                        <path d="M12 2a10 10 0 0 1 10 10"/>
-                                    </svg>
-                                    <span wire:loading.remove wire:target="liberarTokens">Sí, liberar</span>
-                                    <span wire:loading wire:target="liberarTokens">Liberando…</span>
-                                </button>
-                                <button x-on:click="confirmar = false"
-                                        class="text-xs font-medium text-slate-500 hover:text-slate-700 px-3 py-2 rounded-xl transition-colors">
-                                    Cancelar
-                                </button>
+                        <div class="flex justify-between h-full">
+                            {{-- Izquierda: label + número --}}
+                            <div class="flex flex-col justify-between">
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
+                                    En riesgo <span class="normal-case font-normal">(+14 días)</span>
+                                </p>
+                                <p class="text-3xl font-bold text-red-500 tabular-nums">
+                                    {{ $kpis['en_riesgo'] }}
+                                </p>
+                            </div>
+
+                            {{-- Derecha: texto de apoyo + acción --}}
+                            <div class="flex flex-col items-end justify-between text-right">
+                                {{-- Texto de apoyo — cambia según estado --}}
+                                <p x-show="!confirmar" class="text-xs text-red-500 font-medium">
+                                    Más de 14 días sin actividad
+                                </p>
+                                <p x-show="confirmar" x-cloak class="text-xs text-red-700 font-medium">
+                                    ¿Confirmas liberar {{ $kpis['en_riesgo'] }} token(s)?
+                                </p>
+
+                                {{-- Acción — cambia según estado --}}
+                                <div x-show="!confirmar">
+                                    <button x-on:click="confirmar = true"
+                                            class="inline-flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all duration-200">
+                                        Liberar tokens
+                                    </button>
+                                </div>
+                                <div x-show="confirmar" x-cloak class="flex gap-2">
+                                    <button wire:click="liberarTokens"
+                                            wire:loading.attr="disabled"
+                                            class="inline-flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all duration-200 disabled:opacity-75">
+                                        <svg wire:loading wire:target="liberarTokens" class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                            <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+                                            <path d="M12 2a10 10 0 0 1 10 10"/>
+                                        </svg>
+                                        <span wire:loading.remove wire:target="liberarTokens">Sí, liberar</span>
+                                        <span wire:loading wire:target="liberarTokens">Liberando…</span>
+                                    </button>
+                                    <button x-on:click="confirmar = false"
+                                            class="text-xs font-medium text-slate-500 hover:text-slate-700 px-3 py-2 rounded-xl transition-colors">
+                                        Cancelar
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 @elseif($kpis['en_advertencia'] > 0)
                     {{-- Advertencia amarilla: 7-13 días — solo informativo --}}
                     <div class="rounded-2xl border border-amber-200 bg-amber-50 p-6">
-                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
-                            Sin actividad <span class="normal-case font-normal">(+7 días)</span>
-                        </p>
-                        <p class="text-3xl font-bold text-amber-500 tabular-nums mb-1">
-                            {{ $kpis['en_advertencia'] }}
-                        </p>
-                        <p class="text-xs text-amber-600 font-medium">Monitorear — aún no requieren acción</p>
+                        <div class="flex justify-between h-full">
+                            <div class="flex flex-col justify-between">
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
+                                    Sin actividad <span class="normal-case font-normal">(+7 días)</span>
+                                </p>
+                                <p class="text-3xl font-bold text-amber-500 tabular-nums">
+                                    {{ $kpis['en_advertencia'] }}
+                                </p>
+                            </div>
+                            <div class="flex flex-col items-end justify-between text-right">
+                                <p class="text-xs text-amber-600 font-medium">Monitorear</p>
+                                <p class="text-xs text-amber-600 font-medium">Aún no requieren acción</p>
+                            </div>
+                        </div>
                     </div>
                 @else
                     {{-- Todo en orden --}}
                     <div class="rounded-2xl border border-slate-200 bg-white p-6">
-                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
-                            Sin actividad
-                        </p>
-                        <p class="text-3xl font-bold text-slate-300 tabular-nums mb-1">0</p>
-                        <p class="text-xs text-slate-400 font-medium">Todos los tokens activos</p>
+                        <div class="flex justify-between h-full">
+                            <div class="flex flex-col justify-between">
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
+                                    Sin actividad
+                                </p>
+                                <p class="text-3xl font-bold text-slate-300 tabular-nums">0</p>
+                            </div>
+                            <div class="flex flex-col items-end justify-between text-right">
+                                <p class="text-xs text-slate-400 font-medium">Todos los tokens activos</p>
+                            </div>
+                        </div>
                     </div>
                 @endif
 
