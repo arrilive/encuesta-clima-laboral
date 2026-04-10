@@ -73,11 +73,11 @@ class ComparativasDemograficas extends Component
     private function getDatosComparativas(): array
     {
         $mapaCampos = [
-            'sexo' => ['tabla' => 'sexos', 'fk' => 'sexo_id'],
-            'cargo' => ['tabla' => 'cargos', 'fk' => 'cargo_id'],
-            'edad' => ['tabla' => 'edades', 'fk' => 'edad_id'],
-            'antiguedad' => ['tabla' => 'antiguedades', 'fk' => 'antiguedad_id'],
-            'lugar_trabajo' => ['tabla' => 'lugares_trabajo', 'fk' => 'lugar_trabajo_id'],
+            'sexo'            => ['tabla' => 'sexos',             'fk' => 'sexo_id'],
+            'cargo'           => ['tabla' => 'cargos',            'fk' => 'cargo_id'],
+            'edad'            => ['tabla' => 'edades',            'fk' => 'edad_id'],
+            'antiguedad'      => ['tabla' => 'antiguedades',      'fk' => 'antiguedad_id'],
+            'lugar_trabajo'   => ['tabla' => 'lugares_trabajo',   'fk' => 'lugar_trabajo_id'],
             'grado_academico' => ['tabla' => 'grados_academicos', 'fk' => 'grado_academico_id'],
         ];
 
@@ -86,48 +86,52 @@ class ComparativasDemograficas extends Component
         }
 
         $config = $mapaCampos[$this->campoComparativa];
-        $tablaDemografica = $config['tabla'];
-        $fk = $config['fk'];
+        $fk     = $config['fk'];
+        $tabla  = $config['tabla'];
 
-        $dimensiones = Dimension::orderBy('orden')->get();
-        $categorias = $dimensiones->pluck('nombre')->toArray();
+        // 1 query agrupada en lugar del doble loop
+        $resultados = (clone $this->getBaseQuery())
+            ->whereHas('opcionRespuesta', fn($q) =>
+                $q->where('valor_numerico', '!=', 0)
+            )
+            ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
+            ->join('encuestas as enc_join', 'respuestas.encuesta_id', '=', 'enc_join.id')
+            ->join('datos_demograficos', 'enc_join.id', '=', 'datos_demograficos.encuesta_id')
+            ->join('preguntas', 'respuestas.pregunta_id', '=', 'preguntas.id')
+            ->join('subdimensiones', 'preguntas.subdimension_id', '=', 'subdimensiones.id')
+            ->selectRaw("subdimensiones.dimension_id, datos_demograficos.{$fk} as grupo_id, AVG(opciones_respuesta.valor_numerico) as promedio")
+            ->groupBy('subdimensiones.dimension_id', "datos_demograficos.{$fk}")
+            ->get()
+            ->groupBy('grupo_id');
 
-        $labelsDemograficos = DB::table($tablaDemografica)->orderBy('orden')->get();
-
-        $seriesData = [];
+        $dimensiones        = Dimension::orderBy('orden')->get();
+        $labelsDemograficos = DB::table($tabla)->orderBy('orden')->get();
+        $categorias         = $dimensiones->pluck('nombre')->toArray();
+        $seriesData         = [];
 
         foreach ($labelsDemograficos as $labelObj) {
-            $puntajes = [];
-            $hasData = false;
+            $grupoResultados      = $resultados->get($labelObj->id, collect());
+            $puntajesPorDimension = $grupoResultados->keyBy('dimension_id');
+            $puntajes             = [];
+            $hasData              = false;
 
             foreach ($dimensiones as $dimension) {
-                $result = (clone $this->getBaseQuery())
-                    ->whereHas('pregunta.subdimension', fn($q) => $q->where('dimension_id', $dimension->id))
-                    ->whereHas('encuesta.datoDemografico', fn($q) => $q->where($fk, $labelObj->id))
-                    ->whereHas('opcionRespuesta', fn($q) => $q->where('valor_numerico', '!=', 0))
-                    ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
-                    ->avg('opciones_respuesta.valor_numerico');
+                $row = $puntajesPorDimension->get($dimension->id);
 
-                if ($result !== null) {
-                    $puntajes[] = round((($result - 1) / 2) * 100, 1);
-                    $hasData = true;
+                if ($row && $row->promedio !== null) {
+                    $puntajes[] = round((($row->promedio - 1) / 2) * 100, 1);
+                    $hasData    = true;
                 } else {
                     $puntajes[] = 0.0;
                 }
             }
 
             if ($hasData) {
-                $seriesData[] = [
-                    'name' => $labelObj->opcion,
-                    'data' => $puntajes,
-                ];
+                $seriesData[] = ['name' => $labelObj->opcion, 'data' => $puntajes];
             }
         }
 
-        return [
-            'categorias' => $categorias,
-            'series' => $seriesData,
-        ];
+        return ['categorias' => $categorias, 'series' => $seriesData];
     }
 
     public function getComparativasProperty(): array
