@@ -102,8 +102,23 @@ test('la ruta encuesta.reanudar redirige a dimensiones con token válido', funct
 
     $encuesta = Encuesta::factory()->asignada()->create();
 
-    $this->post(route('encuesta.reanudar'), ['token' => $encuesta->token])
+    $this->withSession(['empresa_id' => $encuesta->empresa_id])
+        ->post(route('encuesta.reanudar'), ['token' => $encuesta->token])
         ->assertRedirect(route('encuesta.dimensiones', $encuesta->token));
+});
+
+test('la ruta encuesta.reanudar rechaza token si pertenece a otra empresa', function () {
+    seedEncuesta();
+
+    // El participante entra con la contraseña de la Empresa A
+    $empresaSesion = \App\Models\Empresa::factory()->create();
+    
+    // Pero intenta usar un token asignado a la Empresa B
+    $encuestaOtraEmpresa = Encuesta::factory()->asignada()->create();
+
+    $this->withSession(['empresa_id' => $empresaSesion->id])
+        ->post(route('encuesta.reanudar'), ['token' => $encuestaOtraEmpresa->token])
+        ->assertSessionHasErrors(['token' => 'Código no encontrado, favor verificar que sea correcto.']);
 });
 
 test('la ruta encuesta.dimensiones redirige a demograficos si no hay datos demográficos', function () {
