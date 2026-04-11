@@ -283,14 +283,8 @@ class Reportes extends Component
             })->toArray();
     }
 
-    public function render()
+    private function despacharEventos(array $datosNivel1, array $datosNivel2, array $distribucionAgregada): void
     {
-        $user = auth()->user();
-
-        $datosNivel1          = $this->getDatosNivel1();
-        $datosNivel2          = $this->nivel === 2 ? $this->getDatosNivel2() : [];
-        $distribucionAgregada = $this->nivel === 2 ? $this->getDistribucionAgregadaNivel2() : [];
-        $datosNivel3          = $this->nivel === 3 ? $this->getDatosNivel3() : [];
         $nuevoHashRadar = md5(json_encode($datosNivel1));
         if ($this->hashDatosNivel1 !== $nuevoHashRadar) {
             $this->dispatch('radar-datos-actualizados', datos: $datosNivel1);
@@ -301,6 +295,17 @@ class Reportes extends Component
             $this->dispatch('barras-nivel2-actualizadas', datos: $datosNivel2);
             $this->dispatch('donut-nivel2-actualizado', datos: $distribucionAgregada);
         }
+    }
+
+    public function render()
+    {
+        $user = auth()->user();
+
+        $datosNivel1          = $this->getDatosNivel1();
+        $datosNivel2          = $this->nivel === 2 ? $this->getDatosNivel2() : [];
+        $distribucionAgregada = $this->nivel === 2 ? $this->getDistribucionAgregadaNivel2() : [];
+        $datosNivel3          = $this->nivel === 3 ? $this->getDatosNivel3() : [];
+        $this->despacharEventos($datosNivel1, $datosNivel2, $distribucionAgregada);
 
         $completadasFiltradas = $this->getEncuestasBaseQuery()->count();
 

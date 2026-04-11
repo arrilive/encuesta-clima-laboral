@@ -39,22 +39,24 @@ class Dashboard extends Component
             fn($q) => $q->where('empresa_id', $user->empresa_id)
         );
 
-        // ── KPIs operativos ───────────────────────────────────────────────
-        $totalTokens = (clone $base)->count();
-        $completadas = (clone $base)->where('estado', 'completado')->count();
-        $enProgreso  = (clone $base)->where('estado', 'en_progreso')->count();
-        $asignados   = (clone $base)->where('estado', 'asignado')->count();
-        $disponibles = (clone $base)->where('estado', 'disponible')->count();
+        $kpis            = $this->calcularKpis($base);
+        $clima           = $user->role === 'admin_empresa' ? $this->calcularClima($scoring, $user->empresa_id) : [];
+        $rankingEmpresas = $user->role === 'super_admin' ? $this->calcularRanking($scoring) : collect();
+
+        return view('livewire.admin.dashboard', compact('kpis', 'clima', 'rankingEmpresas'));
+    }
+
+    private function calcularKpis($base): array
+    {
+        $totalTokens   = (clone $base)->count();
+        $completadas   = (clone $base)->where('estado', 'completado')->count();
+        $enProgreso    = (clone $base)->where('estado', 'en_progreso')->count();
+        $asignados     = (clone $base)->where('estado', 'asignado')->count();
+        $disponibles   = (clone $base)->where('estado', 'disponible')->count();
         $enAdvertencia = (clone $base)->enAdvertencia()->count();
-        $enRiesgo    = (clone $base)->enRiesgo()->count();
+        $enRiesgo      = (clone $base)->enRiesgo()->count();
 
-        $tasaParticipacion = $totalTokens > 0
-            ? round($completadas / $totalTokens * 100, 1)
-            : 0.0;
-
-        $alertaTokens = $totalTokens === 0 || ($disponibles / $totalTokens) < 0.10;
-
-        $kpis = [
+        return [
             'total_tokens'       => $totalTokens,
             'completadas'        => $completadas,
             'en_progreso'        => $enProgreso,
@@ -62,50 +64,46 @@ class Dashboard extends Component
             'disponibles'        => $disponibles,
             'en_advertencia'     => $enAdvertencia,
             'en_riesgo'          => $enRiesgo,
-            'tasa_participacion' => $tasaParticipacion,
-            'alerta_tokens'      => $alertaTokens,
+            'tasa_participacion' => $totalTokens > 0 ? round($completadas / $totalTokens * 100, 1) : 0.0,
+            'alerta_tokens'      => $totalTokens === 0 || ($disponibles / $totalTokens) < 0.10,
         ];
+    }
 
-        // ── Widget de clima (solo admin_empresa) ──────────────────────────
-        $clima = [];
-        if ($user->role === 'admin_empresa') {
-            $respuestasBase = Respuesta::query()
-                ->whereHas('encuesta', fn($q) => $q
-                    ->where('estado', 'completado')
-                    ->where('empresa_id', $user->empresa_id)
-                );
+    private function calcularClima(ClimaScoringService $scoring, int $empresaId): array
+    {
+        $respuestasBase = Respuesta::query()
+            ->whereHas('encuesta', fn($q) => $q
+                ->where('estado', 'completado')
+                ->where('empresa_id', $empresaId)
+            );
 
-            $scoresDimensiones    = $scoring->scoresPorDimension($respuestasBase);
-            $scoresSubdimensiones = $scoring->scoresPorSubdimension($respuestasBase);
+        $scoresDimensiones    = $scoring->scoresPorDimension($respuestasBase);
+        $scoresSubdimensiones = $scoring->scoresPorSubdimension($respuestasBase);
 
-            $clima = [
-                'promedio_general'  => $scoring->promedioGeneral($respuestasBase),
-                'dimension_alta'    => $scoresDimensiones->sortByDesc('puntaje')->first(),
-                'dimension_baja'    => $scoresDimensiones->sortBy('puntaje')->first(),
-                'subdimension_alta' => $scoresSubdimensiones->sortByDesc('puntaje')->first(),
-                'subdimension_baja' => $scoresSubdimensiones->sortBy('puntaje')->first(),
-            ];
-        }
+        return [
+            'promedio_general'  => $scoring->promedioGeneral($respuestasBase),
+            'dimension_alta'    => $scoresDimensiones->sortByDesc('puntaje')->first(),
+            'dimension_baja'    => $scoresDimensiones->sortBy('puntaje')->first(),
+            'subdimension_alta' => $scoresSubdimensiones->sortByDesc('puntaje')->first(),
+            'subdimension_baja' => $scoresSubdimensiones->sortBy('puntaje')->first(),
+        ];
+    }
 
-        // ── Ranking de empresas (solo super_admin) ────────────────────────
-        $rankingEmpresas = collect();
-        if ($user->role === 'super_admin') {
-            $rankingEmpresas = Empresa::orderBy('nombre')->get()
-                ->map(function ($empresa) use ($scoring) {
-                    $base = Respuesta::query()
-                        ->whereHas('encuesta', fn($q) => $q
-                            ->where('estado', 'completado')
-                            ->where('empresa_id', $empresa->id)
-                        );
-                    return [
-                        'nombre'  => $empresa->nombre,
-                        'puntaje' => $scoring->promedioGeneral($base),
-                    ];
-                })
-                ->sortByDesc('puntaje')
-                ->values();
-        }
-
-        return view('livewire.admin.dashboard', compact('kpis', 'clima', 'rankingEmpresas'));
+    private function calcularRanking(ClimaScoringService $scoring): \Illuminate\Support\Collection
+    {
+        return Empresa::orderBy('nombre')->get()
+            ->map(function ($empresa) use ($scoring) {
+                $base = Respuesta::query()
+                    ->whereHas('encuesta', fn($q) => $q
+                        ->where('estado', 'completado')
+                        ->where('empresa_id', $empresa->id)
+                    );
+                return [
+                    'nombre'  => $empresa->nombre,
+                    'puntaje' => $scoring->promedioGeneral($base),
+                ];
+            })
+            ->sortByDesc('puntaje')
+            ->values();
     }
 }
