@@ -7,10 +7,6 @@ use App\Http\Controllers\Admin\PdfController;
 
 Route::redirect('/', 'encuesta');
 
-Route::get('dashboard', function () {
-    return redirect()->route('admin.dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
 Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
