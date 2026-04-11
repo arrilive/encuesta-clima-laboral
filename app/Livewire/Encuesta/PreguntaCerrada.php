@@ -3,8 +3,8 @@
 namespace App\Livewire\Encuesta;
 
 use App\Models\Encuesta;
-use App\Models\Pregunta;
 use App\Models\OpcionRespuesta;
+use App\Models\Pregunta;
 use App\Models\Respuesta;
 use Illuminate\View\View;
 use Livewire\Attributes\Reactive;
@@ -13,7 +13,9 @@ use Livewire\Component;
 class PreguntaCerrada extends Component
 {
     public Encuesta $encuesta;
+
     public Pregunta $pregunta;
+
     public ?int $opcionSeleccionada = null;
 
     #[Reactive]

@@ -26,7 +26,7 @@ class Empresa extends Model
     {
         return [
             'password' => 'hashed',
-            'activa'   => 'boolean',
+            'activa' => 'boolean',
         ];
     }
 

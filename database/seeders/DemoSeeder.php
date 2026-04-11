@@ -37,12 +37,12 @@ class DemoSeeder extends Seeder
             $preguntasAbiertasIds = PreguntaAbierta::pluck('id');
 
             // Catálogos demográficos
-            $sexosIds          = DB::table('sexos')->pluck('id')->toArray();
-            $cargosIds         = DB::table('cargos')->pluck('id')->toArray();
-            $edadesIds         = DB::table('edades')->orderBy('orden')->pluck('id')->toArray();
-            $gradosIds         = DB::table('grados_academicos')->orderBy('orden')->pluck('id')->toArray();
-            $antiguedadesIds   = DB::table('antiguedades')->orderBy('orden')->pluck('id')->toArray();
-            $lugaresIds        = DB::table('lugares_trabajo')->pluck('id')->toArray();
+            $sexosIds = DB::table('sexos')->pluck('id')->toArray();
+            $cargosIds = DB::table('cargos')->pluck('id')->toArray();
+            $edadesIds = DB::table('edades')->orderBy('orden')->pluck('id')->toArray();
+            $gradosIds = DB::table('grados_academicos')->orderBy('orden')->pluck('id')->toArray();
+            $antiguedadesIds = DB::table('antiguedades')->orderBy('orden')->pluck('id')->toArray();
+            $lugaresIds = DB::table('lugares_trabajo')->pluck('id')->toArray();
 
             $now = now();
 
@@ -69,12 +69,12 @@ class DemoSeeder extends Seeder
             // 3. Pesos de respuesta por dimensión (nombres reales en BD)
             // ----------------------------------------------------------------
             $pesosPorDimension = [
-                'Credibilidad'            => ['verdadero' => 65, 'a_veces' => 25, 'falso' => 7,  'no_responde' => 3],
-                'Respeto'                 => ['verdadero' => 55, 'a_veces' => 30, 'falso' => 10, 'no_responde' => 5],
-                'Imparcialidad'           => ['verdadero' => 48, 'a_veces' => 32, 'falso' => 15, 'no_responde' => 5],
-                'Orgullo'                 => ['verdadero' => 60, 'a_veces' => 28, 'falso' => 8,  'no_responde' => 4],
-                'Compañerismo'            => ['verdadero' => 60, 'a_veces' => 28, 'falso' => 8,  'no_responde' => 4],
-                'Seguridad y Capacitación'=> ['verdadero' => 30, 'a_veces' => 35, 'falso' => 28, 'no_responde' => 7],
+                'Credibilidad' => ['verdadero' => 65, 'a_veces' => 25, 'falso' => 7,  'no_responde' => 3],
+                'Respeto' => ['verdadero' => 55, 'a_veces' => 30, 'falso' => 10, 'no_responde' => 5],
+                'Imparcialidad' => ['verdadero' => 48, 'a_veces' => 32, 'falso' => 15, 'no_responde' => 5],
+                'Orgullo' => ['verdadero' => 60, 'a_veces' => 28, 'falso' => 8,  'no_responde' => 4],
+                'Compañerismo' => ['verdadero' => 60, 'a_veces' => 28, 'falso' => 8,  'no_responde' => 4],
+                'Seguridad y Capacitación' => ['verdadero' => 30, 'a_veces' => 35, 'falso' => 28, 'no_responde' => 7],
             ];
             $pesosDefault = ['verdadero' => 50, 'a_veces' => 30, 'falso' => 15, 'no_responde' => 5];
 
@@ -149,33 +149,33 @@ class DemoSeeder extends Seeder
             // ----------------------------------------------------------------
             // 5. Loop: 93 encuestas COMPLETADAS
             // ----------------------------------------------------------------
-            $respuestasBatch       = [];
+            $respuestasBatch = [];
             $respuestasAbiertasBatch = [];
 
             for ($i = 0; $i < 93; $i++) {
-                $createdAt        = now()->subDays(fake()->numberBetween(8, 60));
-                $fechaAsignacion  = (clone $createdAt)->addMinutes(fake()->numberBetween(2, 360));
-                $fechaCompletada  = (clone $fechaAsignacion)->addMinutes(fake()->numberBetween(15, 7200));
+                $createdAt = now()->subDays(fake()->numberBetween(8, 60));
+                $fechaAsignacion = (clone $createdAt)->addMinutes(fake()->numberBetween(2, 360));
+                $fechaCompletada = (clone $fechaAsignacion)->addMinutes(fake()->numberBetween(15, 7200));
 
                 $encuesta = Encuesta::create([
-                    'token'            => Str::uuid()->toString(),
-                    'empresa_id'       => $empresa->id,
-                    'estado'           => 'completado',
+                    'token' => Str::uuid()->toString(),
+                    'empresa_id' => $empresa->id,
+                    'estado' => 'completado',
                     'fecha_asignacion' => $fechaAsignacion,
                     'fecha_completada' => $fechaCompletada,
-                    'created_at'       => $createdAt,
-                    'updated_at'       => $now,
+                    'created_at' => $createdAt,
+                    'updated_at' => $now,
                 ]);
 
                 // Dato demográfico
                 DatoDemografico::create([
-                    'encuesta_id'       => $encuesta->id,
-                    'sexo_id'           => fake()->randomElement($sexosPool),
-                    'antiguedad_id'     => fake()->randomElement($antiguedadPool),
-                    'edad_id'           => fake()->randomElement($edadPool),
-                    'cargo_id'          => fake()->randomElement($cargosIds),
-                    'grado_academico_id'=> fake()->randomElement($gradoPool),
-                    'lugar_trabajo_id'  => fake()->randomElement($lugaresIds),
+                    'encuesta_id' => $encuesta->id,
+                    'sexo_id' => fake()->randomElement($sexosPool),
+                    'antiguedad_id' => fake()->randomElement($antiguedadPool),
+                    'edad_id' => fake()->randomElement($edadPool),
+                    'cargo_id' => fake()->randomElement($cargosIds),
+                    'grado_academico_id' => fake()->randomElement($gradoPool),
+                    'lugar_trabajo_id' => fake()->randomElement($lugaresIds),
                 ]);
 
                 // Respuestas cerradas — acumular en batch
@@ -186,11 +186,11 @@ class DemoSeeder extends Seeder
                         : $poolDefault;
 
                     $respuestasBatch[] = [
-                        'encuesta_id'         => $encuesta->id,
-                        'pregunta_id'         => $pregunta->id,
+                        'encuesta_id' => $encuesta->id,
+                        'pregunta_id' => $pregunta->id,
                         'opcion_respuesta_id' => fake()->randomElement($pool),
-                        'created_at'          => $now,
-                        'updated_at'          => $now,
+                        'created_at' => $now,
+                        'updated_at' => $now,
                     ];
                 }
 
@@ -201,11 +201,11 @@ class DemoSeeder extends Seeder
                         : null;
 
                     $respuestasAbiertasBatch[] = [
-                        'encuesta_id'         => $encuesta->id,
+                        'encuesta_id' => $encuesta->id,
                         'pregunta_abierta_id' => $preguntaAbiertaId,
-                        'texto'               => $texto,
-                        'created_at'          => $now,
-                        'updated_at'          => $now,
+                        'texto' => $texto,
+                        'created_at' => $now,
+                        'updated_at' => $now,
                     ];
                 }
             }
@@ -215,17 +215,17 @@ class DemoSeeder extends Seeder
             // ----------------------------------------------------------------
             for ($i = 0; $i < 7; $i++) {
                 // fecha_asignacion debe ser > 14 días atrás para activar scopeEnRiesgo
-                $createdAt       = now()->subDays(fake()->numberBetween(15, 30));
+                $createdAt = now()->subDays(fake()->numberBetween(15, 30));
                 $fechaAsignacion = (clone $createdAt)->addMinutes(fake()->numberBetween(2, 360));
 
                 Encuesta::create([
-                    'token'            => Str::uuid()->toString(),
-                    'empresa_id'       => $empresa->id,
-                    'estado'           => 'asignado',
+                    'token' => Str::uuid()->toString(),
+                    'empresa_id' => $empresa->id,
+                    'estado' => 'asignado',
                     'fecha_asignacion' => $fechaAsignacion,
                     'fecha_completada' => null,
-                    'created_at'       => $createdAt,
-                    'updated_at'       => $now,
+                    'created_at' => $createdAt,
+                    'updated_at' => $now,
                 ]);
                 // Sin DatoDemografico, sin respuestas, sin respuestas abiertas
             }
@@ -241,8 +241,8 @@ class DemoSeeder extends Seeder
             // ----------------------------------------------------------------
             $this->command->info('✓ 93 encuestas completadas creadas');
             $this->command->info('✓ 7 tokens en riesgo creados');
-            $this->command->info('✓ ' . count($respuestasBatch) . ' respuestas insertadas');
-            $this->command->info('✓ ' . count($respuestasAbiertasBatch) . ' respuestas abiertas insertadas');
+            $this->command->info('✓ '.count($respuestasBatch).' respuestas insertadas');
+            $this->command->info('✓ '.count($respuestasAbiertasBatch).' respuestas abiertas insertadas');
         });
     }
 }

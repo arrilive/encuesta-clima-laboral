@@ -10,7 +10,7 @@ class EnsureRole
 {
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
-        if (!in_array(auth()->user()->role, $roles)) {
+        if (! in_array(auth()->user()->role, $roles)) {
             abort(403, 'No tienes permiso para acceder a esta sección.');
         }
 

@@ -11,7 +11,7 @@ class CargosSeeder extends Seeder
     {
         DB::table('cargos')->insertOrIgnore([
             ['opcion' => 'Director',            'orden' => 1, 'created_at' => now(), 'updated_at' => now()],
-            ['opcion' => 'Gerente o subgerente','orden' => 2, 'created_at' => now(), 'updated_at' => now()],
+            ['opcion' => 'Gerente o subgerente', 'orden' => 2, 'created_at' => now(), 'updated_at' => now()],
             ['opcion' => 'Jefe de área',        'orden' => 3, 'created_at' => now(), 'updated_at' => now()],
             ['opcion' => 'Administrativo',      'orden' => 4, 'created_at' => now(), 'updated_at' => now()],
             ['opcion' => 'Operativo',           'orden' => 5, 'created_at' => now(), 'updated_at' => now()],

@@ -24,8 +24,7 @@ class ClimaScoringService
         $dimensiones = Dimension::orderBy('orden')->get();
 
         $promedios = (clone $baseQuery)
-            ->whereHas('opcionRespuesta', fn(Builder $q) =>
-                $q->where('valor_numerico', '!=', 0)
+            ->whereHas('opcionRespuesta', fn (Builder $q) => $q->where('valor_numerico', '!=', 0)
             )
             ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
             ->join('preguntas', 'respuestas.pregunta_id', '=', 'preguntas.id')
@@ -35,9 +34,9 @@ class ClimaScoringService
             ->get()
             ->keyBy('dimension_id');
 
-        return $dimensiones->map(fn(Dimension $d) => [
-            'id'      => $d->id,
-            'nombre'  => $d->nombre,
+        return $dimensiones->map(fn (Dimension $d) => [
+            'id' => $d->id,
+            'nombre' => $d->nombre,
             'puntaje' => isset($promedios[$d->id])
                 ? round((($promedios[$d->id]->promedio - 1) / 2) * 100, 1)
                 : 0.0,
@@ -55,8 +54,7 @@ class ClimaScoringService
         $subdimensiones = Subdimension::orderBy('orden')->get();
 
         $promedios = (clone $baseQuery)
-            ->whereHas('opcionRespuesta', fn(Builder $q) =>
-                $q->where('valor_numerico', '!=', 0)
+            ->whereHas('opcionRespuesta', fn (Builder $q) => $q->where('valor_numerico', '!=', 0)
             )
             ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
             ->join('preguntas', 'respuestas.pregunta_id', '=', 'preguntas.id')
@@ -65,9 +63,9 @@ class ClimaScoringService
             ->get()
             ->keyBy('subdimension_id');
 
-        return $subdimensiones->map(fn(Subdimension $s) => [
-            'id'      => $s->id,
-            'nombre'  => $s->nombre,
+        return $subdimensiones->map(fn (Subdimension $s) => [
+            'id' => $s->id,
+            'nombre' => $s->nombre,
             'puntaje' => isset($promedios[$s->id])
                 ? round((($promedios[$s->id]->promedio - 1) / 2) * 100, 1)
                 : 0.0,
@@ -83,7 +81,7 @@ class ClimaScoringService
     public function promedioGeneral(Builder $baseQuery): float
     {
         $result = (clone $baseQuery)
-            ->whereHas('opcionRespuesta', fn(Builder $q) => $q->where('valor_numerico', '!=', 0))
+            ->whereHas('opcionRespuesta', fn (Builder $q) => $q->where('valor_numerico', '!=', 0))
             ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
             ->avg('opciones_respuesta.valor_numerico');
 

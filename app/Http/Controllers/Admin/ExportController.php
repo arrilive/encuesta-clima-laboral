@@ -14,28 +14,22 @@ class ExportController extends Controller
         $user = auth()->user();
 
         $encuestas = Encuesta::with('empresa')
-            ->when($user->role === 'admin_empresa', fn($q) =>
-                $q->where('empresa_id', $user->empresa_id)
+            ->when($user->role === 'admin_empresa', fn ($q) => $q->where('empresa_id', $user->empresa_id)
             )
-            ->when($request->estado, fn($q) =>
-                $q->where('estado', $request->estado)
+            ->when($request->estado, fn ($q) => $q->where('estado', $request->estado)
             )
-            ->when($request->buscar, fn($q) =>
-                $q->where('token', 'like', '%' . $request->buscar . '%')
+            ->when($request->buscar, fn ($q) => $q->where('token', 'like', '%'.$request->buscar.'%')
             )
-            ->when($request->empresa, fn($q) =>
-                $q->where('empresa_id', $request->empresa)
+            ->when($request->empresa, fn ($q) => $q->where('empresa_id', $request->empresa)
             )
-            ->when($request->desde, fn($q) =>
-                $q->whereDate('fecha_asignacion', '>=', $request->desde)
+            ->when($request->desde, fn ($q) => $q->whereDate('fecha_asignacion', '>=', $request->desde)
             )
-            ->when($request->hasta, fn($q) =>
-                $q->whereDate('fecha_asignacion', '<=', $request->hasta)
+            ->when($request->hasta, fn ($q) => $q->whereDate('fecha_asignacion', '<=', $request->hasta)
             )
             ->orderByDesc('fecha_asignacion')
             ->get();
 
-        $filename = 'encuestas_' . now()->format('Ymd_His') . '.csv';
+        $filename = 'encuestas_'.now()->format('Ymd_His').'.csv';
 
         return response()->streamDownload(function () use ($encuestas, $user) {
             $handle = fopen('php://output', 'w');

@@ -13,9 +13,9 @@ class EmpresaSeeder extends Seeder
             ?? throw new \RuntimeException('EMPRESA_DEMO_PASSWORD no está definida en .env');
 
         DB::table('empresas')->insertOrIgnore([
-            'nombre'     => 'Empresa Demo',
-            'password'   => bcrypt($password),
-            'activa'     => true,
+            'nombre' => 'Empresa Demo',
+            'password' => bcrypt($password),
+            'activa' => true,
             'created_at' => now(),
             'updated_at' => now(),
         ]);

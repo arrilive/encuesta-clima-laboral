@@ -9,12 +9,12 @@ class SubdimensionesSeeder extends Seeder
 {
     public function run(): void
     {
-        $credibilidad   = DB::table('dimensiones')->where('nombre', 'Credibilidad')->value('id');
-        $respeto        = DB::table('dimensiones')->where('nombre', 'Respeto')->value('id');
-        $imparcialidad  = DB::table('dimensiones')->where('nombre', 'Imparcialidad')->value('id');
-        $orgullo        = DB::table('dimensiones')->where('nombre', 'Orgullo')->value('id');
-        $compañerismo   = DB::table('dimensiones')->where('nombre', 'Compañerismo')->value('id');
-        $seguridad      = DB::table('dimensiones')->where('nombre', 'Seguridad y Capacitación')->value('id');
+        $credibilidad = DB::table('dimensiones')->where('nombre', 'Credibilidad')->value('id');
+        $respeto = DB::table('dimensiones')->where('nombre', 'Respeto')->value('id');
+        $imparcialidad = DB::table('dimensiones')->where('nombre', 'Imparcialidad')->value('id');
+        $orgullo = DB::table('dimensiones')->where('nombre', 'Orgullo')->value('id');
+        $compañerismo = DB::table('dimensiones')->where('nombre', 'Compañerismo')->value('id');
+        $seguridad = DB::table('dimensiones')->where('nombre', 'Seguridad y Capacitación')->value('id');
 
         DB::table('subdimensiones')->insertOrIgnore([
             // Credibilidad
@@ -27,7 +27,7 @@ class SubdimensionesSeeder extends Seeder
             ['dimension_id' => $respeto,       'nombre' => 'Colaboración',           'orden' => 3, 'created_at' => now(), 'updated_at' => now()],
             // Imparcialidad
             ['dimension_id' => $imparcialidad, 'nombre' => 'Equidad',                'orden' => 1, 'created_at' => now(), 'updated_at' => now()],
-            ['dimension_id' => $imparcialidad, 'nombre' => 'Ausencia de favoritismo','orden' => 2, 'created_at' => now(), 'updated_at' => now()],
+            ['dimension_id' => $imparcialidad, 'nombre' => 'Ausencia de favoritismo', 'orden' => 2, 'created_at' => now(), 'updated_at' => now()],
             ['dimension_id' => $imparcialidad, 'nombre' => 'Justicia',               'orden' => 3, 'created_at' => now(), 'updated_at' => now()],
             // Orgullo
             ['dimension_id' => $orgullo,       'nombre' => 'Del Equipo',             'orden' => 1, 'created_at' => now(), 'updated_at' => now()],

@@ -17,8 +17,8 @@ it('super_admin puede acceder al dashboard', function () {
     $admin = User::factory()->superAdmin()->create();
 
     $this->actingAs($admin)
-         ->get(route('admin.dashboard'))
-         ->assertOk();
+        ->get(route('admin.dashboard'))
+        ->assertOk();
 });
 
 it('admin_empresa puede acceder al dashboard', function () {
@@ -26,13 +26,13 @@ it('admin_empresa puede acceder al dashboard', function () {
     $admin = User::factory()->adminEmpresa($empresa->id)->create();
 
     $this->actingAs($admin)
-         ->get(route('admin.dashboard'))
-         ->assertOk();
+        ->get(route('admin.dashboard'))
+        ->assertOk();
 });
 
 it('usuario sin autenticar no puede acceder al dashboard', function () {
     $this->get(route('admin.dashboard'))
-         ->assertRedirect(route('login'));
+        ->assertRedirect(route('login'));
 });
 
 it('los KPIs del super_admin incluyen todas las empresas', function () {
@@ -110,22 +110,22 @@ it('en_riesgo y en_advertencia cuentan tokens asignados basados en 14 y 7 días'
 
     // En riesgo: asignado hace 15 días
     Encuesta::factory()->create([
-        'empresa_id'       => $empresa->id,
-        'estado'           => 'asignado',
+        'empresa_id' => $empresa->id,
+        'estado' => 'asignado',
         'fecha_asignacion' => now()->subDays(15),
     ]);
 
     // En advertencia: asignado hace 8 días
     Encuesta::factory()->create([
-        'empresa_id'       => $empresa->id,
-        'estado'           => 'asignado',
+        'empresa_id' => $empresa->id,
+        'estado' => 'asignado',
         'fecha_asignacion' => now()->subDays(8),
     ]);
 
     // No en riesgo ni advertencia: asignado hace 3 días
     Encuesta::factory()->create([
-        'empresa_id'       => $empresa->id,
-        'estado'           => 'asignado',
+        'empresa_id' => $empresa->id,
+        'estado' => 'asignado',
         'fecha_asignacion' => now()->subDays(3),
     ]);
 
@@ -163,17 +163,17 @@ it('rankingEmpresas está vacío para admin_empresa', function () {
 it('clima contiene promedio_general para admin_empresa cuando hay respuestas', function () {
     $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
 
-    $empresa  = Empresa::factory()->create();
-    $admin    = User::factory()->adminEmpresa($empresa->id)->create();
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
     $encuesta = Encuesta::factory()->completada()->create(['empresa_id' => $empresa->id]);
 
-    $opcion    = OpcionRespuesta::where('valor_numerico', 3)->first();
+    $opcion = OpcionRespuesta::where('valor_numerico', 3)->first();
     $preguntas = Pregunta::all();
 
     foreach ($preguntas as $pregunta) {
         Respuesta::create([
-            'encuesta_id'         => $encuesta->id,
-            'pregunta_id'         => $pregunta->id,
+            'encuesta_id' => $encuesta->id,
+            'pregunta_id' => $pregunta->id,
             'opcion_respuesta_id' => $opcion->id,
         ]);
     }

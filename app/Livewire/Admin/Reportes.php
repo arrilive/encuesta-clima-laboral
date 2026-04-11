@@ -15,37 +15,50 @@ class Reportes extends Component
 {
     // Navegación drill-down
     public int $nivel = 1;
+
     public ?int $dimensionActivaId = null;
+
     public ?int $subdimensionActivaId = null;
 
     // Filtros demográficos
     public string $filtroEdadId = '';
+
     public string $filtroSexoId = '';
+
     public string $filtroCargoId = '';
+
     public string $filtroLugarTrabajoId = '';
+
     public string $filtroGradoAcademicoId = '';
+
     public string $filtroAntiguedadId = '';
 
     // Filtro empresa (solo super_admin)
     public string $filtroEmpresaId = '';
 
     public ?string $hashDatosNivel1 = null;
+
     public array $pdfSvgs = [];
 
     public $edades;
+
     public $sexos;
+
     public $cargos;
+
     public $lugares;
+
     public $grados;
+
     public $antiguedades;
 
     public function mount(): void
     {
-        $this->edades       = \App\Models\Edad::orderBy('orden')->get();
-        $this->sexos        = \App\Models\Sexo::orderBy('orden')->get();
-        $this->cargos       = \App\Models\Cargo::orderBy('orden')->get();
-        $this->lugares      = \App\Models\LugarTrabajo::orderBy('orden')->get();
-        $this->grados       = \App\Models\GradoAcademico::orderBy('orden')->get();
+        $this->edades = \App\Models\Edad::orderBy('orden')->get();
+        $this->sexos = \App\Models\Sexo::orderBy('orden')->get();
+        $this->cargos = \App\Models\Cargo::orderBy('orden')->get();
+        $this->lugares = \App\Models\LugarTrabajo::orderBy('orden')->get();
+        $this->grados = \App\Models\GradoAcademico::orderBy('orden')->get();
         $this->antiguedades = \App\Models\Antiguedad::orderBy('orden')->get();
     }
 
@@ -96,46 +109,38 @@ class Reportes extends Component
     {
         $user = auth()->user();
         $query = Respuesta::query()
-            ->whereHas('encuesta', fn($q) => $q->where('estado', 'completado'));
+            ->whereHas('encuesta', fn ($q) => $q->where('estado', 'completado'));
 
         if ($user->role === 'admin_empresa') {
-            $query->whereHas('encuesta', fn($q) =>
-                $q->where('empresa_id', $user->empresa_id)
+            $query->whereHas('encuesta', fn ($q) => $q->where('empresa_id', $user->empresa_id)
             );
         } elseif ($this->filtroEmpresaId) {
-            $query->whereHas('encuesta', fn($q) =>
-                $q->where('empresa_id', $this->filtroEmpresaId)
+            $query->whereHas('encuesta', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId)
             );
         }
 
         if ($this->filtroEdadId) {
-            $query->whereHas('encuesta.datoDemografico', fn($q) =>
-                $q->where('edad_id', $this->filtroEdadId)
+            $query->whereHas('encuesta.datoDemografico', fn ($q) => $q->where('edad_id', $this->filtroEdadId)
             );
         }
         if ($this->filtroSexoId) {
-            $query->whereHas('encuesta.datoDemografico', fn($q) =>
-                $q->where('sexo_id', $this->filtroSexoId)
+            $query->whereHas('encuesta.datoDemografico', fn ($q) => $q->where('sexo_id', $this->filtroSexoId)
             );
         }
         if ($this->filtroCargoId) {
-            $query->whereHas('encuesta.datoDemografico', fn($q) =>
-                $q->where('cargo_id', $this->filtroCargoId)
+            $query->whereHas('encuesta.datoDemografico', fn ($q) => $q->where('cargo_id', $this->filtroCargoId)
             );
         }
         if ($this->filtroLugarTrabajoId) {
-            $query->whereHas('encuesta.datoDemografico', fn($q) =>
-                $q->where('lugar_trabajo_id', $this->filtroLugarTrabajoId)
+            $query->whereHas('encuesta.datoDemografico', fn ($q) => $q->where('lugar_trabajo_id', $this->filtroLugarTrabajoId)
             );
         }
         if ($this->filtroGradoAcademicoId) {
-            $query->whereHas('encuesta.datoDemografico', fn($q) =>
-                $q->where('grado_academico_id', $this->filtroGradoAcademicoId)
+            $query->whereHas('encuesta.datoDemografico', fn ($q) => $q->where('grado_academico_id', $this->filtroGradoAcademicoId)
             );
         }
         if ($this->filtroAntiguedadId) {
-            $query->whereHas('encuesta.datoDemografico', fn($q) =>
-                $q->where('antiguedad_id', $this->filtroAntiguedadId)
+            $query->whereHas('encuesta.datoDemografico', fn ($q) => $q->where('antiguedad_id', $this->filtroAntiguedadId)
             );
         }
 
@@ -158,22 +163,22 @@ class Reportes extends Component
         }
 
         if ($this->filtroEdadId) {
-            $query->whereHas('datoDemografico', fn($q) => $q->where('edad_id', $this->filtroEdadId));
+            $query->whereHas('datoDemografico', fn ($q) => $q->where('edad_id', $this->filtroEdadId));
         }
         if ($this->filtroSexoId) {
-            $query->whereHas('datoDemografico', fn($q) => $q->where('sexo_id', $this->filtroSexoId));
+            $query->whereHas('datoDemografico', fn ($q) => $q->where('sexo_id', $this->filtroSexoId));
         }
         if ($this->filtroCargoId) {
-            $query->whereHas('datoDemografico', fn($q) => $q->where('cargo_id', $this->filtroCargoId));
+            $query->whereHas('datoDemografico', fn ($q) => $q->where('cargo_id', $this->filtroCargoId));
         }
         if ($this->filtroLugarTrabajoId) {
-            $query->whereHas('datoDemografico', fn($q) => $q->where('lugar_trabajo_id', $this->filtroLugarTrabajoId));
+            $query->whereHas('datoDemografico', fn ($q) => $q->where('lugar_trabajo_id', $this->filtroLugarTrabajoId));
         }
         if ($this->filtroGradoAcademicoId) {
-            $query->whereHas('datoDemografico', fn($q) => $q->where('grado_academico_id', $this->filtroGradoAcademicoId));
+            $query->whereHas('datoDemografico', fn ($q) => $q->where('grado_academico_id', $this->filtroGradoAcademicoId));
         }
         if ($this->filtroAntiguedadId) {
-            $query->whereHas('datoDemografico', fn($q) => $q->where('antiguedad_id', $this->filtroAntiguedadId));
+            $query->whereHas('datoDemografico', fn ($q) => $q->where('antiguedad_id', $this->filtroAntiguedadId));
         }
 
         return $query;
@@ -185,6 +190,7 @@ class Reportes extends Component
     {
         $scoringService = app(ClimaScoringService::class);
         $baseQuery = $this->getBaseQuery();
+
         return $scoringService->scoresPorDimension($baseQuery)->toArray();
     }
 
@@ -195,9 +201,9 @@ class Reportes extends Component
         return Subdimension::where('dimension_id', $this->dimensionActivaId)
             ->orderBy('orden')
             ->get()
-            ->map(fn($s) => [
-                'id'      => $s->id,
-                'nombre'  => $s->nombre,
+            ->map(fn ($s) => [
+                'id' => $s->id,
+                'nombre' => $s->nombre,
                 'puntaje' => $this->calcularPuntajeSubdimension($s->id),
             ])->toArray();
     }
@@ -205,17 +211,16 @@ class Reportes extends Component
     public function getDistribucionAgregadaNivel2(): array
     {
         return (clone $this->getBaseQuery())
-            ->whereHas('pregunta.subdimension', fn($q) =>
-                $q->where('dimension_id', $this->dimensionActivaId)
+            ->whereHas('pregunta.subdimension', fn ($q) => $q->where('dimension_id', $this->dimensionActivaId)
             )
             ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
             ->selectRaw('opciones_respuesta.id, opciones_respuesta.opcion as nombre, opciones_respuesta.orden, COUNT(*) as total')
             ->groupBy('opciones_respuesta.id', 'opciones_respuesta.opcion', 'opciones_respuesta.orden')
             ->orderBy('opciones_respuesta.orden')
             ->get()
-            ->map(fn($row) => [
+            ->map(fn ($row) => [
                 'opcion' => $row->nombre,
-                'total'  => (int) $row->total,
+                'total' => (int) $row->total,
             ])
             ->toArray();
     }
@@ -223,16 +228,17 @@ class Reportes extends Component
     protected function calcularPuntajeSubdimension(int $subdimensionId): float
     {
         $result = (clone $this->getBaseQuery())
-            ->whereHas('pregunta', fn($q) =>
-                $q->where('subdimension_id', $subdimensionId)
+            ->whereHas('pregunta', fn ($q) => $q->where('subdimension_id', $subdimensionId)
             )
-            ->whereHas('opcionRespuesta', fn($q) =>
-                $q->where('valor_numerico', '!=', 0)
+            ->whereHas('opcionRespuesta', fn ($q) => $q->where('valor_numerico', '!=', 0)
             )
             ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
             ->avg('opciones_respuesta.valor_numerico');
 
-        if ($result === null) return 0.0;
+        if ($result === null) {
+            return 0.0;
+        }
+
         return round((($result - 1) / 2) * 100, 1);
     }
 
@@ -240,7 +246,9 @@ class Reportes extends Component
 
     public function getDatosNivel3(): array
     {
-        if (!$this->subdimensionActivaId) return [];
+        if (! $this->subdimensionActivaId) {
+            return [];
+        }
 
         return \App\Models\Pregunta::where('subdimension_id', $this->subdimensionActivaId)
             ->orderBy('orden')
@@ -262,20 +270,20 @@ class Reportes extends Component
                 // Puntaje: excluye valor_numerico = 0
                 $puntaje = (clone $baseQuery)
                     ->where('pregunta_id', $pregunta->id)
-                    ->whereHas('opcionRespuesta', fn($q) => $q->where('valor_numerico', '!=', 0))
+                    ->whereHas('opcionRespuesta', fn ($q) => $q->where('valor_numerico', '!=', 0))
                     ->join('opciones_respuesta as or2', 'respuestas.opcion_respuesta_id', '=', 'or2.id')
                     ->avg('or2.valor_numerico');
 
                 return [
-                    'id'      => $pregunta->id,
-                    'texto'   => $pregunta->texto,
+                    'id' => $pregunta->id,
+                    'texto' => $pregunta->texto,
                     'puntaje' => $puntaje !== null ? round((($puntaje - 1) / 2) * 100, 1) : 0.0,
-                    'total'   => $totalRespuestas,
-                    'distribucion' => $distribucion->map(fn($op) => [
-                        'opcion'         => $op->opcion,
+                    'total' => $totalRespuestas,
+                    'distribucion' => $distribucion->map(fn ($op) => [
+                        'opcion' => $op->opcion,
                         'valor_numerico' => $op->valor_numerico,
-                        'total'          => $op->total,
-                        'porcentaje'     => $totalRespuestas > 0
+                        'total' => $op->total,
+                        'porcentaje' => $totalRespuestas > 0
                                             ? round($op->total / $totalRespuestas * 100)
                                             : 0,
                     ])->toArray(),
@@ -301,25 +309,25 @@ class Reportes extends Component
     {
         $user = auth()->user();
 
-        $datosNivel1          = $this->getDatosNivel1();
-        $datosNivel2          = $this->nivel === 2 ? $this->getDatosNivel2() : [];
+        $datosNivel1 = $this->getDatosNivel1();
+        $datosNivel2 = $this->nivel === 2 ? $this->getDatosNivel2() : [];
         $distribucionAgregada = $this->nivel === 2 ? $this->getDistribucionAgregadaNivel2() : [];
-        $datosNivel3          = $this->nivel === 3 ? $this->getDatosNivel3() : [];
+        $datosNivel3 = $this->nivel === 3 ? $this->getDatosNivel3() : [];
         $this->despacharEventos($datosNivel1, $datosNivel2, $distribucionAgregada);
 
         $completadasFiltradas = $this->getEncuestasBaseQuery()->count();
 
         return view('livewire.admin.reportes', [
             'completadasFiltradas' => $completadasFiltradas,
-            'completadasTotal'     => $this->getEncuestasBaseQuery(soloSinFiltrosDemograficos: true)->count(),
-            'sinDatos'             => $completadasFiltradas === 0,
-            'empresas'             => $user->role === 'super_admin' ? Empresa::orderBy('nombre')->get() : collect(),
-            'dimensionActiva'      => $this->dimensionActivaId ? Dimension::find($this->dimensionActivaId) : null,
-            'subdimensionActiva'   => $this->subdimensionActivaId ? Subdimension::find($this->subdimensionActivaId) : null,
-            'datosNivel1'          => $datosNivel1,
-            'datosNivel2'          => $datosNivel2,
+            'completadasTotal' => $this->getEncuestasBaseQuery(soloSinFiltrosDemograficos: true)->count(),
+            'sinDatos' => $completadasFiltradas === 0,
+            'empresas' => $user->role === 'super_admin' ? Empresa::orderBy('nombre')->get() : collect(),
+            'dimensionActiva' => $this->dimensionActivaId ? Dimension::find($this->dimensionActivaId) : null,
+            'subdimensionActiva' => $this->subdimensionActivaId ? Subdimension::find($this->subdimensionActivaId) : null,
+            'datosNivel1' => $datosNivel1,
+            'datosNivel2' => $datosNivel2,
             'distribucionAgregada' => $distribucionAgregada,
-            'datosNivel3'          => $datosNivel3,
+            'datosNivel3' => $datosNivel3,
         ]);
     }
 }

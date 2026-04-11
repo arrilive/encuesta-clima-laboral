@@ -112,7 +112,7 @@ test('la ruta encuesta.reanudar rechaza token si pertenece a otra empresa', func
 
     // El participante entra con la contraseña de la Empresa A
     $empresaSesion = \App\Models\Empresa::factory()->create();
-    
+
     // Pero intenta usar un token asignado a la Empresa B
     $encuestaOtraEmpresa = Encuesta::factory()->asignada()->create();
 

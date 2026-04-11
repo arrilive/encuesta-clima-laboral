@@ -13,15 +13,29 @@ class RespuestasAbiertas extends Component
 {
     use WithPagination;
 
-    #[Reactive] public string $filtroEdadId = '';
-    #[Reactive] public string $filtroSexoId = '';
-    #[Reactive] public string $filtroCargoId = '';
-    #[Reactive] public string $filtroLugarTrabajoId = '';
-    #[Reactive] public string $filtroGradoAcademicoId = '';
-    #[Reactive] public string $filtroAntiguedadId = '';
-    #[Reactive] public string $filtroEmpresaId = '';
+    #[Reactive]
+    public string $filtroEdadId = '';
+
+    #[Reactive]
+    public string $filtroSexoId = '';
+
+    #[Reactive]
+    public string $filtroCargoId = '';
+
+    #[Reactive]
+    public string $filtroLugarTrabajoId = '';
+
+    #[Reactive]
+    public string $filtroGradoAcademicoId = '';
+
+    #[Reactive]
+    public string $filtroAntiguedadId = '';
+
+    #[Reactive]
+    public string $filtroEmpresaId = '';
 
     public ?int $preguntaAbiertaActiva = null;
+
     public bool $mostrarRespuestasAbiertas = false;
 
     public function mount(): void
@@ -39,27 +53,27 @@ class RespuestasAbiertas extends Component
 
         if ($user->role === 'admin_empresa') {
             $query->where('empresa_id', $user->empresa_id);
-        } elseif (!empty($this->filtroEmpresaId)) {
+        } elseif (! empty($this->filtroEmpresaId)) {
             $query->where('empresa_id', $this->filtroEmpresaId);
         }
 
         if ($this->filtroEdadId) {
-            $query->whereHas('datoDemografico', fn($q) => $q->where('edad_id', $this->filtroEdadId));
+            $query->whereHas('datoDemografico', fn ($q) => $q->where('edad_id', $this->filtroEdadId));
         }
         if ($this->filtroSexoId) {
-            $query->whereHas('datoDemografico', fn($q) => $q->where('sexo_id', $this->filtroSexoId));
+            $query->whereHas('datoDemografico', fn ($q) => $q->where('sexo_id', $this->filtroSexoId));
         }
         if ($this->filtroCargoId) {
-            $query->whereHas('datoDemografico', fn($q) => $q->where('cargo_id', $this->filtroCargoId));
+            $query->whereHas('datoDemografico', fn ($q) => $q->where('cargo_id', $this->filtroCargoId));
         }
         if ($this->filtroLugarTrabajoId) {
-            $query->whereHas('datoDemografico', fn($q) => $q->where('lugar_trabajo_id', $this->filtroLugarTrabajoId));
+            $query->whereHas('datoDemografico', fn ($q) => $q->where('lugar_trabajo_id', $this->filtroLugarTrabajoId));
         }
         if ($this->filtroGradoAcademicoId) {
-            $query->whereHas('datoDemografico', fn($q) => $q->where('grado_academico_id', $this->filtroGradoAcademicoId));
+            $query->whereHas('datoDemografico', fn ($q) => $q->where('grado_academico_id', $this->filtroGradoAcademicoId));
         }
         if ($this->filtroAntiguedadId) {
-            $query->whereHas('datoDemografico', fn($q) => $q->where('antiguedad_id', $this->filtroAntiguedadId));
+            $query->whereHas('datoDemografico', fn ($q) => $q->where('antiguedad_id', $this->filtroAntiguedadId));
         }
 
         return $query;
@@ -87,7 +101,7 @@ class RespuestasAbiertas extends Component
 
     public function toggleRespuestasAbiertas(): void
     {
-        $this->mostrarRespuestasAbiertas = !$this->mostrarRespuestasAbiertas;
+        $this->mostrarRespuestasAbiertas = ! $this->mostrarRespuestasAbiertas;
         $this->resetPage();
     }
 
@@ -97,7 +111,7 @@ class RespuestasAbiertas extends Component
             'preguntasAbiertas' => PreguntaAbierta::orderBy('orden')->get(),
             'respuestasAbiertas' => $this->mostrarRespuestasAbiertas
                 ? $this->getRespuestasAbiertasPaginadas()
-                : null
+                : null,
         ]);
     }
 }

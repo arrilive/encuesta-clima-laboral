@@ -3,12 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Barryvdh\DomPDF\Facade\Pdf;
-use App\Models\Respuesta;
 use App\Models\Dimension;
+use App\Models\Respuesta;
 use App\Models\Subdimension;
-use App\Models\Pregunta;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
 
 class PdfController extends Controller
 {
@@ -22,7 +21,7 @@ class PdfController extends Controller
 
         $filtrosActivos = $this->getFiltrosActivos($request);
         $datosDimensiones = $this->getDatosDimensiones($request, $user);
-        
+
         $datosSubdimensiones = [];
         if (in_array($alcance, ['subdimensiones', 'completo'])) {
             $datosSubdimensiones = $this->getDatosSubdimensiones($request, $user);
@@ -33,10 +32,10 @@ class PdfController extends Controller
             $respuestasAbiertas = $this->getRespuestasAbiertas($request, $user, $limite);
         }
 
-        $promedioGeneral = count($datosDimensiones) > 0 
-            ? array_sum(array_column($datosDimensiones, 'puntaje')) / count($datosDimensiones) 
+        $promedioGeneral = count($datosDimensiones) > 0
+            ? array_sum(array_column($datosDimensiones, 'puntaje')) / count($datosDimensiones)
             : 0;
-            
+
         $completadas = $this->getBaseQuery($request, $user)->distinct('encuesta_id')->count('encuesta_id');
         $svgs = session('pdf_svgs', []);
 
@@ -57,12 +56,12 @@ class PdfController extends Controller
     private function getBaseQuery(Request $request, $user)
     {
         $query = Respuesta::query()
-            ->whereHas('encuesta', fn($q) => $q->where('estado', 'completado'));
+            ->whereHas('encuesta', fn ($q) => $q->where('estado', 'completado'));
 
         if ($user->role === 'admin_empresa') {
-            $query->whereHas('encuesta', fn($q) => $q->where('empresa_id', $user->empresa_id));
+            $query->whereHas('encuesta', fn ($q) => $q->where('empresa_id', $user->empresa_id));
         } elseif ($request->filled('empresa_id')) {
-            $query->whereHas('encuesta', fn($q) => $q->where('empresa_id', $request->empresa_id));
+            $query->whereHas('encuesta', fn ($q) => $q->where('empresa_id', $request->empresa_id));
         }
 
         $filtros = [
@@ -76,7 +75,7 @@ class PdfController extends Controller
 
         foreach ($filtros as $param => $column) {
             if ($request->filled($param)) {
-                $query->whereHas('encuesta.datoDemografico', fn($q) => $q->where($column, $request->$param));
+                $query->whereHas('encuesta.datoDemografico', fn ($q) => $q->where($column, $request->$param));
             }
         }
 
@@ -114,17 +113,18 @@ class PdfController extends Controller
         $dimensiones = Dimension::orderBy('orden')->get();
         foreach ($dimensiones as $d) {
             $avg = $this->getBaseQuery($request, $user)
-                ->whereHas('pregunta.subdimension', fn($q) => $q->where('dimension_id', $d->id))
-                ->whereHas('opcionRespuesta', fn($q) => $q->where('valor_numerico', '!=', 0))
+                ->whereHas('pregunta.subdimension', fn ($q) => $q->where('dimension_id', $d->id))
+                ->whereHas('opcionRespuesta', fn ($q) => $q->where('valor_numerico', '!=', 0))
                 ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
                 ->avg('opciones_respuesta.valor_numerico');
-            
+
             $datos[] = [
                 'id' => $d->id,
                 'nombre' => $d->nombre,
                 'puntaje' => $avg !== null ? round((($avg - 1) / 2) * 100, 1) : 0.0,
             ];
         }
+
         return $datos;
     }
 
@@ -134,16 +134,17 @@ class PdfController extends Controller
         $subdimensiones = Subdimension::with('dimension')->orderBy('dimension_id')->orderBy('orden')->get();
         foreach ($subdimensiones as $s) {
             $avg = $this->getBaseQuery($request, $user)
-                ->whereHas('pregunta', fn($q) => $q->where('subdimension_id', $s->id))
-                ->whereHas('opcionRespuesta', fn($q) => $q->where('valor_numerico', '!=', 0))
+                ->whereHas('pregunta', fn ($q) => $q->where('subdimension_id', $s->id))
+                ->whereHas('opcionRespuesta', fn ($q) => $q->where('valor_numerico', '!=', 0))
                 ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
                 ->avg('opciones_respuesta.valor_numerico');
-            
+
             $datos[$s->dimension->nombre][] = [
                 'nombre' => $s->nombre,
                 'puntaje' => $avg !== null ? round((($avg - 1) / 2) * 100, 1) : 0.0,
             ];
         }
+
         return $datos;
     }
 
@@ -151,16 +152,16 @@ class PdfController extends Controller
     {
         $respuestasAbiertas = [];
         $preguntasAbiertas = \App\Models\PreguntaAbierta::orderBy('orden')->get();
-        
+
         $encuestasIds = \App\Models\Encuesta::where('estado', 'completado')
-            ->when($user->role === 'admin_empresa', fn($q) => $q->where('empresa_id', $user->empresa_id))
-            ->when($user->role === 'super_admin' && $request->filled('empresa_id'), fn($q) => $q->where('empresa_id', $request->empresa_id))
-            ->when($request->filled('edad_id'), fn($q) => $q->whereHas('datoDemografico', fn($q2) => $q2->where('edad_id', $request->edad_id)))
-            ->when($request->filled('sexo_id'), fn($q) => $q->whereHas('datoDemografico', fn($q2) => $q2->where('sexo_id', $request->sexo_id)))
-            ->when($request->filled('cargo_id'), fn($q) => $q->whereHas('datoDemografico', fn($q2) => $q2->where('cargo_id', $request->cargo_id)))
-            ->when($request->filled('lugar_trabajo_id'), fn($q) => $q->whereHas('datoDemografico', fn($q2) => $q2->where('lugar_trabajo_id', $request->lugar_trabajo_id)))
-            ->when($request->filled('grado_academico_id'), fn($q) => $q->whereHas('datoDemografico', fn($q2) => $q2->where('grado_academico_id', $request->grado_academico_id)))
-            ->when($request->filled('antiguedad_id'), fn($q) => $q->whereHas('datoDemografico', fn($q2) => $q2->where('antiguedad_id', $request->antiguedad_id)))
+            ->when($user->role === 'admin_empresa', fn ($q) => $q->where('empresa_id', $user->empresa_id))
+            ->when($user->role === 'super_admin' && $request->filled('empresa_id'), fn ($q) => $q->where('empresa_id', $request->empresa_id))
+            ->when($request->filled('edad_id'), fn ($q) => $q->whereHas('datoDemografico', fn ($q2) => $q2->where('edad_id', $request->edad_id)))
+            ->when($request->filled('sexo_id'), fn ($q) => $q->whereHas('datoDemografico', fn ($q2) => $q2->where('sexo_id', $request->sexo_id)))
+            ->when($request->filled('cargo_id'), fn ($q) => $q->whereHas('datoDemografico', fn ($q2) => $q2->where('cargo_id', $request->cargo_id)))
+            ->when($request->filled('lugar_trabajo_id'), fn ($q) => $q->whereHas('datoDemografico', fn ($q2) => $q2->where('lugar_trabajo_id', $request->lugar_trabajo_id)))
+            ->when($request->filled('grado_academico_id'), fn ($q) => $q->whereHas('datoDemografico', fn ($q2) => $q2->where('grado_academico_id', $request->grado_academico_id)))
+            ->when($request->filled('antiguedad_id'), fn ($q) => $q->whereHas('datoDemografico', fn ($q2) => $q2->where('antiguedad_id', $request->antiguedad_id)))
             ->pluck('id');
 
         foreach ($preguntasAbiertas as $p) {
@@ -174,10 +175,11 @@ class PdfController extends Controller
                 ->toArray();
 
             $respuestasAbiertas[] = [
-                'pregunta'   => $p->texto,
+                'pregunta' => $p->texto,
                 'respuestas' => $respuestas,
             ];
         }
+
         return $respuestasAbiertas;
     }
 }

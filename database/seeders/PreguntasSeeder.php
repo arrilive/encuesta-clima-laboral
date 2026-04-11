@@ -9,23 +9,23 @@ class PreguntasSeeder extends Seeder
 {
     public function run(): void
     {
-        $comunicacion        = DB::table('subdimensiones')->where('nombre', 'Comunicación')->value('id');
-        $capacidad           = DB::table('subdimensiones')->where('nombre', 'Capacidad')->value('id');
-        $integridad          = DB::table('subdimensiones')->where('nombre', 'Integridad')->value('id');
-        $apoyo               = DB::table('subdimensiones')->where('nombre', 'Apoyo')->value('id');
-        $valoracion          = DB::table('subdimensiones')->where('nombre', 'Valoración')->value('id');
-        $colaboracion        = DB::table('subdimensiones')->where('nombre', 'Colaboración')->value('id');
-        $equidad             = DB::table('subdimensiones')->where('nombre', 'Equidad')->value('id');
+        $comunicacion = DB::table('subdimensiones')->where('nombre', 'Comunicación')->value('id');
+        $capacidad = DB::table('subdimensiones')->where('nombre', 'Capacidad')->value('id');
+        $integridad = DB::table('subdimensiones')->where('nombre', 'Integridad')->value('id');
+        $apoyo = DB::table('subdimensiones')->where('nombre', 'Apoyo')->value('id');
+        $valoracion = DB::table('subdimensiones')->where('nombre', 'Valoración')->value('id');
+        $colaboracion = DB::table('subdimensiones')->where('nombre', 'Colaboración')->value('id');
+        $equidad = DB::table('subdimensiones')->where('nombre', 'Equidad')->value('id');
         $ausenciaFavoritismo = DB::table('subdimensiones')->where('nombre', 'Ausencia de favoritismo')->value('id');
-        $justicia            = DB::table('subdimensiones')->where('nombre', 'Justicia')->value('id');
-        $delEquipo           = DB::table('subdimensiones')->where('nombre', 'Del Equipo')->value('id');
-        $delTrabajo          = DB::table('subdimensiones')->where('nombre', 'Del Trabajo')->value('id');
-        $delaEmpresa         = DB::table('subdimensiones')->where('nombre', 'De la Empresa')->value('id');
-        $hospitalidad        = DB::table('subdimensiones')->where('nombre', 'Hospitalidad')->value('id');
-        $cercania            = DB::table('subdimensiones')->where('nombre', 'Cercanía')->value('id');
-        $sentidoFamilia      = DB::table('subdimensiones')->where('nombre', 'Sentido de Familia')->value('id');
-        $seguridad           = DB::table('subdimensiones')->where('nombre', 'Seguridad')->value('id');
-        $capacitacion        = DB::table('subdimensiones')->where('nombre', 'Capacitación')->value('id');
+        $justicia = DB::table('subdimensiones')->where('nombre', 'Justicia')->value('id');
+        $delEquipo = DB::table('subdimensiones')->where('nombre', 'Del Equipo')->value('id');
+        $delTrabajo = DB::table('subdimensiones')->where('nombre', 'Del Trabajo')->value('id');
+        $delaEmpresa = DB::table('subdimensiones')->where('nombre', 'De la Empresa')->value('id');
+        $hospitalidad = DB::table('subdimensiones')->where('nombre', 'Hospitalidad')->value('id');
+        $cercania = DB::table('subdimensiones')->where('nombre', 'Cercanía')->value('id');
+        $sentidoFamilia = DB::table('subdimensiones')->where('nombre', 'Sentido de Familia')->value('id');
+        $seguridad = DB::table('subdimensiones')->where('nombre', 'Seguridad')->value('id');
+        $capacitacion = DB::table('subdimensiones')->where('nombre', 'Capacitación')->value('id');
 
         DB::table('preguntas')->insertOrIgnore([
             // Comunicación (3)

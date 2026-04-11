@@ -15,9 +15,9 @@ class EmpresaFactory extends Factory
     public function definition(): array
     {
         return [
-            'nombre'  => $this->faker->company(),
+            'nombre' => $this->faker->company(),
             'password' => 'test1234',
-            'activa'  => true,
+            'activa' => true,
         ];
     }
 }

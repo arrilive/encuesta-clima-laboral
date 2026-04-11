@@ -12,9 +12,13 @@ use Livewire\Component;
 class EncuestaBloque extends Component
 {
     public Encuesta $encuesta;
+
     public int $dimensionActual;
+
     public int $dimensionId;
+
     public string $dimensionNombre = '';
+
     public int $totalDimensiones;
 
     // Escucha el evento que disparan los hijos
@@ -26,11 +30,11 @@ class EncuestaBloque extends Component
             ->where('token', $token)
             ->firstOrFail();
 
-        $this->dimensionActual  = $dimension;
+        $this->dimensionActual = $dimension;
         $this->totalDimensiones = Dimension::count();
-        $dimensionModelo        = Dimension::where('orden', $dimension)->firstOrFail();
-        $this->dimensionId      = $dimensionModelo->id;
-        $this->dimensionNombre  = $dimensionModelo->nombre;
+        $dimensionModelo = Dimension::where('orden', $dimension)->firstOrFail();
+        $this->dimensionId = $dimensionModelo->id;
+        $this->dimensionNombre = $dimensionModelo->nombre;
     }
 
     public array $preguntasSinRespuesta = [];
@@ -46,8 +50,7 @@ class EncuestaBloque extends Component
 
     public function siguienteBloque(): void
     {
-        $preguntasBloqueId = Pregunta::whereHas('subdimension', fn ($q) =>
-            $q->where('dimension_id', $this->dimensionId)
+        $preguntasBloqueId = Pregunta::whereHas('subdimension', fn ($q) => $q->where('dimension_id', $this->dimensionId)
         )->pluck('id')->toArray();
 
         $respondidasId = $this->encuesta->respuestas()
@@ -58,32 +61,32 @@ class EncuestaBloque extends Component
 
         if (count($this->preguntasSinRespuesta) > 0) {
             $this->addError('bloque', 'Debes responder todas las preguntas antes de continuar.');
-            
+
             // Emitir evento para hacer scroll a la primera pregunta sin respuesta
             $primeraFaltante = reset($this->preguntasSinRespuesta);
             $this->dispatch('scroll-to-pregunta', preguntaId: $primeraFaltante);
-            
+
             return;
         }
 
         $this->redirect(route('encuesta.bloque.completado', [
-            'token'     => $this->encuesta->token,
+            'token' => $this->encuesta->token,
             'dimension' => $this->dimensionActual,
         ]));
     }
 
     public function calcularProgreso(): int
     {
-        $totalPreguntas = Pregunta::whereHas('subdimension', fn($q) =>
-            $q->where('dimension_id', $this->dimensionId)
+        $totalPreguntas = Pregunta::whereHas('subdimension', fn ($q) => $q->where('dimension_id', $this->dimensionId)
         )->count();
 
         $respondidas = $this->encuesta->respuestas()
-            ->whereHas('pregunta.subdimension', fn($q) =>
-                $q->where('dimension_id', $this->dimensionId)
+            ->whereHas('pregunta.subdimension', fn ($q) => $q->where('dimension_id', $this->dimensionId)
             )->count();
 
-        if ($totalPreguntas === 0) return 0;
+        if ($totalPreguntas === 0) {
+            return 0;
+        }
 
         return (int) (($respondidas / $totalPreguntas) * 100);
     }
@@ -91,8 +94,7 @@ class EncuestaBloque extends Component
     public function render(): View
     {
         $preguntas = Pregunta::with('subdimension')
-            ->whereHas('subdimension', fn ($q) =>
-                $q->where('dimension_id', $this->dimensionId)
+            ->whereHas('subdimension', fn ($q) => $q->where('dimension_id', $this->dimensionId)
             )
             ->join('subdimensiones', 'preguntas.subdimension_id', '=', 'subdimensiones.id')
             ->orderBy('subdimensiones.orden')
@@ -104,8 +106,8 @@ class EncuestaBloque extends Component
 
         return view('livewire.encuesta.encuesta-bloque', [
             'preguntasPorSubdimension' => $preguntas->groupBy('subdimension_id'),
-            'opciones'                 => $opciones,
-            'progreso'                 => $this->calcularProgreso(),
+            'opciones' => $opciones,
+            'progreso' => $this->calcularProgreso(),
         ]);
     }
 }

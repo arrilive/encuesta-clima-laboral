@@ -13,8 +13,8 @@ it('super_admin puede acceder a /admin/empresas', function () {
     $admin = User::factory()->superAdmin()->create();
 
     $this->actingAs($admin)
-         ->get(route('admin.empresas'))
-         ->assertOk();
+        ->get(route('admin.empresas'))
+        ->assertOk();
 });
 
 it('admin_empresa no puede acceder a /admin/empresas', function () {
@@ -24,15 +24,15 @@ it('admin_empresa no puede acceder a /admin/empresas', function () {
     $admin = User::factory()->adminEmpresa($empresa->id)->create();
 
     $this->actingAs($admin)
-         ->get(route('admin.empresas'))
-         ->assertForbidden();
+        ->get(route('admin.empresas'))
+        ->assertForbidden();
 });
 
 it('usuario no autenticado es redirigido al login', function () {
     $this->seed();
 
     $this->get(route('admin.empresas'))
-         ->assertRedirect(route('login'));
+        ->assertRedirect(route('login'));
 });
 
 // ── Acciones del componente ──────────────────────────────────────────────────
@@ -55,8 +55,8 @@ it('crear() genera empresa y user admin en la base de datos', function () {
     // Verificar que el user admin fue creado con el empresa_id correcto
     $empresa = Empresa::where('nombre', 'Empresa Test')->first();
     $this->assertDatabaseHas('users', [
-        'email'      => 'admin@empresatest.com',
-        'role'       => 'admin_empresa',
+        'email' => 'admin@empresatest.com',
+        'role' => 'admin_empresa',
         'empresa_id' => $empresa->id,
     ]);
 
@@ -94,7 +94,7 @@ it('editarNombre() actualiza el nombre de la empresa', function () {
         ->call('editarNombre');
 
     $this->assertDatabaseHas('empresas', [
-        'id'     => $empresa->id,
+        'id' => $empresa->id,
         'nombre' => 'Nombre Actualizado',
     ]);
 });
