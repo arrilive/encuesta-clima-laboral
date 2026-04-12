@@ -192,8 +192,8 @@ it('getDatosNivel2 retorna subdimensiones de la dimension activa', function () {
 
     foreach ($preguntas as $pregunta) {
         Respuesta::create([
-            'encuesta_id'        => $encuesta->id,
-            'pregunta_id'        => $pregunta->id,
+            'encuesta_id' => $encuesta->id,
+            'pregunta_id' => $pregunta->id,
             'opcion_respuesta_id' => $opcion->id,
         ]);
     }
@@ -220,8 +220,8 @@ it('getDatosNivel3 retorna preguntas de la subdimension activa', function () {
 
     foreach ($preguntas as $pregunta) {
         Respuesta::create([
-            'encuesta_id'        => $encuesta->id,
-            'pregunta_id'        => $pregunta->id,
+            'encuesta_id' => $encuesta->id,
+            'pregunta_id' => $pregunta->id,
             'opcion_respuesta_id' => $opcion->id,
         ]);
     }

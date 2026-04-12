@@ -13,7 +13,7 @@ class ClimaScoringService
      * Calcula el puntaje (0–100) para cada dimensión sobre el conjunto
      * de respuestas representado por $baseQuery.
      *
-     * El consumidor construye y scope-a la query base (por rol, por filtros    
+     * El consumidor construye y scope-a la query base (por rol, por filtros
      * demográficos, etc.). El servicio no la modifica: clona internamente
      * antes de agregar constraints propios.
      *
@@ -36,8 +36,10 @@ class ClimaScoringService
             $puntajesSub = $d->subdimensiones->map(function ($sub) use ($promediosSub) {
                 if (isset($promediosSub[$sub->id])) {
                     $avg = $promediosSub[$sub->id]->promedio;
+
                     return (($avg - 1) / 2) * 100;
                 }
+
                 return null;
             })->filter(fn ($p) => $p !== null);
 
@@ -129,8 +131,10 @@ class ClimaScoringService
                 $puntajesSub = $d->subdimensiones->map(function ($sub) use ($filasGrupoSub) {
                     if (isset($filasGrupoSub[$sub->id])) {
                         $avg = $filasGrupoSub[$sub->id]->promedio;
+
                         return (($avg - 1) / 2) * 100;
                     }
+
                     return null;
                 })->filter(fn ($p) => $p !== null);
 
