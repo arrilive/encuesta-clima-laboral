@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prototipo C — Conversacional (v2)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --primary:#2563EB;--primary-hover:#1D4ED8;--primary-light:#DBEAFE;--primary-bg:#EFF6FF;
+  --bg:#FFFFFF;--surface:#F8FAFC;--text:#0F172A;--text-secondary:#475569;--text-muted:#94A3B8;
+  --border:#E2E8F0;--success:#059669;--success-bg:#ECFDF5;--warn-bg:#FEF3C7;--warn-text:#92400E;
+  --radius:16px;--font:'DM Sans',system-ui,sans-serif;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* === SCREENS === */
+.screen{display:none;min-height:100vh}
+.screen.active{display:flex;flex-direction:column}
+
+/* === ANIMATIONS === */
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideRight{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+@keyframes checkDraw{from{stroke-dashoffset:24}to{stroke-dashoffset:0}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes cardPop{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.ani-1{animation:slideUp .5s ease .1s both}
+.ani-2{animation:slideUp .5s ease .2s both}
+.ani-3{animation:slideUp .5s ease .3s both}
+.ani-4{animation:slideUp .5s ease .4s both}
+.ani-5{animation:slideUp .5s ease .5s both}
+
+/* === Top strip === */
+.strip{height:4px;background:linear-gradient(90deg,var(--primary),#7C3AED,#EC4899);position:sticky;top:0;z-index:20}
+.strip-progress{height:4px;background:var(--border);position:sticky;top:0;z-index:20}
+.strip-fill{height:100%;background:linear-gradient(90deg,var(--primary),#7C3AED);transition:width .5s ease;border-radius:0 2px 2px 0}
+
+/* === Header === */
+.header{padding:14px 20px;border-bottom:1px solid var(--border);position:sticky;top:4px;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(10px)}
+.header-inner{max-width:600px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
+.header-left{display:flex;align-items:center;gap:10px}
+.header-dot{width:8px;height:8px;border-radius:50%;background:var(--primary)}
+.header-title{font-weight:600;font-size:14px}
+.header-meta{font-size:12px;color:var(--text-muted)}
+
+/* === Content === */
+.content{flex:1;max-width:600px;width:100%;margin:0 auto;padding:40px 20px 60px;position:relative}
+.content-center{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;flex:1;padding:40px 20px 60px;max-width:500px;margin:0 auto}
+
+/* === Typography === */
+h1{font-size:30px;font-weight:700;line-height:1.25;letter-spacing:-.02em}
+h2{font-size:24px;font-weight:700;line-height:1.3;letter-spacing:-.01em}
+.subtitle{font-size:16px;color:var(--text-secondary);margin-top:8px;line-height:1.6}
+
+/* === Icon box (replaces emoji) === */
+.icon-box{width:64px;height:64px;border-radius:18px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:20px}
+.icon-box svg{width:28px;height:28px}
+
+/* === Card === */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-top:24px}
+@media(min-width:640px){.card{padding:32px}}
+
+/* === Buttons === */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 28px;border-radius:12px;
+  font-weight:600;font-size:15px;border:none;cursor:pointer;transition:all .2s;font-family:var(--font);text-decoration:none}
+.btn-primary{background:var(--primary);color:#fff;width:100%}
+.btn-primary:hover{background:var(--primary-hover);transform:translateY(-1px);box-shadow:0 4px 16px rgba(37,99,235,.2)}
+.btn-secondary{background:var(--surface);color:var(--text);border:1.5px solid var(--border);width:100%}
+.btn-secondary:hover{background:#F1F5F9;border-color:#CBD5E1}
+.btn-ghost{background:transparent;color:var(--primary);font-weight:600;padding:10px 16px}
+.btn-ghost:hover{background:var(--primary-bg)}
+
+/* === Inputs === */
+.field{margin-bottom:20px}
+.field label{display:block;font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px}
+.field-input{width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;
+  font-family:var(--font);transition:all .2s;background:#fff;color:var(--text)}
+.field-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.field-input::placeholder{color:var(--text-muted)}
+select.field-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20' fill='%2394A3B8'%3E%3Cpath d='M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;padding-right:40px}
+
+/* === Token === */
+.token-card{background:var(--primary-bg);border:2px solid var(--primary-light);border-radius:16px;padding:24px;text-align:center;
+  margin:20px 0;cursor:pointer;transition:all .2s}
+.token-card:hover{border-color:var(--primary);background:#DBEAFE}
+.token-val{font-family:'Courier New',monospace;font-size:13px;font-weight:600;color:var(--primary);word-break:break-all;
+  user-select:all;line-height:1.6}
+.token-hint{font-size:12px;color:var(--text-muted);margin-top:10px;display:flex;align-items:center;justify-content:center;gap:4px}
+
+/* === Alert === */
+.alert{border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.5;display:flex;gap:10px;align-items:flex-start}
+.alert-warn{background:var(--warn-bg);color:var(--warn-text)}
+.alert-info{background:var(--primary-bg);color:var(--primary)}
+
+/* === Separator === */
+.or-sep{display:flex;align-items:center;gap:16px;margin:20px 0}
+.or-sep-line{flex:1;height:1px;background:var(--border)}
+.or-sep-text{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px}
+
+/* =========================================
+   DIMENSION BLOCKS (new screen)
+   ========================================= */
+.dim-grid{display:flex;flex-direction:column;gap:14px;margin-top:24px}
+
+.dim-block{border-radius:16px;padding:20px;position:relative;overflow:hidden;cursor:pointer;
+  transition:all .3s cubic-bezier(.4,0,.2,1);border:2px solid transparent}
+.dim-block:hover:not(.dim-locked){transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.08)}
+
+/* Completed */
+.dim-block.dim-done{opacity:.85}
+.dim-block.dim-done:hover{opacity:1}
+
+/* In progress */
+.dim-block.dim-active{animation:breathe 2.5s ease infinite;border-color:currentColor}
+
+/* Locked */
+.dim-block.dim-locked{background:#F1F5F9 !important;cursor:not-allowed;opacity:.6}
+.dim-block.dim-locked *{color:#94A3B8 !important}
+.dim-block.dim-locked .dim-block-icon{background:rgba(148,163,184,.15) !important}
+
+/* Block internals */
+.dim-block-top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.dim-block-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dim-block-icon svg{width:22px;height:22px}
+.dim-block-info{flex:1}
+.dim-block-name{font-size:16px;font-weight:700;color:inherit}
+.dim-block-status{font-size:12px;font-weight:500;margin-top:2px;opacity:.8}
+.dim-block-subs{display:flex;flex-wrap:wrap;gap:6px}
+.dim-block-sub{font-size:11px;font-weight:500;padding:4px 10px;border-radius:99px;background:rgba(255,255,255,.25)}
+.dim-locked .dim-block-sub{background:rgba(148,163,184,.1)}
+.dim-block-badge{position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center}
+.dim-block-badge svg{width:14px;height:14px}
+.dim-block-progress{margin-top:12px;height:4px;border-radius:99px;background:rgba(255,255,255,.2);overflow:hidden}
+.dim-block-progress-fill{height:100%;border-radius:99px;background:rgba(255,255,255,.6);transition:width .6s ease}
+
+/* Dimension colors */
+.dim-c1{background:linear-gradient(135deg,#2563EB,#3B82F6);color:#fff}
+.dim-c1 .dim-block-icon{background:rgba(255,255,255,.2)}
+.dim-c2{background:linear-gradient(135deg,#059669,#10B981);color:#fff}
+.dim-c2 .dim-block-icon{background:rgba(255,255,255,.2)}
+.dim-c3{background:linear-gradient(135deg,#D97706,#F59E0B);color:#fff}
+.dim-c3 .dim-block-icon{background:rgba(255,255,255,.2)}
+.dim-c4{background:linear-gradient(135deg,#E11D48,#F43F5E);color:#fff}
+.dim-c4 .dim-block-icon{background:rgba(255,255,255,.2)}
+.dim-c5{background:linear-gradient(135deg,#7C3AED,#8B5CF6);color:#fff}
+.dim-c5 .dim-block-icon{background:rgba(255,255,255,.2)}
+.dim-c6{background:linear-gradient(135deg,#0891B2,#06B6D4);color:#fff}
+.dim-c6 .dim-block-icon{background:rgba(255,255,255,.2)}
+
+/* =========================================
+   SURVEY QUESTIONS
+   ========================================= */
+.q-container{animation:slideUp .4s ease}
+.q-number{font-size:13px;color:var(--text-muted);font-weight:500;margin-bottom:12px}
+.q-text{font-size:20px;font-weight:600;line-height:1.4;margin-bottom:28px;letter-spacing:-.01em}
+
+/* Subdimension progress */
+.sub-progress-wrap{margin:20px 0 16px}
+.sub-progress-label{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.sub-progress-name{font-size:14px;font-weight:600;color:var(--primary);display:flex;align-items:center;gap:6px}
+.sub-progress-name svg{width:14px;height:14px}
+.sub-progress-count{font-size:12px;color:var(--text-muted)}
+.sub-progress-bar{height:6px;background:var(--border);border-radius:99px;overflow:hidden}
+.sub-progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),#7C3AED);border-radius:99px;
+  transition:width .5s cubic-bezier(.4,0,.2,1)}
+
+/* Dimension dots (overall) */
+.dim-dots{display:flex;gap:4px;margin-bottom:20px}
+.dim-dot-seg{flex:1;height:4px;border-radius:99px;background:var(--border);transition:background .3s}
+.dim-dot-seg.done{background:var(--primary)}
+.dim-dot-seg.current{background:var(--primary);animation:breathe 1.5s ease infinite}
+
+/* Horizontal scale */
+.scale{display:flex;gap:0;margin-bottom:16px}
+.scale-item{flex:1;text-align:center;cursor:pointer;padding:16px 4px;border:1.5px solid var(--border);
+  background:#fff;transition:all .2s;font-size:13px;font-weight:500;color:var(--text-secondary)}
+.scale-item:first-child{border-radius:10px 0 0 10px}
+.scale-item:last-child{border-radius:0 10px 10px 0}
+.scale-item:not(:first-child){border-left:none}
+.scale-item:hover{background:var(--primary-bg);color:var(--primary)}
+.scale-item.selected{background:var(--primary);color:#fff;border-color:var(--primary)}
+.scale-item .scale-num{font-size:18px;font-weight:700;display:block;margin-bottom:4px}
+
+/* Nav */
+.q-nav{display:flex;gap:12px;margin-top:24px}
+.q-nav .btn{flex:1}
+
+/* Dimension break */
+.break-center{text-align:center;padding:48px 20px}
+.break-stats{display:flex;gap:12px;justify-content:center;margin-top:20px}
+.break-stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 24px;text-align:center}
+.break-stat .val{font-size:22px;font-weight:700;color:var(--text)}
+.break-stat .lbl{font-size:11px;color:var(--text-muted);margin-top:2px}
+
+/* Textarea */
+textarea.field-input{resize:vertical;min-height:100px}
+.char-ct{text-align:right;font-size:12px;color:var(--text-muted);margin-top:4px}
+
+/* Done check */
+.done-check{width:80px;height:80px;border-radius:50%;background:var(--success-bg);display:inline-flex;
+  align-items:center;justify-content:center;margin-bottom:20px}
+.done-check svg{width:40px;height:40px;color:var(--success)}
+.done-check svg path{stroke-dasharray:24;animation:checkDraw .6s ease .3s both}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--text);color:#fff;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:500;
+  transition:transform .3s;z-index:99;display:flex;align-items:center;gap:8px}
+.toast svg{width:16px;height:16px}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* === Responsive === */
+@media(max-width:480px){
+  h1{font-size:24px}h2{font-size:20px}.q-text{font-size:18px}
+  .scale-item{padding:12px 2px;font-size:11px}.scale-item .scale-num{font-size:16px}
+  .dim-block{padding:16px}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     S1: BIENVENIDA
+     ═══════════════════════════════════════ -->
+<div class="screen active" id="s-welcome">
+  <div class="strip"></div>
+  <div class="header">
+    <div class="header-inner">
+      <div class="header-left"><div class="header-dot"></div><span class="header-title">Clima Laboral</span></div>
+      <span class="header-meta">Anónima y confidencial</span>
+    </div>
+  </div>
+  <div class="content-center" style="flex:1">
+    <div class="ani-1">
+      <div class="icon-box" style="background:var(--primary-bg)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+    </div>
+    <h1 class="ani-2">Hola, queremos escucharte</h1>
+    <p class="subtitle ani-3">Tu opinión es el primer paso para construir un mejor lugar de trabajo. Esta encuesta es <strong>anónima</strong> — nadie sabrá quién dijo qué.</p>
+
+    <div class="card ani-4" style="text-align:left;width:100%;max-width:400px">
+      <div class="field" style="margin-bottom:16px">
+        <label>Contraseña de acceso</label>
+        <input type="password" class="field-input" placeholder="La recibiste en tu correo">
+      </div>
+      <button class="btn btn-primary" onclick="goTo('s-access')">Ingresar</button>
+    </div>
+
+    <p style="font-size:13px;color:var(--text-muted);margin-top:16px;display:flex;align-items:center;gap:6px" class="ani-5">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      Duración aprox. 15 minutos
+    </p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     S2: ACCESO (Login/Token) — NUEVO
+     ═══════════════════════════════════════ -->
+<div class="screen" id="s-access">
+  <div class="strip"></div>
+  <div class="header">
+    <div class="header-inner">
+      <div class="header-left"><div class="header-dot"></div><span class="header-title">Acceso</span></div>
+      <span class="header-meta">Anónima y confidencial</span>
+    </div>
+  </div>
+  <div class="content-center" style="flex:1">
+    <div class="icon-box" style="background:var(--primary-bg)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 7h3a5 5 0 015 5 5 5 0 01-5 5h-3m-6 0H6a5 5 0 01-5-5 5 5 0 015-5h3"/>
+        <line x1="8" y1="12" x2="16" y2="12"/></svg>
+    </div>
+    <h2>¿Cómo deseas continuar?</h2>
+    <p class="subtitle" style="max-width:380px">Si ya iniciaste la encuesta antes, usa tu código para retomar donde te quedaste.</p>
+
+    <div style="width:100%;max-width:400px;margin-top:28px">
+      <!-- Opción 1: Ya tengo token -->
+      <div class="card" style="margin-top:0;text-align:left">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <div style="width:36px;height:36px;border-radius:10px;background:var(--primary-bg);display:flex;align-items:center;justify-content:center">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+          </div>
+          <div>
+            <p style="font-weight:600;font-size:14px">Ya tengo un código</p>
+            <p style="font-size:12px;color:var(--text-muted)">Retomar encuesta</p>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:12px">
+          <input type="text" class="field-input" placeholder="Pega tu código aquí…" style="font-family:'Courier New',monospace;font-size:13px">
+        </div>
+        <button class="btn btn-primary" onclick="goTo('s-demo')">Continuar con mi encuesta</button>
+      </div>
+
+      <div class="or-sep">
+        <div class="or-sep-line"></div>
+        <span class="or-sep-text">o bien</span>
+        <div class="or-sep-line"></div>
+      </div>
+
+      <!-- Opción 2: No tengo token -->
+      <button class="btn btn-secondary" onclick="goTo('s-token')" style="gap:10px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><path d="M12 8v8m-4-4h8"/></svg>
+        Es mi primera vez — generar código
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     S3: TOKEN
+     ═══════════════════════════════════════ -->
+<div class="screen" id="s-token">
+  <div class="strip"></div>
+  <div class="header">
+    <div class="header-inner">
+      <div class="header-left"><div class="header-dot"></div><span class="header-title">Clima Laboral</span></div>
+    </div>
+  </div>
+  <div class="content-center" style="flex:1">
+    <div class="icon-box" style="background:var(--success-bg)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 6L9 17l-5-5"/></svg>
+    </div>
+    <h2>Tu código personal</h2>
+    <p class="subtitle">Guárdalo. Si necesitas salir, podrás retomar donde te quedaste.</p>
+
+    <div class="token-card" onclick="copyToken()">
+      <p class="token-val" id="tokenValue">a3f8d1b6-0b3b-4b1a-9c1a-1a2b3c4d5e6f</p>
+      <p class="token-hint">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Toca para copiar
+      </p>
+    </div>
+
+    <div class="alert alert-warn" style="text-align:left;width:100%;max-width:400px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px">
+        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span>Este código es de un solo uso. Una vez que inicies, no podrás usar otro.</span>
+    </div>
+
+    <div style="margin-top:20px;width:100%;max-width:400px">
+      <button class="btn btn-primary" onclick="goTo('s-demo')">Continuar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     S4: DIMENSIONES (bloques) — NUEVO
+     ═══════════════════════════════════════ -->
+<div class="screen" id="s-dimensions">
+  <div class="strip-progress"><div class="strip-fill" style="width:48%"></div></div>
+  <div class="header">
+    <div class="header-inner">
+      <div class="header-left"><div class="header-dot"></div><span class="header-title">Tu encuesta</span></div>
+      <span class="header-meta">48% completado</span>
+    </div>
+  </div>
+  <div class="content">
+    <h2>Dimensiones de la encuesta</h2>
+    <p class="subtitle">Completa cada dimensión en orden. Tu progreso se guarda automáticamente.</p>
+
+    <div class="dim-grid">
+
+      <!-- 1. Credibilidad — COMPLETADA -->
+      <div class="dim-block dim-c1 dim-done" style="animation:cardPop .5s ease .1s both" onclick="goTo('s-survey')">
+        <div class="dim-block-top">
+          <div class="dim-block-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div class="dim-block-info">
+            <div class="dim-block-name">Credibilidad</div>
+            <div class="dim-block-status">Completada</div>
+          </div>
+        </div>
+        <div class="dim-block-subs">
+          <span class="dim-block-sub">Comunicación</span>
+          <span class="dim-block-sub">Capacidad</span>
+          <span class="dim-block-sub">Integridad</span>
+        </div>
+        <div class="dim-block-progress"><div class="dim-block-progress-fill" style="width:100%"></div></div>
+        <div class="dim-block-badge" style="background:rgba(255,255,255,.25)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+      </div>
+
+      <!-- 2. Respeto — COMPLETADA -->
+      <div class="dim-block dim-c2 dim-done" style="animation:cardPop .5s ease .2s both">
+        <div class="dim-block-top">
+          <div class="dim-block-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+          </div>
+          <div class="dim-block-info">
+            <div class="dim-block-name">Respeto</div>
+            <div class="dim-block-status">Completada</div>
+          </div>
+        </div>
+        <div class="dim-block-subs">
+          <span class="dim-block-sub">Apoyo</span>
+          <span class="dim-block-sub">Valoración</span>
+          <span class="dim-block-sub">Colaboración</span>
+        </div>
+        <div class="dim-block-progress"><div class="dim-block-progress-fill" style="width:100%"></div></div>
+        <div class="dim-block-badge" style="background:rgba(255,255,255,.25)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+      </div>
+
+      <!-- 3. Imparcialidad — COMPLETADA -->
+      <div class="dim-block dim-c3 dim-done" style="animation:cardPop .5s ease .3s both">
+        <div class="dim-block-top">
+          <div class="dim-block-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="3" x2="12" y2="15"/><path d="M5 12l3 6h8l3-6"/><circle cx="12" cy="3" r="1"/></svg>
+          </div>
+          <div class="dim-block-info">
+            <div class="dim-block-name">Imparcialidad</div>
+            <div class="dim-block-status">Completada</div>
+          </div>
+        </div>
+        <div class="dim-block-subs">
+          <span class="dim-block-sub">Equidad</span>
+          <span class="dim-block-sub">Ausencia de favoritismo</span>
+          <span class="dim-block-sub">Justicia</span>
+        </div>
+        <div class="dim-block-progress"><div class="dim-block-progress-fill" style="width:100%"></div></div>
+        <div class="dim-block-badge" style="background:rgba(255,255,255,.25)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+      </div>
+
+      <!-- 4. Orgullo — EN PROGRESO -->
+      <div class="dim-block dim-c4 dim-active" style="animation:cardPop .5s ease .4s both" onclick="goTo('s-survey')">
+        <div class="dim-block-top">
+          <div class="dim-block-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <div class="dim-block-info">
+            <div class="dim-block-name">Orgullo</div>
+            <div class="dim-block-status">En progreso — 3 de 7 preguntas</div>
+          </div>
+        </div>
+        <div class="dim-block-subs">
+          <span class="dim-block-sub">Del Equipo</span>
+          <span class="dim-block-sub">Del Trabajo</span>
+          <span class="dim-block-sub">De la Empresa</span>
+        </div>
+        <div class="dim-block-progress"><div class="dim-block-progress-fill" style="width:43%"></div></div>
+        <div class="dim-block-badge" style="background:rgba(255,255,255,.25)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
+
+      <!-- 5. Compañerismo — BLOQUEADA -->
+      <div class="dim-block dim-c5 dim-locked" style="animation:cardPop .5s ease .5s both">
+        <div class="dim-block-top">
+          <div class="dim-block-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          </div>
+          <div class="dim-block-info">
+            <div class="dim-block-name">Compañerismo</div>
+            <div class="dim-block-status">Completa Orgullo primero</div>
+          </div>
+        </div>
+        <div class="dim-block-subs">
+          <span class="dim-block-sub">Hospitalidad</span>
+          <span class="dim-block-sub">Cercanía</span>
+          <span class="dim-block-sub">Sentido de Familia</span>
+        </div>
+        <div class="dim-block-progress"><div class="dim-block-progress-fill" style="width:0%"></div></div>
+        <div class="dim-block-badge" style="background:rgba(148,163,184,.15)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        </div>
+      </div>
+
+      <!-- 6. Seguridad y Capacitación — BLOQUEADA -->
+      <div class="dim-block dim-c6 dim-locked" style="animation:cardPop .5s ease .6s both">
+        <div class="dim-block-top">
+          <div class="dim-block-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+          </div>
+          <div class="dim-block-info">
+            <div class="dim-block-name">Seguridad y Capacitación</div>
+            <div class="dim-block-status">Completa Compañerismo primero</div>
+          </div>
+        </div>
+        <div class="dim-block-subs">
+          <span class="dim-block-sub">Seguridad</span>
+          <span class="dim-block-sub">Capacitación</span>
+        </div>
+        <div class="dim-block-progress"><div class="dim-block-progress-fill" style="width:0%"></div></div>
+        <div class="dim-block-badge" style="background:rgba(148,163,184,.15)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     S5: DEMOGRÁFICOS
+     ═══════════════════════════════════════ -->
+<div class="screen" id="s-demo">
+  <div class="strip"></div>
+  <div class="header">
+    <div class="header-inner">
+      <div class="header-left"><div class="header-dot"></div><span class="header-title">Antes de comenzar</span></div>
+    </div>
+  </div>
+  <div class="content">
+    <h2>Cuéntanos sobre ti</h2>
+    <p class="subtitle">Esta información nos ayuda a comprender los resultados de forma general. Nadie puede saber quién respondió qué.</p>
+
+    <div class="card">
+      <div class="field"><label>Rango de edad</label><select class="field-input"><option value="">— Selecciona —</option><option>18-25</option><option>26-35</option><option>36-45</option><option>46-55</option><option>55+</option></select></div>
+      <div class="field"><label>Sexo</label><select class="field-input"><option value="">— Selecciona —</option><option>Hombre</option><option>Mujer</option><option>Prefiero no decirlo</option></select></div>
+      <div class="field"><label>Antigüedad en la empresa</label><select class="field-input"><option value="">— Selecciona —</option><option>Menos de 1 año</option><option>1-3 años</option><option>4-6 años</option><option>7-10 años</option><option>10+ años</option></select></div>
+      <div class="field"><label>Lugar de trabajo</label><select class="field-input"><option value="">— Selecciona —</option><option>Oficina central</option><option>Planta</option><option>Remoto</option></select></div>
+      <div class="field"><label>Grado académico</label><select class="field-input"><option value="">— Selecciona —</option><option>Preparatoria</option><option>Licenciatura</option><option>Posgrado</option></select></div>
+      <div class="field" style="margin-bottom:0"><label>Cargo</label><select class="field-input"><option value="">— Selecciona —</option><option>Operativo</option><option>Coordinador</option><option>Gerente</option><option>Director</option></select></div>
+    </div>
+
+    <div style="margin-top:24px"><button class="btn btn-primary" onclick="goTo('s-dimensions')">Siguiente</button></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     S6: ENCUESTA (preguntas)
+     ═══════════════════════════════════════ -->
+<div class="screen" id="s-survey">
+  <div class="strip"></div>
+  <div class="header">
+    <div class="header-inner">
+      <div class="header-left"><div class="header-dot"></div><span class="header-title" id="hDim">Orgullo</span></div>
+      <span class="header-meta" id="hCount">1 de 7</span>
+    </div>
+  </div>
+  <div class="content">
+    <!-- Subdimension label + segmented progress (one bar per question) -->
+    <div class="sub-progress-label" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <span class="sub-progress-name" id="subName" style="font-size:14px;font-weight:600;color:var(--primary);display:flex;align-items:center;gap:6px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Del Equipo
+      </span>
+      <span class="sub-progress-count" id="subCount" style="font-size:12px;color:var(--text-muted)">1 de 2</span>
+    </div>
+    <div class="dim-dots" id="dimSegs"></div>
+
+    <!-- Question -->
+    <div class="q-container" id="qContainer">
+      <p class="q-number" id="qNum">Pregunta 4 de 7</p>
+      <p class="q-text" id="qText">¿Los colaboradores están dispuestos a hacer un esfuerzo extra para realizar el trabajo?</p>
+
+      <div class="scale" id="scaleWrap">
+        <div class="scale-item" onclick="pickScale(this)"><span class="scale-num">1</span>Totalmente<br>en desacuerdo</div>
+        <div class="scale-item" onclick="pickScale(this)"><span class="scale-num">2</span>En<br>desacuerdo</div>
+        <div class="scale-item" onclick="pickScale(this)"><span class="scale-num">3</span>De<br>acuerdo</div>
+        <div class="scale-item" onclick="pickScale(this)"><span class="scale-num">4</span>Totalmente<br>de acuerdo</div>
+      </div>
+    </div>
+
+    <div class="q-nav">
+      <button class="btn btn-secondary" onclick="prevQ()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Anterior
+      </button>
+      <button class="btn btn-primary" onclick="nextQ()">
+        Siguiente
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     S7: PAUSA ENTRE DIMENSIONES
+     ═══════════════════════════════════════ -->
+<div class="screen" id="s-dimbreak">
+  <div class="strip"></div>
+  <div class="header">
+    <div class="header-inner">
+      <div class="header-left"><div class="header-dot"></div><span class="header-title">Clima Laboral</span></div>
+    </div>
+  </div>
+  <div class="content-center" style="flex:1">
+    <div class="break-center">
+      <div class="icon-box" style="background:var(--primary-bg)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
+      </div>
+      <h2 id="breakTitle">Dimensión completada</h2>
+      <p class="subtitle" id="breakSub">Completaste <strong>Orgullo</strong>. Vas por buen camino.</p>
+
+      <div class="break-stats">
+        <div class="break-stat"><div class="val" id="bAnswered">38</div><div class="lbl">respondidas</div></div>
+        <div class="break-stat"><div class="val" id="bRemaining">26</div><div class="lbl">restantes</div></div>
+      </div>
+
+      <p style="font-size:14px;color:var(--text-secondary);margin-top:24px;font-style:italic">"Cada respuesta nos acerca a un mejor lugar de trabajo"</p>
+
+      <div style="margin-top:24px;width:100%;max-width:360px;margin-left:auto;margin-right:auto">
+        <button class="btn btn-primary" onclick="goTo('s-open')">
+          Siguiente dimensión
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     S8: PREGUNTAS ABIERTAS
+     ═══════════════════════════════════════ -->
+<div class="screen" id="s-open">
+  <div class="strip"></div>
+  <div class="header">
+    <div class="header-inner">
+      <div class="header-left"><div class="header-dot"></div><span class="header-title">Últimas preguntas</span></div>
+      <span class="header-meta">Opcionales</span>
+    </div>
+  </div>
+  <div class="content">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      <h2>Tu voz con tus palabras</h2>
+    </div>
+    <p class="subtitle">Estas preguntas son opcionales pero muy valiosas. Escríbenos con confianza.</p>
+
+    <div class="card">
+      <div class="field">
+        <label>Si pudieras cambiar algo para hacer de esta empresa un mejor lugar, ¿qué sería?</label>
+        <textarea class="field-input" maxlength="500" oninput="uc(this,'c1')" placeholder="Escribe libremente…"></textarea>
+        <div class="char-ct"><span id="c1">0</span>/500</div>
+      </div>
+      <div class="field">
+        <label>¿Qué hace especial a tu empresa como lugar de trabajo?</label>
+        <textarea class="field-input" maxlength="500" oninput="uc(this,'c2')" placeholder="Escribe libremente…"></textarea>
+        <div class="char-ct"><span id="c2">0</span>/500</div>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label>¿A quién reconocerías como embajador/a de la cultura laboral?</label>
+        <textarea class="field-input" maxlength="300" oninput="uc(this,'c3')" placeholder="Un nombre…"></textarea>
+        <div class="char-ct"><span id="c3">0</span>/300</div>
+      </div>
+    </div>
+    <div style="margin-top:24px"><button class="btn btn-primary" onclick="goTo('s-thanks')">Enviar encuesta</button></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     S9: GRACIAS
+     ═══════════════════════════════════════ -->
+<div class="screen" id="s-thanks">
+  <div class="strip" style="background:var(--success)"></div>
+  <div class="content-center" style="flex:1">
+    <div class="done-check">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 6L9 17l-5-5"/></svg>
+    </div>
+    <h1 style="margin-bottom:8px">Gracias por participar</h1>
+    <p class="subtitle" style="max-width:380px">Tu opinión es valiosa y nos ayuda a mejorar. Los resultados serán compartidos con todo el equipo próximamente.</p>
+
+    <div class="alert alert-info" style="max-width:320px;margin-top:24px;justify-content:center;font-weight:600;gap:6px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+      Encuesta completada al 100%
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+  Código copiado
+</div>
+
+<script>
+/* ── Navigation ── */
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById(id);el.classList.add('active');
+  window.scrollTo(0,0);
+  if(id==='s-survey'){buildSegments();updateUI();}
+}
+
+/* ── Copy token ── */
+function copyToken(){
+  navigator.clipboard.writeText(document.getElementById('tokenValue').textContent).then(()=>{
+    const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);
+  });
+}
+
+/* ── Char count ── */
+function uc(el,id){document.getElementById(id).textContent=el.value.length;}
+
+/* ── Question data (Orgullo dimension for demo) ── */
+const questions = [
+  // Del Equipo (2 preguntas)
+  {sub:"Del Equipo", subIdx:0, qInSub:0, subTotal:2, q:"¿Los colaboradores están dispuestos a hacer un esfuerzo extra para realizar el trabajo?"},
+  {sub:"Del Equipo", subIdx:0, qInSub:1, subTotal:2, q:"¿Cuando veo lo que logramos, me siento orgulloso?"},
+  // Del Trabajo (2 preguntas)
+  {sub:"Del Trabajo", subIdx:1, qInSub:0, subTotal:2, q:"¿Mi trabajo tiene un significado especial; para mí este no es solo un trabajo?"},
+  {sub:"Del Trabajo", subIdx:1, qInSub:1, subTotal:2, q:"¿Siento que mi participación hace una diferencia en la organización?"},
+  // De la Empresa (3 preguntas)
+  {sub:"De la Empresa", subIdx:2, qInSub:0, subTotal:3, q:"¿Me siento bien por la forma en la que contribuimos a la sociedad?"},
+  {sub:"De la Empresa", subIdx:2, qInSub:1, subTotal:3, q:"¿Estoy orgulloso de decirle a otros que trabajo aquí?"},
+  {sub:"De la Empresa", subIdx:2, qInSub:2, subTotal:3, q:"¿Deseo trabajar aquí por un largo tiempo?"},
+];
+
+let cq = 0;
+const dimTotal = questions.length;
+
+/* ── Build segmented progress (one bar per question in current subdimension) ── */
+function buildSegments(){
+  const wrap = document.getElementById('dimSegs');
+  wrap.innerHTML = '';
+  const q = questions[cq];
+  // One segment per question in the current subdimension
+  for(let i = 0; i < q.subTotal; i++){
+    const seg = document.createElement('div');
+    seg.className = 'dim-dot-seg';
+    if(i < q.qInSub) seg.classList.add('done');
+    else if(i === q.qInSub) seg.classList.add('current');
+    wrap.appendChild(seg);
+  }
+}
+
+/* ── Update UI ── */
+function updateUI(){
+  const q = questions[cq];
+
+  // Header
+  document.getElementById('hDim').textContent = 'Orgullo';
+  document.getElementById('hCount').textContent = `${cq+1} de ${dimTotal}`;
+
+  // Subdimension label
+  document.getElementById('subName').innerHTML = `
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    ${q.sub}`;
+  document.getElementById('subCount').textContent = `${q.qInSub + 1} de ${q.subTotal}`;
+
+  // Question
+  document.getElementById('qNum').textContent = `Pregunta ${cq+1} de ${dimTotal}`;
+  document.getElementById('qText').textContent = q.q;
+
+  // Reset scale
+  document.querySelectorAll('.scale-item').forEach(s => s.classList.remove('selected'));
+
+  // Segments
+  buildSegments();
+
+  // Animate
+  const c = document.getElementById('qContainer');
+  c.style.animation = 'none';
+  setTimeout(() => c.style.animation = 'slideUp .35s ease', 10);
+}
+
+/* ── Scale pick ── */
+function pickScale(el){
+  el.closest('.scale').querySelectorAll('.scale-item').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+/* ── Nav ── */
+function nextQ(){
+  if(cq < questions.length - 1){
+    cq++;
+    updateUI();
+  } else {
+    goTo('s-dimbreak');
+  }
+}
+function prevQ(){
+  if(cq > 0){
+    cq--;
+    updateUI();
+  }
+}
+</script>
+</body>
+</html>

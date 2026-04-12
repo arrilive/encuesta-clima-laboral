@@ -1,0 +1,17 @@
+[
+  {
+    "orden": 1,
+  "pregunta": "Si pudieras cambiar algo acerca de tu empresa para hacerla un mejor lugar para trabajar, ¿qué cambiarías?",
+    "limite_caracteres": 500
+  },
+  {
+    "orden": 2,
+    "pregunta": "¿Existe algo especial o único en tu empresa que la caracterice como un gran lugar para trabajar?",
+    "limite_caracteres": 500
+  },
+  {
+    "orden": 3,
+    "pregunta": "¿A quién reconocerías como embajador/a de la cultura laboral de la empresa?",
+    "limite_caracteres": 300
+  }
+]
