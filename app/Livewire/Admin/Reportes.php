@@ -317,7 +317,11 @@ class Reportes extends Component
 
         $completadasFiltradas = $this->getEncuestasBaseQuery()->count();
 
+        $scoringService = app(ClimaScoringService::class);
+        $promedioGeneral = $scoringService->promedioGeneral($this->getBaseQuery());
+
         return view('livewire.admin.reportes', [
+            'promedioGeneral' => $promedioGeneral,
             'completadasFiltradas' => $completadasFiltradas,
             'completadasTotal' => $this->getEncuestasBaseQuery(soloSinFiltrosDemograficos: true)->count(),
             'sinDatos' => $completadasFiltradas === 0,

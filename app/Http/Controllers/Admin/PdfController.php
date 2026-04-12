@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Dimension;
 use App\Models\Respuesta;
 use App\Models\Subdimension;
+use App\Services\ClimaScoringService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
@@ -32,9 +33,8 @@ class PdfController extends Controller
             $respuestasAbiertas = $this->getRespuestasAbiertas($request, $user, $limite);
         }
 
-        $promedioGeneral = count($datosDimensiones) > 0
-            ? array_sum(array_column($datosDimensiones, 'puntaje')) / count($datosDimensiones)
-            : 0;
+        $scoring = app(ClimaScoringService::class);
+        $promedioGeneral = $scoring->promedioGeneral($this->getBaseQuery($request, $user));
 
         $completadas = $this->getBaseQuery($request, $user)->distinct('encuesta_id')->count('encuesta_id');
         $svgs = session('pdf_svgs', []);
