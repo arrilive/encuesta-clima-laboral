@@ -172,21 +172,8 @@
                     <div class="bg-white rounded-2xl shadow-sm p-4">
                         <p class="text-slate-500 text-sm mb-1">Promedio General</p>
                         <div class="flex items-end justify-between">
-                            @php
-                                $colorBadge =
-                                    $promedioGeneral >= 80
-                                        ? 'bg-emerald-50 text-emerald-600'
-                                        : ($promedioGeneral >= 51
-                                            ? 'bg-blue-50 text-blue-600'
-                                            : ($promedioGeneral >= 25
-                                                ? 'bg-amber-50 text-amber-600'
-                                                : 'bg-red-50 text-red-600'));
-                            @endphp
                             <h3 class="text-2xl font-bold text-slate-900">{{ number_format($promedioGeneral, 2) }}</h3>
-                            <span
-                                class="px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider {{ $colorBadge }}">
-                                {{ $promedioGeneral >= 80 ? 'Excelente' : ($promedioGeneral >= 51 ? 'Bueno' : ($promedioGeneral >= 25 ? 'Regular' : 'Crítico')) }}
-                            </span>
+                            <x-badge-clima :puntaje="$promedioGeneral" variant="compact" />
                         </div>
                     </div>
 
@@ -299,28 +286,7 @@
                                                     class="font-bold text-slate-700">{{ number_format($item['puntaje'], 2) }}</span>
                                             </td>
                                             <td class="py-3">
-                                                @php
-                                                    $badge =
-                                                        $item['puntaje'] >= 80
-                                                            ? 'bg-emerald-50 text-emerald-600'
-                                                            : ($item['puntaje'] >= 51
-                                                                ? 'bg-blue-50 text-blue-600'
-                                                                : ($item['puntaje'] >= 25
-                                                                    ? 'bg-amber-50 text-amber-600'
-                                                                    : 'bg-red-50 text-red-600'));
-                                                    $label =
-                                                        $item['puntaje'] >= 80
-                                                            ? 'Excelente'
-                                                            : ($item['puntaje'] >= 51
-                                                                ? 'Buen clima'
-                                                                : ($item['puntaje'] >= 25
-                                                                    ? 'Regular'
-                                                                    : 'Deficiente'));
-                                                @endphp
-                                                <span
-                                                    class="px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider {{ $badge }}">
-                                                    {{ $label }}
-                                                </span>
+                                                <x-badge-clima :puntaje="$item['puntaje']" />
                                             </td>
                                             <td class="py-3 text-right">
                                                 <button wire:click="irNivel2({{ $item['id'] }})"
@@ -432,24 +398,7 @@
             {{-- Cards de secciones --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @foreach ($datosNivel2 as $sub)
-                    @php
-                        $badgeClass =
-                            $sub['puntaje'] >= 80
-                                ? 'bg-emerald-100 text-emerald-700'
-                                : ($sub['puntaje'] >= 51
-                                    ? 'bg-blue-100 text-blue-700'
-                                    : ($sub['puntaje'] >= 25
-                                        ? 'bg-amber-100 text-amber-700'
-                                        : 'bg-red-100 text-red-700'));
-                        $badgeLabel =
-                            $sub['puntaje'] >= 80
-                                ? 'Excelente clima'
-                                : ($sub['puntaje'] >= 51
-                                    ? 'Buen clima'
-                                    : ($sub['puntaje'] >= 25
-                                        ? 'Regular'
-                                        : 'Deficiente'));
-                    @endphp
+
                     <div wire:click="irNivel3({{ $sub['id'] }})"
                         class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex items-center justify-between gap-4
                                cursor-pointer hover:border-blue-300 hover:shadow-md transition-all duration-200">
@@ -461,10 +410,7 @@
                             <div class="text-right">
                                 <p class="text-xl font-bold text-slate-900">{{ number_format($sub['puntaje'], 2) }}
                                 </p>
-                                <span
-                                    class="px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider {{ $badgeClass }}">
-                                    {{ $badgeLabel }}
-                                </span>
+                                <x-badge-clima :puntaje="$sub['puntaje']" />
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                 stroke-width="2.5" stroke="currentColor" class="w-4 h-4 text-blue-400 shrink-0">
