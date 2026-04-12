@@ -173,23 +173,19 @@
                         <p class="text-slate-500 text-sm mb-1">Promedio General</p>
                         <div class="flex items-end justify-between">
                             @php
-                                $promedioGral =
-                                    count($datosNivel1) > 0
-                                        ? array_sum(array_column($datosNivel1, 'puntaje')) / count($datosNivel1)
-                                        : 0;
                                 $colorBadge =
-                                    $promedioGral >= 80
+                                    $promedioGeneral >= 80
                                         ? 'bg-emerald-50 text-emerald-600'
-                                        : ($promedioGral >= 51
+                                        : ($promedioGeneral >= 51
                                             ? 'bg-blue-50 text-blue-600'
-                                            : ($promedioGral >= 25
+                                            : ($promedioGeneral >= 25
                                                 ? 'bg-amber-50 text-amber-600'
                                                 : 'bg-red-50 text-red-600'));
                             @endphp
-                            <h3 class="text-2xl font-bold text-slate-900">{{ number_format($promedioGral, 2) }}</h3>
+                            <h3 class="text-2xl font-bold text-slate-900">{{ number_format($promedioGeneral, 2) }}</h3>
                             <span
                                 class="px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider {{ $colorBadge }}">
-                                {{ $promedioGral >= 80 ? 'Excelente' : ($promedioGral >= 51 ? 'Bueno' : ($promedioGral >= 25 ? 'Regular' : 'Crítico')) }}
+                                {{ $promedioGeneral >= 80 ? 'Excelente' : ($promedioGeneral >= 51 ? 'Bueno' : ($promedioGeneral >= 25 ? 'Regular' : 'Crítico')) }}
                             </span>
                         </div>
                     </div>
