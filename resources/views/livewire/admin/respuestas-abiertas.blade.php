@@ -50,7 +50,7 @@
 
                 {{-- Paginación --}}
                 <div class="mt-6">
-                    {{ $respuestasAbiertas->links() }}
+                    {{ $respuestasAbiertas->links(data: ['scrollTo' => false]) }}
                 </div>
             @else
                 <div class="text-center py-10 page-enter" wire:key="sin-respuestas-{{ $preguntaAbiertaActiva }}">

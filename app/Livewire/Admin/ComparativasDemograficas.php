@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\Dimension;
 use App\Models\Respuesta;
+use App\Services\ClimaScoringService;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Reactive;
 use Livewire\Component;
@@ -94,44 +95,24 @@ class ComparativasDemograficas extends Component
         $fk = $config['fk'];
         $tabla = $config['tabla'];
 
-        // 1 query agrupada en lugar del doble loop
-        $resultados = (clone $this->getBaseQuery())
-            ->whereHas('opcionRespuesta', fn ($q) => $q->where('valor_numerico', '!=', 0)
-            )
-            ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
-            ->join('encuestas as enc_join', 'respuestas.encuesta_id', '=', 'enc_join.id')
-            ->join('datos_demograficos', 'enc_join.id', '=', 'datos_demograficos.encuesta_id')
-            ->join('preguntas', 'respuestas.pregunta_id', '=', 'preguntas.id')
-            ->join('subdimensiones', 'preguntas.subdimension_id', '=', 'subdimensiones.id')
-            ->selectRaw("subdimensiones.dimension_id, datos_demograficos.{$fk} as grupo_id, AVG(opciones_respuesta.valor_numerico) as promedio")
-            ->groupBy('subdimensiones.dimension_id', "datos_demograficos.{$fk}")
-            ->get()
-            ->groupBy('grupo_id');
-
+        $scoringService = app(ClimaScoringService::class);
         $dimensiones = Dimension::orderBy('orden')->get();
         $labelsDemograficos = DB::table($tabla)->orderBy('orden')->get();
         $categorias = $dimensiones->pluck('nombre')->toArray();
         $seriesData = [];
 
+        // 1. Usar el servicio centralizado para obtener los puntajes agrupados
+        $resultadosPorGrupo = $scoringService->scoresPorDimensionAgrupado($this->getBaseQuery(), $fk);
+
+        // 2. Mapear al formato esperado por el gráfico
         foreach ($labelsDemograficos as $labelObj) {
-            $grupoResultados = $resultados->get($labelObj->id, collect());
-            $puntajesPorDimension = $grupoResultados->keyBy('dimension_id');
-            $puntajes = [];
-            $hasData = false;
+            $scoresGrupo = $resultadosPorGrupo->get($labelObj->id);
 
-            foreach ($dimensiones as $dimension) {
-                $row = $puntajesPorDimension->get($dimension->id);
-
-                if ($row && $row->promedio !== null) {
-                    $puntajes[] = round((($row->promedio - 1) / 2) * 100, 1);
-                    $hasData = true;
-                } else {
-                    $puntajes[] = 0.0;
-                }
-            }
-
-            if ($hasData) {
-                $seriesData[] = ['name' => $labelObj->opcion, 'data' => $puntajes];
+            if ($scoresGrupo) {
+                $seriesData[] = [
+                    'name' => $labelObj->opcion,
+                    'data' => $scoresGrupo->map(fn ($s) => $s['puntaje'] ?? 0.0)->toArray(),
+                ];
             }
         }
 

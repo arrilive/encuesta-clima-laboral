@@ -1,9 +1,8 @@
 <?php
 
 use App\Livewire\Encuesta\FormularioDemografico;
-use App\Models\Encuesta;
 use App\Models\DatoDemografico;
-use Database\Seeders\DemograficosSeeder;
+use App\Models\Encuesta;
 use Livewire\Livewire;
 
 function seedDemograficos(): void
@@ -46,8 +45,8 @@ test('mount carga datos demograficos previos si existen', function () {
     $sexo = \App\Models\Sexo::first();
     DatoDemografico::factory()->create([
         'encuesta_id' => $encuesta->id,
-        'edad_id'     => $edad->id,
-        'sexo_id'     => $sexo->id,
+        'edad_id' => $edad->id,
+        'sexo_id' => $sexo->id,
     ]);
 
     Livewire::test(FormularioDemografico::class, ['token' => $encuesta->token])
@@ -81,12 +80,12 @@ test('continuar redirige a dimensiones cuando todos los campos son validos', fun
     seedDemograficos();
     $encuesta = Encuesta::factory()->asignada()->create();
 
-    $edad       = \App\Models\Edad::first();
-    $sexo       = \App\Models\Sexo::first();
+    $edad = \App\Models\Edad::first();
+    $sexo = \App\Models\Sexo::first();
     $antiguedad = \App\Models\Antiguedad::first();
-    $lugar      = \App\Models\LugarTrabajo::first();
-    $grado      = \App\Models\GradoAcademico::first();
-    $cargo      = \App\Models\Cargo::first();
+    $lugar = \App\Models\LugarTrabajo::first();
+    $grado = \App\Models\GradoAcademico::first();
+    $cargo = \App\Models\Cargo::first();
 
     Livewire::test(FormularioDemografico::class, ['token' => $encuesta->token])
         ->set('edad_id', $edad->id)

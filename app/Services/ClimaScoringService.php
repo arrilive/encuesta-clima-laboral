@@ -21,26 +21,38 @@ class ClimaScoringService
      */
     public function scoresPorDimension(Builder $baseQuery): Collection
     {
-        $dimensiones = Dimension::orderBy('orden')->get();
+        $dimensiones = Dimension::with('subdimensiones')->orderBy('orden')->get();
 
-        $promedios = (clone $baseQuery)
-            ->whereHas('opcionRespuesta', fn (Builder $q) => $q->where('valor_numerico', '!=', 0)
-            )
+        $promediosSub = (clone $baseQuery)
+            ->whereHas('opcionRespuesta', fn (Builder $q) => $q->where('valor_numerico', '!=', 0))
             ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
             ->join('preguntas', 'respuestas.pregunta_id', '=', 'preguntas.id')
-            ->join('subdimensiones', 'preguntas.subdimension_id', '=', 'subdimensiones.id')
-            ->selectRaw('subdimensiones.dimension_id, AVG(opciones_respuesta.valor_numerico) as promedio')
-            ->groupBy('subdimensiones.dimension_id')
+            ->selectRaw('preguntas.subdimension_id, AVG(opciones_respuesta.valor_numerico) as promedio')
+            ->groupBy('preguntas.subdimension_id')
             ->get()
-            ->keyBy('dimension_id');
+            ->keyBy('subdimension_id');
 
-        return $dimensiones->map(fn (Dimension $d) => [
-            'id' => $d->id,
-            'nombre' => $d->nombre,
-            'puntaje' => isset($promedios[$d->id])
-                ? round((($promedios[$d->id]->promedio - 1) / 2) * 100, 1)
-                : 0.0,
-        ])->values();
+        return $dimensiones->map(function (Dimension $d) use ($promediosSub) {
+            $puntajesSub = $d->subdimensiones->map(function ($sub) use ($promediosSub) {
+                if (isset($promediosSub[$sub->id])) {
+                    $avg = $promediosSub[$sub->id]->promedio;
+
+                    return (($avg - 1) / 2) * 100;
+                }
+
+                return null;
+            })->filter(fn ($p) => $p !== null);
+
+            $puntajeDimension = $puntajesSub->count() > 0
+                ? round($puntajesSub->average(), 1)
+                : null;
+
+            return [
+                'id' => $d->id,
+                'nombre' => $d->nombre,
+                'puntaje' => $puntajeDimension,
+            ];
+        })->values();
     }
 
     /**
@@ -80,15 +92,62 @@ class ClimaScoringService
      */
     public function promedioGeneral(Builder $baseQuery): float
     {
-        $result = (clone $baseQuery)
-            ->whereHas('opcionRespuesta', fn (Builder $q) => $q->where('valor_numerico', '!=', 0))
-            ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
-            ->avg('opciones_respuesta.valor_numerico');
+        $scores = $this->scoresPorDimension($baseQuery);
+        $dimensionesValidas = $scores->whereNotNull('puntaje');
 
-        if ($result === null) {
+        if ($dimensionesValidas->isEmpty()) {
             return 0.0;
         }
 
-        return round((($result - 1) / 2) * 100, 1);
+        return round($dimensionesValidas->avg('puntaje'), 1);
+    }
+
+    /**
+     * Calcula los puntajes por dimensión agrupados por un campo demográfico.
+     * Útil para gráficos comparativos manteniendo la consistencia matemática.
+     *
+     * @return Collection<int, Collection<int, array{id: int, nombre: string, puntaje: float|null}>>
+     */
+    public function scoresPorDimensionAgrupado(Builder $baseQuery, string $fkDemografico): Collection
+    {
+        $dimensiones = Dimension::with('subdimensiones')->orderBy('orden')->get();
+
+        $promedios = (clone $baseQuery)
+            ->whereHas('opcionRespuesta', fn (Builder $q) => $q->where('valor_numerico', '!=', 0))
+            ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
+            ->join('encuestas as enc_join', 'respuestas.encuesta_id', '=', 'enc_join.id')
+            ->join('datos_demograficos', 'enc_join.id', '=', 'datos_demograficos.encuesta_id')
+            ->join('preguntas', 'respuestas.pregunta_id', '=', 'preguntas.id')
+            ->selectRaw("preguntas.subdimension_id, datos_demograficos.{$fkDemografico} as grupo_id, AVG(opciones_respuesta.valor_numerico) as promedio")
+            ->groupBy('preguntas.subdimension_id', "datos_demograficos.{$fkDemografico}")
+            ->get();
+
+        $resultadosPorGrupo = $promedios->groupBy('grupo_id');
+
+        return $resultadosPorGrupo->map(function ($filasGrupo) use ($dimensiones) {
+            $filasGrupoSub = $filasGrupo->keyBy('subdimension_id');
+
+            return $dimensiones->map(function (Dimension $d) use ($filasGrupoSub) {
+                $puntajesSub = $d->subdimensiones->map(function ($sub) use ($filasGrupoSub) {
+                    if (isset($filasGrupoSub[$sub->id])) {
+                        $avg = $filasGrupoSub[$sub->id]->promedio;
+
+                        return (($avg - 1) / 2) * 100;
+                    }
+
+                    return null;
+                })->filter(fn ($p) => $p !== null);
+
+                $puntajeDimension = $puntajesSub->count() > 0
+                    ? round($puntajesSub->average(), 1)
+                    : null;
+
+                return [
+                    'id' => $d->id,
+                    'nombre' => $d->nombre,
+                    'puntaje' => $puntajeDimension,
+                ];
+            });
+        });
     }
 }

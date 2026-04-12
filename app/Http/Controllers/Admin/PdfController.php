@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Dimension;
 use App\Models\Respuesta;
 use App\Models\Subdimension;
 use App\Services\ClimaScoringService;
@@ -109,39 +108,24 @@ class PdfController extends Controller
 
     private function getDatosDimensiones(Request $request, $user): array
     {
-        $datos = [];
-        $dimensiones = Dimension::orderBy('orden')->get();
-        foreach ($dimensiones as $d) {
-            $avg = $this->getBaseQuery($request, $user)
-                ->whereHas('pregunta.subdimension', fn ($q) => $q->where('dimension_id', $d->id))
-                ->whereHas('opcionRespuesta', fn ($q) => $q->where('valor_numerico', '!=', 0))
-                ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
-                ->avg('opciones_respuesta.valor_numerico');
+        $scoring = app(ClimaScoringService::class);
 
-            $datos[] = [
-                'id' => $d->id,
-                'nombre' => $d->nombre,
-                'puntaje' => $avg !== null ? round((($avg - 1) / 2) * 100, 1) : 0.0,
-            ];
-        }
-
-        return $datos;
+        return $scoring->scoresPorDimension($this->getBaseQuery($request, $user))->toArray();
     }
 
     private function getDatosSubdimensiones(Request $request, $user): array
     {
+        $scoring = app(ClimaScoringService::class);
+        $scores = $scoring->scoresPorSubdimension($this->getBaseQuery($request, $user));
+
         $datos = [];
         $subdimensiones = Subdimension::with('dimension')->orderBy('dimension_id')->orderBy('orden')->get();
-        foreach ($subdimensiones as $s) {
-            $avg = $this->getBaseQuery($request, $user)
-                ->whereHas('pregunta', fn ($q) => $q->where('subdimension_id', $s->id))
-                ->whereHas('opcionRespuesta', fn ($q) => $q->where('valor_numerico', '!=', 0))
-                ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
-                ->avg('opciones_respuesta.valor_numerico');
 
+        foreach ($subdimensiones as $s) {
+            $score = $scores->firstWhere('id', $s->id);
             $datos[$s->dimension->nombre][] = [
                 'nombre' => $s->nombre,
-                'puntaje' => $avg !== null ? round((($avg - 1) / 2) * 100, 1) : 0.0,
+                'puntaje' => $score['puntaje'] ?? 0.0,
             ];
         }
 

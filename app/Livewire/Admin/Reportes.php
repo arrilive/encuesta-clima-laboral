@@ -198,14 +198,16 @@ class Reportes extends Component
 
     public function getDatosNivel2(): array
     {
-        return Subdimension::where('dimension_id', $this->dimensionActivaId)
-            ->orderBy('orden')
-            ->get()
-            ->map(fn ($s) => [
-                'id' => $s->id,
-                'nombre' => $s->nombre,
-                'puntaje' => $this->calcularPuntajeSubdimension($s->id),
-            ])->toArray();
+        $scoringService = app(ClimaScoringService::class);
+        $baseQuery = $this->getBaseQuery();
+        $allScores = $scoringService->scoresPorSubdimension($baseQuery);
+
+        // Filtrar solo las de la dimensión activa
+        $subIds = Subdimension::where('dimension_id', $this->dimensionActivaId)
+            ->pluck('id')
+            ->toArray();
+
+        return $allScores->whereIn('id', $subIds)->values()->toArray();
     }
 
     public function getDistribucionAgregadaNivel2(): array
@@ -223,23 +225,6 @@ class Reportes extends Component
                 'total' => (int) $row->total,
             ])
             ->toArray();
-    }
-
-    protected function calcularPuntajeSubdimension(int $subdimensionId): float
-    {
-        $result = (clone $this->getBaseQuery())
-            ->whereHas('pregunta', fn ($q) => $q->where('subdimension_id', $subdimensionId)
-            )
-            ->whereHas('opcionRespuesta', fn ($q) => $q->where('valor_numerico', '!=', 0)
-            )
-            ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
-            ->avg('opciones_respuesta.valor_numerico');
-
-        if ($result === null) {
-            return 0.0;
-        }
-
-        return round((($result - 1) / 2) * 100, 1);
     }
 
     // ── NIVEL 3: PREGUNTAS INDIVIDUALES ──────────────────────────────────
@@ -317,13 +302,18 @@ class Reportes extends Component
 
         $completadasFiltradas = $this->getEncuestasBaseQuery()->count();
 
+        $totalTokens = \App\Models\Encuesta::query()
+            ->when($user->role === 'admin_empresa', fn ($q) => $q->where('empresa_id', $user->empresa_id))
+            ->when($user->role === 'super_admin' && $this->filtroEmpresaId, fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId))
+            ->count();
+
         $scoringService = app(ClimaScoringService::class);
         $promedioGeneral = $scoringService->promedioGeneral($this->getBaseQuery());
 
         return view('livewire.admin.reportes', [
             'promedioGeneral' => $promedioGeneral,
             'completadasFiltradas' => $completadasFiltradas,
-            'completadasTotal' => $this->getEncuestasBaseQuery(soloSinFiltrosDemograficos: true)->count(),
+            'totalTokens' => $totalTokens,
             'sinDatos' => $completadasFiltradas === 0,
             'empresas' => $user->role === 'super_admin' ? Empresa::orderBy('nombre')->get() : collect(),
             'dimensionActiva' => $this->dimensionActivaId ? Dimension::find($this->dimensionActivaId) : null,

@@ -68,9 +68,9 @@ test('respuestas abiertas se muestran cuando mostrarRespuestasAbiertas es true',
     $pregunta = PreguntaAbierta::orderBy('orden')->first();
 
     RespuestaAbierta::create([
-        'encuesta_id'        => $encuesta->id,
+        'encuesta_id' => $encuesta->id,
         'pregunta_abierta_id' => $pregunta->id,
-        'texto'              => 'Respuesta de prueba',
+        'texto' => 'Respuesta de prueba',
     ]);
 
     Livewire::actingAs($user)
@@ -88,9 +88,9 @@ test('admin_empresa solo ve respuestas de su empresa', function () {
     $pregunta = PreguntaAbierta::orderBy('orden')->first();
 
     RespuestaAbierta::create([
-        'encuesta_id'         => $encuestaOtra->id,
+        'encuesta_id' => $encuestaOtra->id,
         'pregunta_abierta_id' => $pregunta->id,
-        'texto'               => 'Respuesta secreta de otra empresa',
+        'texto' => 'Respuesta secreta de otra empresa',
     ]);
 
     Livewire::actingAs($user)

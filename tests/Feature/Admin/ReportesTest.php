@@ -74,7 +74,7 @@ it('prefiero no responder (valor_numerico = 0) se excluye del cálculo', functio
     $datosNivel1 = $component->instance()->getDatosNivel1();
     $puntaje = collect($datosNivel1)->firstWhere('id', $dimension->id)['puntaje'];
 
-    expect($puntaje)->toBe(0.0);
+    expect($puntaje)->toBeNull();
 });
 
 it('admin_empresa solo ve datos de su empresa', function () {
@@ -101,7 +101,7 @@ it('admin_empresa solo ve datos de su empresa', function () {
     $datosNivel1 = $component->instance()->getDatosNivel1();
     $puntaje = collect($datosNivel1)->firstWhere('id', $dimension->id)['puntaje'];
 
-    expect($puntaje)->toBe(0.0);
+    expect($puntaje)->toBeNull();
 });
 
 it('super_admin sin filtro ve datos de todas las empresas', function () {
@@ -192,8 +192,8 @@ it('getDatosNivel2 retorna subdimensiones de la dimension activa', function () {
 
     foreach ($preguntas as $pregunta) {
         Respuesta::create([
-            'encuesta_id'        => $encuesta->id,
-            'pregunta_id'        => $pregunta->id,
+            'encuesta_id' => $encuesta->id,
+            'pregunta_id' => $pregunta->id,
             'opcion_respuesta_id' => $opcion->id,
         ]);
     }
@@ -220,8 +220,8 @@ it('getDatosNivel3 retorna preguntas de la subdimension activa', function () {
 
     foreach ($preguntas as $pregunta) {
         Respuesta::create([
-            'encuesta_id'        => $encuesta->id,
-            'pregunta_id'        => $pregunta->id,
+            'encuesta_id' => $encuesta->id,
+            'pregunta_id' => $pregunta->id,
             'opcion_respuesta_id' => $opcion->id,
         ]);
     }

@@ -12,7 +12,7 @@
                     <div class="my-4">
                         @if($clima['promedio_general'] > 0)
                             <p class="text-4xl font-extrabold text-slate-900 leading-none mb-3">
-                                {{ $clima['promedio_general'] }}
+                                {{ number_format($clima['promedio_general'], 1) }}
                             </p>
                             @php
                                 $p = $clima['promedio_general'];
@@ -48,7 +48,7 @@
                                 <p class="text-xs text-slate-400 mb-0.5">Más alta</p>
                                 <p class="text-sm font-semibold text-slate-700">{{ $clima['dimension_alta']['nombre'] }}</p>
                             </div>
-                            <span class="text-2xl font-bold text-emerald-600 tabular-nums">{{ $clima['dimension_alta']['puntaje'] }}</span>
+                            <span class="text-2xl font-bold text-emerald-600 tabular-nums">{{ number_format($clima['dimension_alta']['puntaje'], 1) }}</span>
                         </div>
                         <div class="border-t border-slate-100"></div>
                     @endif
@@ -58,7 +58,7 @@
                                 <p class="text-xs text-slate-400 mb-0.5">Más baja</p>
                                 <p class="text-sm font-semibold text-slate-700">{{ $clima['dimension_baja']['nombre'] }}</p>
                             </div>
-                            <span class="text-2xl font-bold text-red-500 tabular-nums">{{ $clima['dimension_baja']['puntaje'] }}</span>
+                            <span class="text-2xl font-bold text-red-500 tabular-nums">{{ number_format($clima['dimension_baja']['puntaje'], 1) }}</span>
                         </div>
                     @endif
                     @if(!$clima['dimension_alta'] && !$clima['dimension_baja'])
@@ -75,7 +75,7 @@
                                 <p class="text-xs text-slate-400 mb-0.5">Más alta</p>
                                 <p class="text-sm font-semibold text-slate-700">{{ $clima['subdimension_alta']['nombre'] }}</p>
                             </div>
-                            <span class="text-2xl font-bold text-emerald-600 tabular-nums">{{ $clima['subdimension_alta']['puntaje'] }}</span>
+                            <span class="text-2xl font-bold text-emerald-600 tabular-nums">{{ number_format($clima['subdimension_alta']['puntaje'], 1) }}</span>
                         </div>
                         <div class="border-t border-slate-100"></div>
                     @endif
@@ -85,7 +85,7 @@
                                 <p class="text-xs text-slate-400 mb-0.5">Más baja</p>
                                 <p class="text-sm font-semibold text-slate-700">{{ $clima['subdimension_baja']['nombre'] }}</p>
                             </div>
-                            <span class="text-2xl font-bold text-red-500 tabular-nums">{{ $clima['subdimension_baja']['puntaje'] }}</span>
+                            <span class="text-2xl font-bold text-red-500 tabular-nums">{{ number_format($clima['subdimension_baja']['puntaje'], 1) }}</span>
                         </div>
                     @endif
                     @if(!$clima['subdimension_alta'] && !$clima['subdimension_baja'])
@@ -276,7 +276,7 @@
                                     <div class="w-32 bg-slate-100 rounded-full h-1.5 hidden sm:block">
                                         <div class="bg-blue-500 h-1.5 rounded-full" style="width: {{ $empresa['puntaje'] }}%"></div>
                                     </div>
-                                    <span class="text-sm font-bold text-slate-900 w-10 text-right tabular-nums">{{ $empresa['puntaje'] }}</span>
+                                    <span class="text-sm font-bold text-slate-900 w-10 text-right tabular-nums">{{ number_format($empresa['puntaje'], 1) }}</span>
                                 </div>
                             </div>
                         @endforeach
