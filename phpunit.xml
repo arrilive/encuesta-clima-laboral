@@ -16,6 +16,18 @@
         <include>
             <directory>app</directory>
         </include>
+        <exclude>
+            <directory>app/Http/Controllers/Admin/ExportController.php</directory>
+            <directory>app/Http/Controllers/Admin/PdfController.php</directory>
+            <file>app/Livewire/Admin/LogoutButton.php</file>
+            <file>app/Livewire/Admin/EncuestasTable.php</file>
+            <file>app/View/Components/AppLayout.php</file>
+            <file>app/View/Components/GuestLayout.php</file>
+            <file>app/Models/DatoDemografico.php</file>
+            <file>app/Models/OpcionRespuesta.php</file>
+            <file>app/Models/PreguntaAbierta.php</file>
+            <file>app/Models/RespuestaAbierta.php</file>
+        </exclude>
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>

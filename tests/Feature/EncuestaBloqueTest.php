@@ -327,3 +327,64 @@ test('finalizar marca la encuesta como completada', function () {
 
     expect($encuesta->fresh()->estado)->toBe('completado');
 });
+
+test('updatedRespuestas guarda respuesta abierta en BD', function () {
+    seedEncuesta();
+    app()['db']->table('preguntas_abiertas')->count() === 0
+        && (new \Database\Seeders\PreguntasAbiertasSeeder)->run();
+    $encuesta = Encuesta::factory()->create(['estado' => 'en_progreso']);
+    \App\Models\DatoDemografico::factory()->create(['encuesta_id' => $encuesta->id]);
+    $pregunta = \App\Models\PreguntaAbierta::orderBy('orden')->first();
+
+    Livewire::test(\App\Livewire\Encuesta\PreguntasAbiertas::class, ['token' => $encuesta->token])
+        ->set("respuestas.{$pregunta->id}", 'Mi respuesta de prueba');
+
+    expect(\App\Models\RespuestaAbierta::where('encuesta_id', $encuesta->id)
+        ->where('pregunta_abierta_id', $pregunta->id)
+        ->exists())->toBeTrue();
+});
+
+test('updatedRespuestas no guarda si el texto supera 300 caracteres', function () {
+    seedEncuesta();
+    app()['db']->table('preguntas_abiertas')->count() === 0
+        && (new \Database\Seeders\PreguntasAbiertasSeeder)->run();
+    $encuesta = Encuesta::factory()->create(['estado' => 'en_progreso']);
+    \App\Models\DatoDemografico::factory()->create(['encuesta_id' => $encuesta->id]);
+    $pregunta = \App\Models\PreguntaAbierta::orderBy('orden')->first();
+    $textoLargo = str_repeat('a', 301);
+
+    Livewire::test(\App\Livewire\Encuesta\PreguntasAbiertas::class, ['token' => $encuesta->token])
+        ->set("respuestas.{$pregunta->id}", $textoLargo);
+
+    expect(\App\Models\RespuestaAbierta::where('encuesta_id', $encuesta->id)->exists())->toBeFalse();
+});
+
+test('finalizar marca encuesta como completada y redirige a gracias', function () {
+    seedEncuesta();
+    $encuesta = Encuesta::factory()->create(['estado' => 'en_progreso']);
+    \App\Models\DatoDemografico::factory()->create(['encuesta_id' => $encuesta->id]);
+
+    Livewire::test(\App\Livewire\Encuesta\PreguntasAbiertas::class, ['token' => $encuesta->token])
+        ->call('finalizar')
+        ->assertRedirect(route('encuesta.gracias', $encuesta->token));
+
+    expect($encuesta->fresh()->estado)->toBe('completado');
+});
+
+test('bloque rechaza dimension fuera de rango', function () {
+    seedEncuesta();
+    $encuesta = Encuesta::factory()->asignada()->create();
+    \App\Models\DatoDemografico::factory()->create(['encuesta_id' => $encuesta->id]);
+
+    $this->get(route('encuesta.bloque', ['token' => $encuesta->token, 'dimension' => 7]))
+        ->assertStatus(404);
+});
+
+test('bloque redirige a dimensiones si el usuario se adelanta', function () {
+    seedEncuesta();
+    $encuesta = Encuesta::factory()->asignada()->create();
+    \App\Models\DatoDemografico::factory()->create(['encuesta_id' => $encuesta->id]);
+
+    $this->get(route('encuesta.bloque', ['token' => $encuesta->token, 'dimension' => 3]))
+        ->assertRedirect(route('encuesta.dimensiones', $encuesta->token));
+});

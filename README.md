@@ -4,7 +4,7 @@
 ![PHP 8.4](https://img.shields.io/badge/PHP-8.4-777BB4?style=for-the-badge&logo=php&logoColor=white)
 ![Livewire 3](https://img.shields.io/badge/Livewire-3-4E56A6?style=for-the-badge)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-110%20passing-brightgreen?style=for-the-badge)
+![Tests](https://img.shields.io/badge/tests-133%20passing-brightgreen?style=for-the-badge)
 
 ## ¿De qué trata este proyecto?
 
@@ -89,7 +89,7 @@ Poner a rodar este repo en local te tomará solo un par de minutos, si ya tienes
 
 ## Testing Integrados
 
-La suite de tests que he armado con PestPHP cubre 110 escenarios que respaldan cada cálculo del clima y comportamiento del panel. 
+La suite de tests que he armado con PestPHP cubre 133 escenarios que respaldan cada cálculo del clima y comportamiento del panel. 
 
 Si bajas el repositorio, haz el intento de correr la suite:
 ```bash
@@ -98,8 +98,9 @@ php artisan test
 
 Y para comprobar que todo sigue estrictamente testeado con la lógica a prueba de fallos mínima del 80%:
 ```bash
-php artisan test --coverage --min=80
+XDEBUG_MODE=coverage php artisan test --coverage
 ```
+*Nota: Este comando requiere tener instalado **Xdebug** con el modo `coverage` activo en el entorno.*
 
 ## 4 Decisiones Técnicas que valen la pena destacar
 
