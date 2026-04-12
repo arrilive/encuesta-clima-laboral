@@ -17,9 +17,9 @@ class AdminSeeder extends Seeder
         User::firstOrCreate(
             ['email' => env('SUPER_ADMIN_EMAIL')],
             [
-                'name'       => 'Super Admin',
-                'password'   => bcrypt($password),
-                'role'       => 'super_admin',
+                'name' => 'Super Admin',
+                'password' => bcrypt($password),
+                'role' => 'super_admin',
                 'empresa_id' => null,
             ]
         );
@@ -30,9 +30,9 @@ class AdminSeeder extends Seeder
         User::firstOrCreate(
             ['email' => env('ADMIN_EMPRESA_EMAIL')],
             [
-                'name'       => 'Admin Empresa Demo',
-                'password'   => bcrypt($password),
-                'role'       => 'admin_empresa',
+                'name' => 'Admin Empresa Demo',
+                'password' => bcrypt($password),
+                'role' => 'admin_empresa',
                 'empresa_id' => $empresa->id,
             ]
         );

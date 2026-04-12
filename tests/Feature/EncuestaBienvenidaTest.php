@@ -47,7 +47,7 @@ test('redirige a pantalla de acceso cuando contraseña es correcta aunque no hay
 // ---------------------------------------------------------------------------
 
 test('acceso con contraseña correcta redirige a pantalla de elección', function () {
-    $empresa  = Empresa::factory()->create();
+    $empresa = Empresa::factory()->create();
     Encuesta::factory()->for($empresa)->create(); // disponible
 
     $response = $this->post(route('encuesta.acceso'), ['password' => 'test1234']);

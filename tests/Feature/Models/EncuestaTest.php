@@ -2,7 +2,6 @@
 
 use App\Models\Empresa;
 use App\Models\Encuesta;
-use App\Models\Respuesta;
 
 test('puede crearse con factory y tiene token único', function () {
     // Arrange & Act

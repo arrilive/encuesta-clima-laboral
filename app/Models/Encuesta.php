@@ -75,14 +75,14 @@ class Encuesta extends Model
     public function scopeEnAdvertencia(Builder $query, int $dias = 7, int $diasRiesgo = 14): Builder
     {
         return $query->where('estado', 'asignado')
-                    ->where('fecha_asignacion', '<', now()->subDays($dias))
-                    ->where('fecha_asignacion', '>=', now()->subDays($diasRiesgo));
+            ->where('fecha_asignacion', '<', now()->subDays($dias))
+            ->where('fecha_asignacion', '>=', now()->subDays($diasRiesgo));
     }
 
     public function scopeEnRiesgo(Builder $query, int $dias = 14): Builder
     {
         return $query->where('estado', 'asignado')
-                    ->where('fecha_asignacion', '<', now()->subDays($dias));
+            ->where('fecha_asignacion', '<', now()->subDays($dias));
     }
 
     // -------------------------------------------------------------------------
@@ -97,7 +97,7 @@ class Encuesta extends Model
     public function asignar(): void
     {
         $this->update([
-            'estado'           => 'asignado',
+            'estado' => 'asignado',
             'fecha_asignacion' => now(),
         ]);
     }
@@ -105,7 +105,7 @@ class Encuesta extends Model
     public function marcarComoCompletada(): void
     {
         $this->update([
-            'estado'           => 'completado',
+            'estado' => 'completado',
             'fecha_completada' => now(),
         ]);
     }

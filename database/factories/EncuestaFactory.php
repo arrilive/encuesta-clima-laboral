@@ -17,11 +17,11 @@ class EncuestaFactory extends Factory
     public function definition(): array
     {
         return [
-            'token'              => (string) Str::uuid(),
-            'empresa_id'         => Empresa::factory(),
-            'estado'             => 'disponible',
-            'fecha_asignacion'   => null,
-            'fecha_completada'   => null,
+            'token' => (string) Str::uuid(),
+            'empresa_id' => Empresa::factory(),
+            'estado' => 'disponible',
+            'fecha_asignacion' => null,
+            'fecha_completada' => null,
         ];
     }
 
@@ -31,7 +31,7 @@ class EncuestaFactory extends Factory
     public function asignada(): static
     {
         return $this->state(fn (array $attributes) => [
-            'estado'           => 'asignado',
+            'estado' => 'asignado',
             'fecha_asignacion' => now(),
         ]);
     }
@@ -42,7 +42,7 @@ class EncuestaFactory extends Factory
     public function completada(): static
     {
         return $this->state(fn (array $attributes) => [
-            'estado'           => 'completado',
+            'estado' => 'completado',
             'fecha_asignacion' => now(),
             'fecha_completada' => now(),
         ]);

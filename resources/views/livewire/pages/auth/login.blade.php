@@ -23,7 +23,7 @@ new #[Layout('layouts.guest')] class extends Component
         $user = auth()->user();
         $destination = in_array($user->role, ['super_admin', 'admin_empresa'])
             ? route('admin.dashboard', absolute: false)
-            : route('dashboard', absolute: false);
+            : route('admin.dashboard', absolute: false);
 
         Session::forget('url.intended');
         $this->redirect($destination, navigate: true);

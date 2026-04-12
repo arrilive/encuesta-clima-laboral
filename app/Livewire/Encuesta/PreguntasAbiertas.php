@@ -11,6 +11,7 @@ use Livewire\Component;
 class PreguntasAbiertas extends Component
 {
     public Encuesta $encuesta;
+
     public array $respuestas = [];
 
     public function mount(string $token): void
@@ -33,7 +34,7 @@ class PreguntasAbiertas extends Component
 
         RespuestaAbierta::updateOrCreate(
             [
-                'encuesta_id'        => $this->encuesta->id,
+                'encuesta_id' => $this->encuesta->id,
                 'pregunta_abierta_id' => (int) $key,
             ],
             ['texto' => $value]

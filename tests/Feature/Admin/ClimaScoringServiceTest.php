@@ -14,7 +14,7 @@ use Database\Seeders\SubdimensionesSeeder;
 it('promedioGeneral retorna 0.0 cuando no hay respuestas', function () {
     $empresa = Empresa::factory()->create();
     $base = Respuesta::query()
-        ->whereHas('encuesta', fn($q) => $q
+        ->whereHas('encuesta', fn ($q) => $q
             ->where('estado', 'completado')
             ->where('empresa_id', $empresa->id)
         );
@@ -26,20 +26,20 @@ it('promedioGeneral retorna 0.0 cuando no hay respuestas', function () {
 it('promedioGeneral excluye respuestas con valor_numerico = 0', function () {
     $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
 
-    $empresa  = Empresa::factory()->create();
+    $empresa = Empresa::factory()->create();
     $encuesta = Encuesta::factory()->completada()->create(['empresa_id' => $empresa->id]);
-    $opcion   = OpcionRespuesta::where('valor_numerico', 0)->first();
+    $opcion = OpcionRespuesta::where('valor_numerico', 0)->first();
 
     foreach (Pregunta::all() as $pregunta) {
         Respuesta::create([
-            'encuesta_id'         => $encuesta->id,
-            'pregunta_id'         => $pregunta->id,
+            'encuesta_id' => $encuesta->id,
+            'pregunta_id' => $pregunta->id,
             'opcion_respuesta_id' => $opcion->id,
         ]);
     }
 
     $base = Respuesta::query()
-        ->whereHas('encuesta', fn($q) => $q
+        ->whereHas('encuesta', fn ($q) => $q
             ->where('estado', 'completado')
             ->where('empresa_id', $empresa->id)
         );
@@ -51,20 +51,20 @@ it('promedioGeneral excluye respuestas con valor_numerico = 0', function () {
 it('promedioGeneral retorna 100.0 cuando todas las respuestas son valor_numerico = 3', function () {
     $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
 
-    $empresa  = Empresa::factory()->create();
+    $empresa = Empresa::factory()->create();
     $encuesta = Encuesta::factory()->completada()->create(['empresa_id' => $empresa->id]);
-    $opcion   = OpcionRespuesta::where('valor_numerico', 3)->first();
+    $opcion = OpcionRespuesta::where('valor_numerico', 3)->first();
 
     foreach (Pregunta::all() as $pregunta) {
         Respuesta::create([
-            'encuesta_id'         => $encuesta->id,
-            'pregunta_id'         => $pregunta->id,
+            'encuesta_id' => $encuesta->id,
+            'pregunta_id' => $pregunta->id,
             'opcion_respuesta_id' => $opcion->id,
         ]);
     }
 
     $base = Respuesta::query()
-        ->whereHas('encuesta', fn($q) => $q
+        ->whereHas('encuesta', fn ($q) => $q
             ->where('estado', 'completado')
             ->where('empresa_id', $empresa->id)
         );
@@ -78,7 +78,7 @@ it('scoresPorDimension retorna exactamente 6 dimensiones', function () {
 
     $empresa = Empresa::factory()->create();
     $base = Respuesta::query()
-        ->whereHas('encuesta', fn($q) => $q
+        ->whereHas('encuesta', fn ($q) => $q
             ->where('estado', 'completado')
             ->where('empresa_id', $empresa->id)
         );
@@ -92,7 +92,7 @@ it('scoresPorDimension retorna collection indexada numéricamente', function () 
 
     $empresa = Empresa::factory()->create();
     $base = Respuesta::query()
-        ->whereHas('encuesta', fn($q) => $q
+        ->whereHas('encuesta', fn ($q) => $q
             ->where('estado', 'completado')
             ->where('empresa_id', $empresa->id)
         );
@@ -108,7 +108,7 @@ it('scoresPorSubdimension retorna collection indexada numéricamente', function 
 
     $empresa = Empresa::factory()->create();
     $base = Respuesta::query()
-        ->whereHas('encuesta', fn($q) => $q
+        ->whereHas('encuesta', fn ($q) => $q
             ->where('estado', 'completado')
             ->where('empresa_id', $empresa->id)
         );
