@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Dimension;
 use App\Models\Respuesta;
 use App\Models\Subdimension;
 use App\Services\ClimaScoringService;
@@ -110,6 +109,7 @@ class PdfController extends Controller
     private function getDatosDimensiones(Request $request, $user): array
     {
         $scoring = app(ClimaScoringService::class);
+
         return $scoring->scoresPorDimension($this->getBaseQuery($request, $user))->toArray();
     }
 
