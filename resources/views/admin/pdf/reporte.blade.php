@@ -267,7 +267,7 @@
                 <div
                     style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; height: 95px;">
                     <div class="kpi-title">Promedio General</div>
-                    <div class="kpi-value">{{ number_format($promedioGeneral, 2) }}</div>
+                    <div class="kpi-value">{{ number_format($promedioGeneral, 1) }}</div>
                     <div style="margin-top: 8px;">
                         <span
                             class="badge {{ getBadgeClass($promedioGeneral) }}">{{ getBadgeLabel($promedioGeneral) }}</span>
@@ -308,7 +308,7 @@
                         <td style="color: #64748b;">{{ $index + 1 }}</td>
                         <td style="font-weight: bold;">{{ $item['nombre'] }}</td>
                         <td class="text-center">
-                            <strong style="color: #0f172a;">{{ number_format($item['puntaje'], 2) }}</strong>
+                            <strong style="color: #0f172a;">{{ number_format($item['puntaje'], 1) }}</strong>
                         </td>
                         <td>
                             <span class="badge {{ getBadgeClass($item['puntaje']) }}">
@@ -347,7 +347,7 @@
                                     <td style="font-size: 12px;">{{ $sub['nombre'] }}</td>
                                     <td class="text-center">
                                         <strong
-                                            style="color: #0f172a;">{{ number_format($sub['puntaje'], 2) }}</strong>
+                                            style="color: #0f172a;">{{ number_format($sub['puntaje'], 1) }}</strong>
                                     </td>
                                     <td>
                                         <div style="width: 250px; background-color: #e2e8f0; border-radius: 4px;">

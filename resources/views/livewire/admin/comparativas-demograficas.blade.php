@@ -19,16 +19,16 @@
 
     <div x-data="{ chart: null }" x-init="let initialData = @js($comparativas);
     if (chart) { chart.destroy(); }
-    let opts = JSON.parse(JSON.stringify(window.comparativasOptions));
+    let opts = { ...window.comparativasOptions };
     opts.series = initialData.series;
-    opts.xaxis.categories = initialData.categorias;
+    opts.xaxis = { ...opts.xaxis, categories: initialData.categorias };
     chart = new ApexCharts($el.querySelector('#comparativas-chart'), opts);
     chart.render();"
         x-on:comparativas-actualizadas.window="
             if (chart) { chart.destroy(); }
-            let opts = JSON.parse(JSON.stringify(window.comparativasOptions));
+            let opts = { ...window.comparativasOptions };
             opts.series = $event.detail.comparativas.series;
-            opts.xaxis.categories = $event.detail.comparativas.categorias;
+            opts.xaxis = { ...opts.xaxis, categories: $event.detail.comparativas.categorias };
             chart = new ApexCharts($el.querySelector('#comparativas-chart'), opts);
             chart.render();
         ">
@@ -88,7 +88,7 @@
                             colors: '#64748b',
                             fontSize: '12px'
                         },
-                        formatter: val => val.toFixed(1)
+                        formatter: val => Math.round(val)
                     }
                 },
                 legend: {
@@ -111,7 +111,7 @@
                 },
                 tooltip: {
                     y: {
-                        formatter: val => val.toFixed(2) + ' pts'
+                        formatter: val => val.toFixed(1) + ' pts'
                     }
                 }
             };
