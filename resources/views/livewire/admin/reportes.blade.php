@@ -172,7 +172,7 @@
                     <div class="bg-white rounded-2xl shadow-sm p-4">
                         <p class="text-slate-500 text-sm mb-1">Promedio General</p>
                         <div class="flex items-end justify-between">
-                            <h3 class="text-2xl font-bold text-slate-900">{{ number_format($promedioGeneral, 2) }}</h3>
+                            <h3 class="text-2xl font-bold text-slate-900">{{ number_format($promedioGeneral, 1) }}</h3>
                             <x-badge-clima :puntaje="$promedioGeneral" variant="compact" />
                         </div>
                     </div>
@@ -206,7 +206,7 @@
                             title="{{ $maxDim['nombre'] ?? 'N/A' }}">
                             {{ $maxDim['nombre'] ?? 'N/A' }}
                         </h3>
-                        <p class="text-emerald-600 text-sm font-bold">{{ number_format($maxDim['puntaje'] ?? 0, 2) }}
+                        <p class="text-emerald-600 text-sm font-bold">{{ number_format($maxDim['puntaje'] ?? 0, 1) }}
                             pts
                         </p>
                     </div>
@@ -222,7 +222,7 @@
                             title="{{ $minDim['nombre'] ?? 'N/A' }}">
                             {{ $minDim['nombre'] ?? 'N/A' }}
                         </h3>
-                        <p class="text-red-500 text-sm font-bold">{{ number_format($minDim['puntaje'] ?? 0, 2) }} pts
+                        <p class="text-red-500 text-sm font-bold">{{ number_format($minDim['puntaje'] ?? 0, 1) }} pts
                         </p>
                     </div>
                 </div>
@@ -283,7 +283,7 @@
                                             <td class="py-3 font-medium text-slate-900">{{ $item['nombre'] }}</td>
                                             <td class="py-3 text-center">
                                                 <span
-                                                    class="font-bold text-slate-700">{{ number_format($item['puntaje'], 2) }}</span>
+                                                    class="font-bold text-slate-700">{{ number_format($item['puntaje'], 1) }}</span>
                                             </td>
                                             <td class="py-3">
                                                 <x-badge-clima :puntaje="$item['puntaje']" />
@@ -339,7 +339,7 @@
                         x-on:barras-nivel2-update.window="
                             if (chart) { chart.destroy(); }
                             window.barrasNivel2Options.series = [{ name: 'Puntaje', data: $event.detail.datos.map(d => d.puntaje) }];
-                            window.barrasNivel2Options.xaxis = { categories: $event.detail.datos.map(d => d.nombre) };
+                            window.barrasNivel2Options.xaxis = { ...window.barrasNivel2Options.xaxis, categories: $event.detail.datos.map(d => d.nombre) };
                             chart = new ApexCharts(
                                 $el.querySelector('#barras-nivel2-container'),
                                 window.barrasNivel2Options
@@ -408,7 +408,7 @@
                         </div>
                         <div class="flex items-center gap-3 shrink-0">
                             <div class="text-right">
-                                <p class="text-xl font-bold text-slate-900">{{ number_format($sub['puntaje'], 2) }}
+                                <p class="text-xl font-bold text-slate-900">{{ number_format($sub['puntaje'], 1) }}
                                 </p>
                                 <x-badge-clima :puntaje="$sub['puntaje']" />
                             </div>
@@ -479,7 +479,7 @@
                             </p>
                             <div class="flex-shrink-0 text-right">
                                 <div class="text-2xl font-bold leading-none mb-1" style="color: {{ $scoreColor }}">
-                                    {{ number_format($pregunta['puntaje'], 2) }}
+                                    {{ number_format($pregunta['puntaje'], 1) }}
                                 </div>
                                 <span
                                     class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full
@@ -706,7 +706,7 @@
                 colors: ['#2563eb'],
                 tooltip: {
                     y: {
-                        formatter: val => val.toFixed(2) + ' pts'
+                        formatter: val => val.toFixed(1) + ' pts'
                     }
                 }
             };
@@ -791,7 +791,7 @@
                 },
                 dataLabels: {
                     enabled: true,
-                    formatter: val => val.toFixed(2),
+                    formatter: val => val.toFixed(1),
                     style: {
                         fontSize: '11px',
                         colors: ['#ffffff'],
@@ -814,7 +814,7 @@
                     max: 100,
                     tickAmount: 5,
                     labels: {
-                        formatter: val => Number(val).toFixed(1),
+                        formatter: val => Math.round(val),
                         style: {
                             colors: '#94a3b8',
                             fontSize: '11px'
@@ -853,7 +853,7 @@
                 },
                 tooltip: {
                     y: {
-                        formatter: val => val.toFixed(2) + ' pts'
+                        formatter: val => val.toFixed(1) + ' pts'
                     }
                 }
             };
@@ -867,14 +867,8 @@
                     data: datos.map(d => d.puntaje)
                 }];
                 window.barrasNivel2Options.xaxis = {
-                    categories: datos.map(d => d.nombre),
-                    labels: {
-                        formatter: val => Number(val).toFixed(1),
-                        style: {
-                            colors: '#94a3b8',
-                            fontSize: '11px'
-                        }
-                    }
+                    ...window.barrasNivel2Options.xaxis,
+                    categories: datos.map(d => d.nombre)
                 };
                 window.barrasNivel2Options.yaxis = {
                     min: 0,
