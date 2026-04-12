@@ -58,22 +58,22 @@ class RespuestasAbiertas extends Component
         }
 
         if ($this->filtroEdadId) {
-            $query->whereHas('datoDemografico', fn ($q) => $q->where('edad_id', $this->filtroEdadId));
+            $query->whereHas('datoDemografico', fn($q) => $q->where('edad_id', $this->filtroEdadId));
         }
         if ($this->filtroSexoId) {
-            $query->whereHas('datoDemografico', fn ($q) => $q->where('sexo_id', $this->filtroSexoId));
+            $query->whereHas('datoDemografico', fn($q) => $q->where('sexo_id', $this->filtroSexoId));
         }
         if ($this->filtroCargoId) {
-            $query->whereHas('datoDemografico', fn ($q) => $q->where('cargo_id', $this->filtroCargoId));
+            $query->whereHas('datoDemografico', fn($q) => $q->where('cargo_id', $this->filtroCargoId));
         }
         if ($this->filtroLugarTrabajoId) {
-            $query->whereHas('datoDemografico', fn ($q) => $q->where('lugar_trabajo_id', $this->filtroLugarTrabajoId));
+            $query->whereHas('datoDemografico', fn($q) => $q->where('lugar_trabajo_id', $this->filtroLugarTrabajoId));
         }
         if ($this->filtroGradoAcademicoId) {
-            $query->whereHas('datoDemografico', fn ($q) => $q->where('grado_academico_id', $this->filtroGradoAcademicoId));
+            $query->whereHas('datoDemografico', fn($q) => $q->where('grado_academico_id', $this->filtroGradoAcademicoId));
         }
         if ($this->filtroAntiguedadId) {
-            $query->whereHas('datoDemografico', fn ($q) => $q->where('antiguedad_id', $this->filtroAntiguedadId));
+            $query->whereHas('datoDemografico', fn($q) => $q->where('antiguedad_id', $this->filtroAntiguedadId));
         }
 
         return $query;
