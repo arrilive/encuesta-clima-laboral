@@ -183,7 +183,7 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <h3 class="text-2xl font-bold text-slate-900">{{ $completadasFiltradas }}</h3>
-                                <p class="text-slate-400 text-[10px]">de {{ $completadasTotal }} totales</p>
+                                <p class="text-slate-400 text-[10px]">de {{ $totalTokens }} tokens</p>
                             </div>
                             <div class="p-2 bg-blue-50 rounded-xl">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"

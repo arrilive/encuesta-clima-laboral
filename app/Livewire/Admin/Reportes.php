@@ -303,13 +303,18 @@ class Reportes extends Component
 
         $completadasFiltradas = $this->getEncuestasBaseQuery()->count();
 
+        $totalTokens = \App\Models\Encuesta::query()
+            ->when($user->role === 'admin_empresa', fn($q) => $q->where('empresa_id', $user->empresa_id))
+            ->when($user->role === 'super_admin' && $this->filtroEmpresaId, fn($q) => $q->where('empresa_id', $this->filtroEmpresaId))
+            ->count();
+
         $scoringService = app(ClimaScoringService::class);
         $promedioGeneral = $scoringService->promedioGeneral($this->getBaseQuery());
 
         return view('livewire.admin.reportes', [
             'promedioGeneral' => $promedioGeneral,
             'completadasFiltradas' => $completadasFiltradas,
-            'completadasTotal' => $this->getEncuestasBaseQuery(soloSinFiltrosDemograficos: true)->count(),
+            'totalTokens' => $totalTokens,
             'sinDatos' => $completadasFiltradas === 0,
             'empresas' => $user->role === 'super_admin' ? Empresa::orderBy('nombre')->get() : collect(),
             'dimensionActiva' => $this->dimensionActivaId ? Dimension::find($this->dimensionActivaId) : null,
