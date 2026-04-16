@@ -218,7 +218,7 @@
                 </div>
 
                 <div class="bg-white rounded-xl border border-slate-200 p-5">
-                    <p class="text-sm text-slate-400 mb-1">Completadas</p>
+                    <p class="text-sm text-slate-400 mb-1">Completados</p>
                     <p class="text-3xl font-bold text-emerald-600 tabular-nums">{{ $kpis['completadas'] }}</p>
                 </div>
 
