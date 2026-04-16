@@ -232,29 +232,11 @@
                     <p class="text-3xl font-bold text-amber-500 tabular-nums">{{ $kpis['asignados'] }}</p>
                 </div>
 
-                <div class="bg-white rounded-xl border p-5 h-full {{ $kpis['alerta_tokens'] ? 'border-amber-300 bg-amber-50' : 'border-slate-200' }}">
-                    <div class="flex justify-between h-full">
-                        <div class="flex flex-col justify-between">
-                            <p class="text-sm text-slate-400 mb-1">Disponibles</p>
-                            <p class="text-3xl font-bold tabular-nums {{ $kpis['alerta_tokens'] ? 'text-amber-500' : 'text-slate-500' }}">
-                                {{ $kpis['disponibles'] }}
-                            </p>
-                        </div>
-                        @if($kpis['alerta_tokens'])
-                            <div class="flex flex-col items-end justify-between text-right">
-                                <span class="text-xs text-amber-600 font-medium">
-                                    ⚠ Pocos disponibles
-                                </span>
-                                <a href="{{ route('admin.tokens') }}"
-                                   class="inline-flex items-center text-sm font-bold text-amber-600 hover:text-amber-700 transition-colors mt-auto">
-                                    Generar
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                        <polyline points="9 18 15 12 9 6"/>
-                                    </svg>
-                                </a>
-                            </div>
-                        @endif
-                    </div>
+                <div class="bg-white rounded-xl border border-slate-200 p-5">
+                    <p class="text-sm text-slate-400 mb-1">Disponibles</p>
+                    <p class="text-3xl font-bold text-slate-500 tabular-nums">
+                        {{ $kpis['disponibles'] }}
+                    </p>
                 </div>
 
             </div>
