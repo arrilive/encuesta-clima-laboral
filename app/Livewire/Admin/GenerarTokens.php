@@ -66,6 +66,13 @@ class GenerarTokens extends Component
             return;
         }
 
+        $empresa = Empresa::findOrFail($this->empresaId);
+        if (! $empresa->activa) {
+            $this->addError('empresaId', 'No se pueden generar tokens para una empresa inactiva. Actívala primero en el panel de Empresas.');
+
+            return;
+        }
+
         // Crear el lote
         $lote = TokenLote::create([
             'empresa_id' => $this->empresaId,
@@ -102,7 +109,7 @@ class GenerarTokens extends Component
         $user = auth()->user();
 
         $empresas = $user->role === 'super_admin'
-            ? Empresa::orderBy('nombre')->get()
+            ? Empresa::orderByDesc('activa')->orderBy('nombre')->get()
             : collect();
 
         $lotes = TokenLote::with('empresa', 'user')

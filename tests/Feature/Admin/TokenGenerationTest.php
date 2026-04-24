@@ -45,3 +45,31 @@ it('admin_empresa no puede generar tokens para otra empresa', function () {
 
     expect(Encuesta::where('empresa_id', $empresa2->id)->count())->toBe(0);
 });
+
+it('super_admin no puede generar tokens para empresa inactiva', function () {
+    $empresa = Empresa::factory()->create(['activa' => false]);
+    $admin = User::factory()->superAdmin()->create();
+
+    Livewire::actingAs($admin)
+        ->test(GenerarTokens::class)
+        ->set('empresaId', (string) $empresa->id)
+        ->set('cantidad', '10')
+        ->call('generar')
+        ->assertHasErrors(['empresaId']);
+
+    expect(Encuesta::where('empresa_id', $empresa->id)->count())->toBe(0);
+});
+
+it('admin_empresa no puede generar tokens si su empresa está inactiva', function () {
+    $empresa = Empresa::factory()->create(['activa' => false]);
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    Livewire::actingAs($admin)
+        ->test(GenerarTokens::class)
+        ->set('empresaId', (string) $empresa->id)
+        ->set('cantidad', '10')
+        ->call('generar')
+        ->assertHasErrors(['empresaId']);
+
+    expect(Encuesta::where('empresa_id', $empresa->id)->count())->toBe(0);
+});

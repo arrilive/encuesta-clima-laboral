@@ -31,7 +31,9 @@
                                {{ $errors->has('empresaId') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}">
                         <option value="">Selecciona una empresa</option>
                         @foreach($empresas as $empresa)
-                            <option value="{{ $empresa->id }}">{{ $empresa->nombre }}</option>
+                            <option value="{{ $empresa->id }}" @disabled(!$empresa->activa)>
+                                {{ $empresa->nombre }}{{ !$empresa->activa ? ' (Inactiva)' : '' }}
+                            </option>
                         @endforeach
                     </select>
                     @error('empresaId')
