@@ -40,7 +40,7 @@ class Encuesta extends Model
 
     public function lote(): BelongsTo
     {
-        return $this->belongsTo(TokenLote::class, 'lote_id');
+        return $this->belongsTo(Lote::class, 'lote_id');
     }
 
     public function datoDemografico(): HasOne
