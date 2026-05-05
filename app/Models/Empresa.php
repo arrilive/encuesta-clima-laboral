@@ -51,4 +51,9 @@ class Empresa extends Model
     {
         return $this->hasMany(Sucursal::class);
     }
+
+    public function lotes(): HasMany
+    {
+        return $this->hasMany(Lote::class);
+    }
 }
