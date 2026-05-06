@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Corporativo;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -31,6 +32,8 @@ class UserFactory extends Factory
             'remember_token' => Str::random(10),
             'role' => 'admin_empresa',
             'empresa_id' => null,
+            'corporativo_id' => null,
+            'sucursal_id' => null,
         ];
     }
 
@@ -57,6 +60,26 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'role' => 'admin_empresa',
             'empresa_id' => $empresaId,
+        ]);
+    }
+
+    public function adminCorporativo(?int $corporativoId = null): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'admin_corporativo',
+            'corporativo_id' => $corporativoId ?? Corporativo::factory(),
+            'empresa_id' => null,
+            'sucursal_id' => null,
+        ]);
+    }
+
+    public function adminSucursal(int $sucursalId): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'admin_sucursal',
+            'sucursal_id' => $sucursalId,
+            'empresa_id' => null,
+            'corporativo_id' => null,
         ]);
     }
 }
