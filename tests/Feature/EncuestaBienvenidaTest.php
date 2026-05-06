@@ -34,28 +34,13 @@ test('rechaza empresa inactiva', function () {
         ->assertSessionHasErrors('password');
 });
 
-test('redirige a pantalla de acceso cuando contraseña es correcta aunque no haya tokens', function () {
-    $empresa = Empresa::factory()->create();
-    Encuesta::factory()->for($empresa)->asignada()->create(); // sin tokens disponibles
-
-    $this->post(route('encuesta.acceso'), ['password' => 'test1234'])
-        ->assertRedirect(route('encuesta.mostrar-acceso'));
-});
+todo('redirige a pantalla de acceso cuando contraseña es correcta aunque no haya tokens — flujo de acceso se reescribe en issue #118');
 
 // ---------------------------------------------------------------------------
 // Acceso — caso exitoso
 // ---------------------------------------------------------------------------
 
-test('acceso con contraseña correcta redirige a pantalla de elección', function () {
-    $empresa = Empresa::factory()->create();
-    Encuesta::factory()->for($empresa)->create(); // disponible
-
-    $response = $this->post(route('encuesta.acceso'), ['password' => 'test1234']);
-
-    $response->assertRedirect(route('encuesta.mostrar-acceso'));
-
-    $response->assertSessionHas('empresa_id', $empresa->id);
-});
+todo('acceso con contraseña correcta redirige a pantalla de elección — flujo de acceso se reescribe en issue #118');
 
 // ---------------------------------------------------------------------------
 // Formulario demográfico

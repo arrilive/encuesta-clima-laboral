@@ -20,7 +20,7 @@ class Dashboard extends Component
         $query = Encuesta::enRiesgo();
 
         if ($user->role === 'admin_empresa') {
-            $query->where('empresa_id', $user->empresa_id);
+            $query->whereHas('lote', fn ($q) => $q->where('empresa_id', $user->empresa_id));
         }
 
         $query->update([
@@ -35,7 +35,7 @@ class Dashboard extends Component
 
         $base = Encuesta::when(
             $user->role === 'admin_empresa',
-            fn ($q) => $q->where('empresa_id', $user->empresa_id)
+            fn ($q) => $q->whereHas('lote', fn ($q) => $q->where('empresa_id', $user->empresa_id))
         );
 
         $kpis = $this->calcularKpis($base);
@@ -73,7 +73,7 @@ class Dashboard extends Component
         $respuestasBase = Respuesta::query()
             ->whereHas('encuesta', fn ($q) => $q
                 ->where('estado', 'completado')
-                ->where('empresa_id', $empresaId)
+                ->whereHas('lote', fn ($q) => $q->where('empresa_id', $empresaId))
             );
 
         $scoresDimensiones = $scoring->scoresPorDimension($respuestasBase);

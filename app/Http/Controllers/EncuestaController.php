@@ -62,7 +62,7 @@ class EncuestaController extends Controller
 
         $encuesta = Encuesta::whereIn('estado', ['asignado', 'en_progreso'])
             ->where('token', $request->token)
-            ->where('empresa_id', session('empresa_id'))
+            ->where('empresa_id', session('empresa_id')) // TODO issue #118
             ->first();
 
         if (! $encuesta) {
@@ -82,7 +82,7 @@ class EncuestaController extends Controller
                 ->withErrors(['password' => 'Sesión expirada. Vuelve a ingresar.']);
         }
 
-        $encuesta = Encuesta::where('empresa_id', $empresaId)
+        $encuesta = Encuesta::where('empresa_id', $empresaId) // TODO issue #118
             ->where('estado', 'disponible')
             ->first();
 

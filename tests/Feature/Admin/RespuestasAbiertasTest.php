@@ -64,7 +64,7 @@ test('respuestas abiertas se muestran cuando mostrarRespuestasAbiertas es true',
     seedPreguntasAbiertas();
     $empresa = \App\Models\Empresa::factory()->create();
     $user = User::factory()->adminEmpresa($empresa->id)->create();
-    $encuesta = Encuesta::factory()->completada()->create(['empresa_id' => $empresa->id]);
+    $encuesta = Encuesta::factory()->completada()->create(['lote_id' => \App\Models\Lote::factory()->for($empresa)->create()->id]);
     $pregunta = PreguntaAbierta::orderBy('orden')->first();
 
     RespuestaAbierta::create([
@@ -84,7 +84,7 @@ test('admin_empresa solo ve respuestas de su empresa', function () {
     $empresa = \App\Models\Empresa::factory()->create();
     $user = User::factory()->adminEmpresa($empresa->id)->create();
     $otraEmpresa = \App\Models\Empresa::factory()->create();
-    $encuestaOtra = Encuesta::factory()->completada()->create(['empresa_id' => $otraEmpresa->id]);
+    $encuestaOtra = Encuesta::factory()->completada()->create(['lote_id' => \App\Models\Lote::factory()->for($otraEmpresa)->create()->id]);
     $pregunta = PreguntaAbierta::orderBy('orden')->first();
 
     RespuestaAbierta::create([
