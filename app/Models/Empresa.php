@@ -32,11 +32,6 @@ class Empresa extends Model
         ];
     }
 
-    public function encuestas(): HasMany
-    {
-        return $this->hasMany(Encuesta::class);
-    }
-
     public function users(): HasMany
     {
         return $this->hasMany(User::class);

@@ -31,7 +31,7 @@ class LoteFactory extends Factory
             'user_id' => User::factory(),
             'sucursal_id' => null,
             'tokens_total' => $this->faker->numberBetween(10, 100),
-            'nombre' => 'Lote ' . $this->faker->word(),
+            'nombre' => 'Lote '.$this->faker->word(),
             'fecha_inicio' => null,
             'fecha_fin' => null,
             'activo' => true,
