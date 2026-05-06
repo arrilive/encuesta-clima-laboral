@@ -30,7 +30,7 @@ it('el puntaje de dimensión es 3.0 cuando todas las respuestas son Verdadero', 
 
     $empresa = Empresa::factory()->create();
     $admin = User::factory()->adminEmpresa($empresa->id)->create();
-    $encuesta = Encuesta::factory()->completada()->create(['empresa_id' => $empresa->id]);
+    $encuesta = Encuesta::factory()->completada()->create(['lote_id' => \App\Models\Lote::factory()->for($empresa)->create()->id]);
 
     $dimension = Dimension::first();
     $opcion = OpcionRespuesta::where('valor_numerico', 3)->first();
@@ -56,7 +56,7 @@ it('prefiero no responder (valor_numerico = 0) se excluye del cálculo', functio
 
     $empresa = Empresa::factory()->create();
     $admin = User::factory()->adminEmpresa($empresa->id)->create();
-    $encuesta = Encuesta::factory()->completada()->create(['empresa_id' => $empresa->id]);
+    $encuesta = Encuesta::factory()->completada()->create(['lote_id' => \App\Models\Lote::factory()->for($empresa)->create()->id]);
 
     $dimension = Dimension::first();
     $opcion = OpcionRespuesta::where('valor_numerico', 0)->first();
@@ -83,7 +83,7 @@ it('admin_empresa solo ve datos de su empresa', function () {
     $empresa1 = Empresa::factory()->create();
     $empresa2 = Empresa::factory()->create();
     $admin = User::factory()->adminEmpresa($empresa1->id)->create();
-    $encuesta = Encuesta::factory()->completada()->create(['empresa_id' => $empresa2->id]);
+    $encuesta = Encuesta::factory()->completada()->create(['lote_id' => \App\Models\Lote::factory()->for($empresa2)->create()->id]);
 
     $dimension = Dimension::first();
     $opcion = OpcionRespuesta::where('valor_numerico', 3)->first();
@@ -111,8 +111,8 @@ it('super_admin sin filtro ve datos de todas las empresas', function () {
     $empresa2 = Empresa::factory()->create();
     $superAdmin = User::factory()->superAdmin()->create();
 
-    $encuesta1 = Encuesta::factory()->completada()->create(['empresa_id' => $empresa1->id]);
-    $encuesta2 = Encuesta::factory()->completada()->create(['empresa_id' => $empresa2->id]);
+    $encuesta1 = Encuesta::factory()->completada()->create(['lote_id' => \App\Models\Lote::factory()->for($empresa1)->create()->id]);
+    $encuesta2 = Encuesta::factory()->completada()->create(['lote_id' => \App\Models\Lote::factory()->for($empresa2)->create()->id]);
 
     $dimension = Dimension::first();
     $opcion = OpcionRespuesta::where('valor_numerico', 3)->first();
@@ -185,7 +185,7 @@ it('getDatosNivel2 retorna subdimensiones de la dimension activa', function () {
 
     $empresa = Empresa::factory()->create();
     $admin = User::factory()->adminEmpresa($empresa->id)->create();
-    $encuesta = Encuesta::factory()->completada()->create(['empresa_id' => $empresa->id]);
+    $encuesta = Encuesta::factory()->completada()->create(['lote_id' => \App\Models\Lote::factory()->for($empresa)->create()->id]);
     $dimension = Dimension::first();
     $opcion = OpcionRespuesta::where('valor_numerico', 3)->first();
     $preguntas = Pregunta::whereHas('subdimension', fn ($q) => $q->where('dimension_id', $dimension->id))->get();
@@ -212,7 +212,7 @@ it('getDatosNivel3 retorna preguntas de la subdimension activa', function () {
 
     $empresa = Empresa::factory()->create();
     $admin = User::factory()->adminEmpresa($empresa->id)->create();
-    $encuesta = Encuesta::factory()->completada()->create(['empresa_id' => $empresa->id]);
+    $encuesta = Encuesta::factory()->completada()->create(['lote_id' => \App\Models\Lote::factory()->for($empresa)->create()->id]);
     $dimension = Dimension::first();
     $subdimension = $dimension->subdimensiones()->first();
     $opcion = OpcionRespuesta::where('valor_numerico', 3)->first();

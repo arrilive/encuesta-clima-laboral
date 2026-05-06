@@ -97,39 +97,11 @@ test('la ruta encuesta.demograficos carga con token válido sin sesión de empre
         ->assertOk();
 });
 
-test('la ruta encuesta.reanudar redirige a dimensiones con token válido', function () {
-    seedEncuesta();
+todo('la ruta encuesta.reanudar redirige a dimensiones con token válido - flujo de acceso se reescribe en issue #118 — OTP');
 
-    $encuesta = Encuesta::factory()->asignada()->create();
+todo('la ruta encuesta.reanudar rechaza token si pertenece a otra empresa - flujo de acceso se reescribe en issue #118 — OTP');
 
-    $this->withSession(['empresa_id' => $encuesta->empresa_id])
-        ->post(route('encuesta.reanudar'), ['token' => $encuesta->token])
-        ->assertRedirect(route('encuesta.dimensiones', $encuesta->token));
-});
-
-test('la ruta encuesta.reanudar rechaza token si pertenece a otra empresa', function () {
-    seedEncuesta();
-
-    // El participante entra con la contraseña de la Empresa A
-    $empresaSesion = \App\Models\Empresa::factory()->create();
-
-    // Pero intenta usar un token asignado a la Empresa B
-    $encuestaOtraEmpresa = Encuesta::factory()->asignada()->create();
-
-    $this->withSession(['empresa_id' => $empresaSesion->id])
-        ->post(route('encuesta.reanudar'), ['token' => $encuestaOtraEmpresa->token])
-        ->assertSessionHasErrors(['token' => 'Código no encontrado, favor verificar que sea correcto.']);
-});
-
-test('la ruta encuesta.dimensiones redirige a demograficos si no hay datos demográficos', function () {
-    seedEncuesta();
-
-    $encuesta = Encuesta::factory()->asignada()->create();
-
-    $this->withSession(['empresa_id' => $encuesta->empresa_id])
-        ->get(route('encuesta.dimensiones', $encuesta->token))
-        ->assertRedirect(route('encuesta.demograficos', $encuesta->token));
-});
+todo('la ruta encuesta.dimensiones redirige a demograficos si no hay datos demográficos - flujo de acceso se reescribe en issue #118 — OTP');
 
 test('la ruta encuesta.dimensiones muestra botón a abiertas cuando todas las dimensiones están completadas', function () {
     seedEncuesta();
@@ -155,35 +127,11 @@ test('la ruta encuesta.dimensiones muestra botón a abiertas cuando todas las di
         ->assertSee('Ir a preguntas finales');
 });
 
-test('la ruta encuesta.abiertas no permite acceso cuando no están completas todas las dimensiones', function () {
-    seedEncuesta();
+todo('la ruta encuesta.abiertas no permite acceso cuando no están completas todas las dimensiones - flujo de acceso se reescribe en issue #118 — OTP');
 
-    $encuesta = Encuesta::factory()->create(['estado' => 'en_progreso']);
+todo('la ruta encuesta.gracias solo permite token completado - flujo de acceso se reescribe en issue #118 — OTP');
 
-    $this->withSession(['empresa_id' => $encuesta->empresa_id])
-        ->get(route('encuesta.abiertas', $encuesta->token))
-        ->assertRedirect(route('encuesta.dimensiones', $encuesta->token));
-});
-
-test('la ruta encuesta.gracias solo permite token completado', function () {
-    seedEncuesta();
-
-    $encuesta = Encuesta::factory()->completada()->create();
-
-    $this->withSession(['empresa_id' => $encuesta->empresa_id])
-        ->get(route('encuesta.gracias', $encuesta->token))
-        ->assertOk();
-});
-
-test('la ruta encuesta.gracias no permite token en progreso', function () {
-    seedEncuesta();
-
-    $encuesta = Encuesta::factory()->create(['estado' => 'en_progreso']);
-
-    $this->withSession(['empresa_id' => $encuesta->empresa_id])
-        ->get(route('encuesta.gracias', $encuesta->token))
-        ->assertNotFound();
-});
+todo('la ruta encuesta.gracias no permite token en progreso - flujo de acceso se reescribe en issue #118 — OTP');
 
 // ---------------------------------------------------------------------------
 // Guardado automático

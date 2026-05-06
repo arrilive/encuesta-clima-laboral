@@ -16,7 +16,7 @@ it('promedioGeneral retorna 0.0 cuando no hay respuestas', function () {
     $base = Respuesta::query()
         ->whereHas('encuesta', fn ($q) => $q
             ->where('estado', 'completado')
-            ->where('empresa_id', $empresa->id)
+            ->whereHas('lote', fn ($q) => $q->where('empresa_id', $empresa->id))
         );
     $service = app(ClimaScoringService::class);
 
@@ -27,7 +27,7 @@ it('promedioGeneral excluye respuestas con valor_numerico = 0', function () {
     $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
 
     $empresa = Empresa::factory()->create();
-    $encuesta = Encuesta::factory()->completada()->create(['empresa_id' => $empresa->id]);
+    $encuesta = Encuesta::factory()->completada()->create(['lote_id' => \App\Models\Lote::factory()->for($empresa)->create()->id]);
     $opcion = OpcionRespuesta::where('valor_numerico', 0)->first();
 
     foreach (Pregunta::all() as $pregunta) {
@@ -41,7 +41,7 @@ it('promedioGeneral excluye respuestas con valor_numerico = 0', function () {
     $base = Respuesta::query()
         ->whereHas('encuesta', fn ($q) => $q
             ->where('estado', 'completado')
-            ->where('empresa_id', $empresa->id)
+            ->whereHas('lote', fn ($q) => $q->where('empresa_id', $empresa->id))
         );
     $service = app(ClimaScoringService::class);
 
@@ -52,7 +52,7 @@ it('promedioGeneral retorna 100.0 cuando todas las respuestas son valor_numerico
     $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
 
     $empresa = Empresa::factory()->create();
-    $encuesta = Encuesta::factory()->completada()->create(['empresa_id' => $empresa->id]);
+    $encuesta = Encuesta::factory()->completada()->create(['lote_id' => \App\Models\Lote::factory()->for($empresa)->create()->id]);
     $opcion = OpcionRespuesta::where('valor_numerico', 3)->first();
 
     foreach (Pregunta::all() as $pregunta) {
@@ -66,7 +66,7 @@ it('promedioGeneral retorna 100.0 cuando todas las respuestas son valor_numerico
     $base = Respuesta::query()
         ->whereHas('encuesta', fn ($q) => $q
             ->where('estado', 'completado')
-            ->where('empresa_id', $empresa->id)
+            ->whereHas('lote', fn ($q) => $q->where('empresa_id', $empresa->id))
         );
     $service = app(ClimaScoringService::class);
 
@@ -80,7 +80,7 @@ it('scoresPorDimension retorna exactamente 6 dimensiones', function () {
     $base = Respuesta::query()
         ->whereHas('encuesta', fn ($q) => $q
             ->where('estado', 'completado')
-            ->where('empresa_id', $empresa->id)
+            ->whereHas('lote', fn ($q) => $q->where('empresa_id', $empresa->id))
         );
     $service = app(ClimaScoringService::class);
 
@@ -94,7 +94,7 @@ it('scoresPorDimension retorna collection indexada numéricamente', function () 
     $base = Respuesta::query()
         ->whereHas('encuesta', fn ($q) => $q
             ->where('estado', 'completado')
-            ->where('empresa_id', $empresa->id)
+            ->whereHas('lote', fn ($q) => $q->where('empresa_id', $empresa->id))
         );
     $service = app(ClimaScoringService::class);
 
@@ -110,7 +110,7 @@ it('scoresPorSubdimension retorna collection indexada numéricamente', function 
     $base = Respuesta::query()
         ->whereHas('encuesta', fn ($q) => $q
             ->where('estado', 'completado')
-            ->where('empresa_id', $empresa->id)
+            ->whereHas('lote', fn ($q) => $q->where('empresa_id', $empresa->id))
         );
     $service = app(ClimaScoringService::class);
 
@@ -124,7 +124,7 @@ it('promedioGeneral calcula un promedio no ponderado de dimensiones', function (
     $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
 
     $empresa = Empresa::factory()->create();
-    $encuesta = Encuesta::factory()->completada()->create(['empresa_id' => $empresa->id]);
+    $encuesta = Encuesta::factory()->completada()->create(['lote_id' => \App\Models\Lote::factory()->for($empresa)->create()->id]);
     $opcionMin = OpcionRespuesta::where('valor_numerico', 1)->first(); // 0 pts
     $opcionMax = OpcionRespuesta::where('valor_numerico', 3)->first(); // 100 pts
 
@@ -151,7 +151,7 @@ it('promedioGeneral calcula un promedio no ponderado de dimensiones', function (
     $base = Respuesta::query()
         ->whereHas('encuesta', fn ($q) => $q
             ->where('estado', 'completado')
-            ->where('empresa_id', $empresa->id)
+            ->whereHas('lote', fn ($q) => $q->where('empresa_id', $empresa->id))
         );
     $service = app(ClimaScoringService::class);
 
