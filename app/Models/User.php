@@ -25,6 +25,8 @@ class User extends Authenticatable
         'password',
         'role',
         'empresa_id',
+        'corporativo_id',
+        'sucursal_id',
     ];
 
     /**
@@ -53,6 +55,16 @@ class User extends Authenticatable
     public function empresa(): BelongsTo
     {
         return $this->belongsTo(Empresa::class);
+    }
+
+    public function corporativo(): BelongsTo
+    {
+        return $this->belongsTo(Corporativo::class);
+    }
+
+    public function sucursal(): BelongsTo
+    {
+        return $this->belongsTo(Sucursal::class);
     }
 
     public function scopeSuperAdmins(Builder $query): Builder
