@@ -84,7 +84,6 @@ class GenerarTokens extends Component
         // Generar tokens en lote — una sola query
         $tokens = collect(range(1, $this->tokens_total))->map(fn () => [
             'token' => Str::random(64),
-            'empresa_id' => $this->empresaId,
             'lote_id' => $lote->id,
             'estado' => 'disponible',
             'created_at' => now(),

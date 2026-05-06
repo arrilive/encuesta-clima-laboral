@@ -112,10 +112,10 @@ class Reportes extends Component
             ->whereHas('encuesta', fn ($q) => $q->where('estado', 'completado'));
 
         if ($user->role === 'admin_empresa') {
-            $query->whereHas('encuesta', fn ($q) => $q->where('empresa_id', $user->empresa_id)
+            $query->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $user->empresa_id)
             );
         } elseif ($this->filtroEmpresaId) {
-            $query->whereHas('encuesta', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId)
+            $query->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId)
             );
         }
 
@@ -153,9 +153,9 @@ class Reportes extends Component
         $query = \App\Models\Encuesta::where('estado', 'completado');
 
         if ($user->role === 'admin_empresa') {
-            $query->where('empresa_id', $user->empresa_id);
+            $query->whereHas('lote', fn ($q) => $q->where('empresa_id', $user->empresa_id));
         } elseif ($this->filtroEmpresaId) {
-            $query->where('empresa_id', $this->filtroEmpresaId);
+            $query->whereHas('lote', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId));
         }
 
         if ($soloSinFiltrosDemograficos) {
