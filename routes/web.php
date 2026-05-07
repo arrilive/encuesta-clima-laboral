@@ -12,7 +12,7 @@ Route::view('profile', 'profile')
     ->name('profile');
 
 Route::prefix('admin')
-    ->middleware(['auth', 'role:super_admin,admin_empresa'])
+    ->middleware(['auth', 'role:super_admin,admin_empresa,admin_corporativo,admin_sucursal'])
     ->name('admin.')
     ->group(function () {
 
@@ -25,9 +25,6 @@ Route::prefix('admin')
         Route::get('/encuestas', \App\Livewire\Admin\EncuestasTable::class)
             ->name('encuestas');
 
-        Route::get('/tokens', \App\Livewire\Admin\GenerarTokens::class)
-            ->name('tokens');
-
         Route::get('/reportes', \App\Livewire\Admin\Reportes::class)
             ->name('reportes');
 
@@ -36,6 +33,8 @@ Route::prefix('admin')
 
         // Solo super_admin
         Route::middleware('role:super_admin')->group(function () {
+            Route::get('/tokens', \App\Livewire\Admin\GenerarTokens::class)
+                ->name('tokens');
             Route::get('/empresas', \App\Livewire\Admin\EmpresasTable::class)
                 ->name('empresas');
         });
