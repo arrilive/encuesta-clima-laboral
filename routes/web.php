@@ -44,12 +44,11 @@ require __DIR__.'/auth.php';
 
 // Sprint 2 - Rutas públicas de encuesta
 Route::get('/encuesta', [EncuestaController::class, 'bienvenida'])->name('encuesta.bienvenida');
-Route::post('/encuesta/acceso', [EncuestaController::class, 'acceso'])->name('encuesta.acceso');
 
-// Pantalla de elección de acceso
-Route::get('/encuesta/continuar', [EncuestaController::class, 'mostrarAcceso'])->name('encuesta.mostrar-acceso');
-Route::post('/encuesta/reanudar', [EncuestaController::class, 'reanudar'])->name('encuesta.reanudar');
-Route::post('/encuesta/generar', [EncuestaController::class, 'generar'])->name('encuesta.generar');
+// Flujo OTP v1.1
+Route::post('/encuesta/solicitar-otp', [EncuestaController::class, 'solicitarOtp'])->name('encuesta.solicitar-otp');
+Route::post('/encuesta/verificar-otp', [EncuestaController::class, 'verificarOtp'])->name('encuesta.verificar-otp');
+
 Route::get('/encuesta/{token}', [EncuestaController::class, 'demograficos'])->name('encuesta.demograficos');
 
 // Sprint 3 - Bloques de preguntas

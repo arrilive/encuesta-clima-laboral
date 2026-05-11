@@ -123,4 +123,16 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Phone Hash Salt
+    |--------------------------------------------------------------------------
+    |
+    | Salt para calcular el hash SHA-256 del número de teléfono al verificar
+    | unicidad de participación. Configurar en .env y nunca commitear el valor.
+    |
+    */
+
+    'phone_hash_salt' => env('PHONE_HASH_SALT'),
+
 ];
