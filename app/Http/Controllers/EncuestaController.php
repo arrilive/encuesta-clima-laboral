@@ -6,10 +6,15 @@ use App\Models\DatoDemografico;
 use App\Models\Dimension;
 use App\Models\Empresa;
 use App\Models\Encuesta;
+use App\Models\EncuestaHash;
+use App\Models\OtpVerificacion;
 use App\Models\Pregunta;
 use App\Models\Respuesta;
+use App\Models\Sucursal;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class EncuestaController extends Controller
 {
@@ -18,34 +23,164 @@ class EncuestaController extends Controller
         return view('encuesta.bienvenida');
     }
 
-    public function acceso(Request $request)
+    // ---------------------------------------------------------------------------
+    // Flujo OTP v1.1
+    // ---------------------------------------------------------------------------
+
+    public function solicitarOtp(Request $request): JsonResponse
     {
+        // 1. Validar campos de entrada
         $request->validate([
-            'password' => ['required', 'string'],
+            'numero_e164' => ['required', 'string', 'regex:/^\+[0-9]+$/'],
+            'lote_id' => ['required', 'integer', 'exists:lotes,id'],
         ]);
 
-        $empresa = Empresa::where('activa', true)
-            ->get()
-            ->first(fn ($e) => Hash::check($request->password, $e->password));
+        $numero_e164 = $request->numero_e164;
+        $lote_id = $request->lote_id;
 
-        if (! $empresa) {
-            return back()->withErrors(['password' => 'Contraseña incorrecta.']);
+        // 2. Buscar entidad dueña del lote (sucursal primero, luego empresa)
+        //    y verificar que el lote esté activo y vigente.
+        $lote = null;
+        $empresa_id = null;
+
+        $sucursal = Sucursal::where('activa', true)
+            ->whereHas('lotes', fn ($q) => $q
+                ->where('id', $lote_id)
+                ->where('activo', true)
+                ->whereDate('fecha_inicio', '<=', now())
+                ->whereDate('fecha_fin', '>=', now()))
+            ->select('id', 'empresa_id')
+            ->first();
+
+        if ($sucursal) {
+            $lote = $sucursal->lotes()->where('lotes.id', $lote_id)->first();
+            $empresa_id = $sucursal->empresa_id;
+        } else {
+            $empresa = Empresa::where('activa', true)
+                ->whereHas('lotes', fn ($q) => $q
+                    ->where('id', $lote_id)
+                    ->where('activo', true)
+                    ->whereDate('fecha_inicio', '<=', now())
+                    ->whereDate('fecha_fin', '>=', now()))
+                ->select('id')
+                ->first();
+
+            if ($empresa) {
+                $lote = $empresa->lotes()->where('lotes.id', $lote_id)->first();
+                $empresa_id = $empresa->id;
+            }
         }
 
-        // Guardamos empresa en sesión para usarla en generar()
-        session(['empresa_id' => $empresa->id]);
+        if (! $lote) {
+            return response()->json(['error' => 'acceso_invalido'], 422);
+        }
 
-        return redirect()->route('encuesta.mostrar-acceso');
+        // 3. Verificar unicidad por hash de teléfono
+        $hash_phone = hash('sha256', $numero_e164.$lote->id.config('app.phone_hash_salt'));
+
+        if (EncuestaHash::where('phone_hash', $hash_phone)->where('lote_id', $lote->id)->exists()) {
+            return response()->json(['error' => 'ya_participaste'], 422);
+        }
+
+        // 4. Eliminar OTPs previos del mismo número en el mismo lote
+        OtpVerificacion::where('lote_id', $lote->id)
+            ->where('numero_e164', $numero_e164)
+            ->delete();
+
+        // 5. Generar y guardar OTP
+        $otp = random_int(100000, 999999);
+
+        OtpVerificacion::create([
+            'numero_e164' => $numero_e164,
+            'otp_hash' => hash('sha256', (string) $otp),
+            'lote_id' => $lote->id,
+            'empresa_id' => $empresa_id,
+            'intentos' => 0,
+            'expira_en' => now()->addMinutes(10),
+        ]);
+
+        // 6. Simular envío (nunca loggear el número real)
+        Log::info('OTP generado', ['lote_id' => $lote->id, 'otp' => $otp]);
+
+        return response()->json(['status' => 'otp_enviado'], 200);
     }
 
-    // Muestra la pantalla de elección (continuar con token vs generar nuevo)
-    public function mostrarAcceso()
+    public function verificarOtp(Request $request): JsonResponse
     {
-        if (! session()->has('empresa_id')) {
-            return redirect()->route('encuesta.bienvenida');
+        // 1. Validar campos de entrada
+        $request->validate([
+            'numero_e164' => ['required', 'string'],
+            'otp' => ['required', 'string', 'digits:6'],
+            'lote_id' => ['required', 'integer'],
+        ]);
+
+        $numero_e164 = $request->numero_e164;
+        $lote_id = $request->lote_id;
+
+        // 2. Buscar registro OTP
+        $otpRecord = OtpVerificacion::where('numero_e164', $numero_e164)
+            ->where('lote_id', $lote_id)
+            ->first();
+
+        if (! $otpRecord) {
+            return response()->json(['error' => 'otp_invalido'], 422);
         }
 
-        return view('encuesta.acceso');
+        // 3. Verificar vigencia
+        if (! $otpRecord->estaVigente()) {
+            $otpRecord->delete();
+
+            return response()->json(['error' => 'otp_expirado'], 422);
+        }
+
+        // 4. Verificar intentos agotados
+        if ($otpRecord->agotaronIntentos()) {
+            return response()->json(['error' => 'intentos_agotados'], 422);
+        }
+
+        // 5. Validar el OTP
+        if (! hash_equals($otpRecord->otp_hash, hash('sha256', $request->otp))) {
+            $otpRecord->intentos++;
+            $otpRecord->save();
+
+            return response()->json([
+                'error' => 'otp_invalido',
+                'intentos_restantes' => 3 - $otpRecord->intentos,
+            ], 422);
+        }
+
+        // 6. OTP válido — orden estricto
+        // 6a. Guardar hash de unicidad
+        EncuestaHash::create([
+            'phone_hash' => hash('sha256', $numero_e164.$lote_id.config('app.phone_hash_salt')),
+            'lote_id' => $lote_id,
+        ]);
+
+        // 6b. Eliminar registro OTP
+        $otpRecord->delete();
+
+        // 6c. Generar token
+        $token = 'TK-'.Str::upper(Str::random(4)).'-'.Str::upper(Str::random(4));
+
+        // 6d. Buscar encuesta disponible
+        $encuesta = Encuesta::where('lote_id', $lote_id)
+            ->where('estado', 'disponible')
+            ->first();
+
+        if (! $encuesta) {
+            return response()->json(['error' => 'sin_tokens'], 422);
+        }
+
+        // 6e. Asignar token
+        $encuesta->update([
+            'estado' => 'asignado',
+            'fecha_asignacion' => now(),
+            'token' => $token,
+        ]);
+
+        Log::info('Token asignado', ['lote_id' => $lote_id, 'token' => $token]);
+
+        return response()->json(['status' => 'token_asignado', 'token' => $token], 200);
     }
 
     private function obtenerEncuestaValida(string $token, array $estados = ['asignado', 'en_progreso']): Encuesta
@@ -53,46 +188,6 @@ class EncuestaController extends Controller
         return Encuesta::whereIn('estado', $estados)
             ->where('token', $token)
             ->firstOrFail();
-    }
-
-    // Opción A: el participante ya tiene un token y quiere retomarlo
-    public function reanudar(Request $request)
-    {
-        $request->validate(['token' => ['required', 'string']]);
-
-        $encuesta = Encuesta::whereIn('estado', ['asignado', 'en_progreso'])
-            ->where('token', $request->token)
-            ->where('empresa_id', session('empresa_id')) // TODO issue #118
-            ->first();
-
-        if (! $encuesta) {
-            return back()->withErrors(['token' => 'Código no encontrado, favor verificar que sea correcto.']);
-        }
-
-        return redirect()->route('encuesta.dimensiones', $encuesta->token);
-    }
-
-    // Opción B: primera vez — asignar un token nuevo y mostrarlo
-    public function generar(Request $request)
-    {
-        $empresaId = session('empresa_id');
-
-        if (! $empresaId) {
-            return redirect()->route('encuesta.bienvenida')
-                ->withErrors(['password' => 'Sesión expirada. Vuelve a ingresar.']);
-        }
-
-        $encuesta = Encuesta::where('empresa_id', $empresaId) // TODO issue #118
-            ->where('estado', 'disponible')
-            ->first();
-
-        if (! $encuesta) {
-            return back()->withErrors(['generar' => 'No hay tokens disponibles. Favor de contactar con el administrador.']);
-        }
-
-        $encuesta->asignar();
-
-        return view('encuesta.token-asignado', compact('encuesta'));
     }
 
     public function demograficos(string $token)
