@@ -46,6 +46,7 @@ require __DIR__.'/auth.php';
 Route::get('/encuesta', [EncuestaController::class, 'bienvenida'])->name('encuesta.bienvenida');
 
 // Flujo OTP v1.1
+Route::post('/encuesta/verificar-llave', [EncuestaController::class, 'verificarLlave'])->name('encuesta.verificar-llave');
 Route::post('/encuesta/solicitar-otp', [EncuestaController::class, 'solicitarOtp'])->name('encuesta.solicitar-otp');
 Route::post('/encuesta/verificar-otp', [EncuestaController::class, 'verificarOtp'])->name('encuesta.verificar-otp');
 
