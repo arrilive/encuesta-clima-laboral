@@ -22,12 +22,12 @@ class OtpVerificacionFactory extends Factory
     public function definition(): array
     {
         return [
-            'numero_e164' => '+52' . fake()->numerify('##########'),
-            'otp_hash'    => hash('sha256', fake()->numerify('######')),
-            'lote_id'     => Lote::factory(),
-            'empresa_id'  => Empresa::factory(),
-            'intentos'    => 0,
-            'expira_en'   => now()->addMinutes(10),
+            'numero_e164' => '+52'.fake()->numerify('##########'),
+            'otp_hash' => hash('sha256', fake()->numerify('######')),
+            'lote_id' => Lote::factory(),
+            'empresa_id' => Empresa::factory(),
+            'intentos' => 0,
+            'expira_en' => now()->addMinutes(10),
         ];
     }
 

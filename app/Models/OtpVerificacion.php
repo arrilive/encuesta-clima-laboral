@@ -27,7 +27,7 @@ class OtpVerificacion extends Model
     {
         return [
             'expira_en' => 'datetime',
-            'intentos'  => 'integer',
+            'intentos' => 'integer',
         ];
     }
 

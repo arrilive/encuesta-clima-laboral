@@ -22,7 +22,7 @@ class EncuestaHashFactory extends Factory
     {
         return [
             'phone_hash' => fake()->sha256(),
-            'lote_id'    => Lote::factory(),
+            'lote_id' => Lote::factory(),
         ];
     }
 }
