@@ -4,6 +4,7 @@ use App\Models\Empresa;
 use App\Models\Encuesta;
 use App\Models\EncuestaHash;
 use App\Models\Lote;
+use App\Models\Sucursal;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
@@ -16,6 +17,73 @@ test('muestra la página de bienvenida', function () {
     $this->get(route('encuesta.bienvenida'))
         ->assertOk()
         ->assertSee('Encuesta de Clima Laboral');
+});
+
+// ---------------------------------------------------------------------------
+// verificarLlave — #129
+// ---------------------------------------------------------------------------
+
+test('verificarLlave devuelve llave_valida con password correcto de empresa', function () {
+    $empresa = Empresa::factory()->create(['activa' => true, 'password' => 'secret123']);
+
+    Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'sucursal_id' => null,
+        'activo' => true,
+        'fecha_inicio' => now()->subDay(),
+        'fecha_fin' => now()->addDay(),
+    ]);
+
+    $this->postJson(route('encuesta.verificar-llave'), ['password' => 'secret123'])
+        ->assertOk()
+        ->assertJson(['status' => 'llave_valida'])
+        ->assertJsonStructure(['status', 'lote_id', 'nombre_entidad']);
+});
+
+test('verificarLlave devuelve llave_valida con password correcto de sucursal', function () {
+    $empresa = Empresa::factory()->create(['activa' => true]);
+    $sucursal = Sucursal::factory()->create([
+        'empresa_id' => $empresa->id,
+        'activa' => true,
+        'password' => 'suc_secret',
+    ]);
+
+    Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'sucursal_id' => $sucursal->id,
+        'activo' => true,
+        'fecha_inicio' => now()->subDay(),
+        'fecha_fin' => now()->addDay(),
+    ]);
+
+    $this->postJson(route('encuesta.verificar-llave'), ['password' => 'suc_secret'])
+        ->assertOk()
+        ->assertJson(['status' => 'llave_valida', 'nombre_entidad' => $sucursal->nombre]);
+});
+
+test('verificarLlave devuelve llave_invalida con password incorrecto', function () {
+    Empresa::factory()->create(['activa' => true, 'password' => 'correcto123']);
+
+    $this->postJson(route('encuesta.verificar-llave'), ['password' => 'incorrecto'])
+        ->assertStatus(422)
+        ->assertJson(['error' => 'llave_invalida']);
+});
+
+test('verificarLlave devuelve sin_lote_activo si no hay lote vigente', function () {
+    $empresa = Empresa::factory()->create(['activa' => true, 'password' => 'secret123']);
+
+    // Lote fuera de rango: fecha_inicio en el futuro
+    Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'sucursal_id' => null,
+        'activo' => true,
+        'fecha_inicio' => now()->addDay(),
+        'fecha_fin' => now()->addDays(10),
+    ]);
+
+    $this->postJson(route('encuesta.verificar-llave'), ['password' => 'secret123'])
+        ->assertStatus(422)
+        ->assertJson(['error' => 'sin_lote_activo']);
 });
 
 // ---------------------------------------------------------------------------

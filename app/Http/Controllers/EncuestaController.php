@@ -7,12 +7,14 @@ use App\Models\Dimension;
 use App\Models\Empresa;
 use App\Models\Encuesta;
 use App\Models\EncuestaHash;
+use App\Models\Lote;
 use App\Models\OtpVerificacion;
 use App\Models\Pregunta;
 use App\Models\Respuesta;
 use App\Models\Sucursal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -26,6 +28,54 @@ class EncuestaController extends Controller
     // ---------------------------------------------------------------------------
     // Flujo OTP v1.1
     // ---------------------------------------------------------------------------
+
+    public function verificarLlave(Request $request): JsonResponse
+    {
+        // 1. Validar campo de entrada
+        $request->validate([
+            'password' => ['required', 'string'],
+        ]);
+
+        // 2. Buscar entidad activa cuya llave maestra coincida (sucursal primero, luego empresa)
+        $sucursal = Sucursal::where('activa', true)
+            ->select('id', 'empresa_id', 'nombre', 'password')
+            ->get()
+            ->first(fn ($s) => Hash::check($request->password, $s->password));
+
+        $empresa = $sucursal ? null : Empresa::where('activa', true)
+            ->select('id', 'nombre', 'password')
+            ->get()
+            ->first(fn ($e) => Hash::check($request->password, $e->password));
+
+        if (! $sucursal && ! $empresa) {
+            return response()->json(['error' => 'llave_invalida'], 422);
+        }
+
+        // 3. Buscar lote activo y vigente para la entidad encontrada
+        $query = Lote::where('activo', true)
+            ->whereDate('fecha_inicio', '<=', now())
+            ->whereDate('fecha_fin', '>=', now());
+
+        if ($sucursal) {
+            $query->where('sucursal_id', $sucursal->id);
+        } else {
+            $query->where('empresa_id', $empresa->id)
+                ->whereNull('sucursal_id');
+        }
+
+        $lote = $query->first();
+
+        if (! $lote) {
+            return response()->json(['error' => 'sin_lote_activo'], 422);
+        }
+
+        // 4. Devolver lote_id y nombre de la entidad al frontend
+        return response()->json([
+            'status' => 'llave_valida',
+            'lote_id' => $lote->id,
+            'nombre_entidad' => $sucursal?->nombre ?? $empresa->nombre,
+        ]);
+    }
 
     public function solicitarOtp(Request $request): JsonResponse
     {
