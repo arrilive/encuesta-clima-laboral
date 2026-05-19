@@ -303,8 +303,8 @@ class Reportes extends Component
         $completadasFiltradas = $this->getEncuestasBaseQuery()->count();
 
         $totalTokens = \App\Models\Encuesta::query()
-            ->when($user->role === 'admin_empresa', fn ($q) => $q->where('empresa_id', $user->empresa_id))
-            ->when($user->role === 'super_admin' && $this->filtroEmpresaId, fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId))
+            ->when($user->role === 'admin_empresa', fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $user->empresa_id)))
+            ->when($user->role === 'super_admin' && $this->filtroEmpresaId, fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $this->filtroEmpresaId)))
             ->count();
 
         $scoringService = app(ClimaScoringService::class);

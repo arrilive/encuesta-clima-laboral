@@ -52,15 +52,15 @@ class PdfController extends Controller
         return $pdf->stream('reporte-clima.pdf');
     }
 
-    private function getBaseQuery(Request $request, $user)
+    private function getBaseQuery(Request $request, \App\Models\User $user)
     {
         $query = Respuesta::query()
             ->whereHas('encuesta', fn ($q) => $q->where('estado', 'completado'));
 
         if ($user->role === 'admin_empresa') {
-            $query->whereHas('encuesta', fn ($q) => $q->where('empresa_id', $user->empresa_id));
+            $query->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $user->empresa_id));
         } elseif ($request->filled('empresa_id')) {
-            $query->whereHas('encuesta', fn ($q) => $q->where('empresa_id', $request->empresa_id));
+            $query->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $request->empresa_id));
         }
 
         $filtros = [
@@ -106,14 +106,14 @@ class PdfController extends Controller
         return $filtros;
     }
 
-    private function getDatosDimensiones(Request $request, $user): array
+    private function getDatosDimensiones(Request $request, \App\Models\User $user): array
     {
         $scoring = app(ClimaScoringService::class);
 
         return $scoring->scoresPorDimension($this->getBaseQuery($request, $user))->toArray();
     }
 
-    private function getDatosSubdimensiones(Request $request, $user): array
+    private function getDatosSubdimensiones(Request $request, \App\Models\User $user): array
     {
         $scoring = app(ClimaScoringService::class);
         $scores = $scoring->scoresPorSubdimension($this->getBaseQuery($request, $user));
@@ -132,14 +132,14 @@ class PdfController extends Controller
         return $datos;
     }
 
-    private function getRespuestasAbiertas(Request $request, $user, int $limite): array
+    private function getRespuestasAbiertas(Request $request, \App\Models\User $user, int $limite): array
     {
         $respuestasAbiertas = [];
         $preguntasAbiertas = \App\Models\PreguntaAbierta::orderBy('orden')->get();
 
         $encuestasIds = \App\Models\Encuesta::where('estado', 'completado')
-            ->when($user->role === 'admin_empresa', fn ($q) => $q->where('empresa_id', $user->empresa_id))
-            ->when($user->role === 'super_admin' && $request->filled('empresa_id'), fn ($q) => $q->where('empresa_id', $request->empresa_id))
+            ->when($user->role === 'admin_empresa', fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $user->empresa_id)))
+            ->when($user->role === 'super_admin' && $request->filled('empresa_id'), fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $request->empresa_id)))
             ->when($request->filled('edad_id'), fn ($q) => $q->whereHas('datoDemografico', fn ($q2) => $q2->where('edad_id', $request->edad_id)))
             ->when($request->filled('sexo_id'), fn ($q) => $q->whereHas('datoDemografico', fn ($q2) => $q2->where('sexo_id', $request->sexo_id)))
             ->when($request->filled('cargo_id'), fn ($q) => $q->whereHas('datoDemografico', fn ($q2) => $q2->where('cargo_id', $request->cargo_id)))
