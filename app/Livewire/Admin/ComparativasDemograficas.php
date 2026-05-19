@@ -41,10 +41,10 @@ class ComparativasDemograficas extends Component
             ->whereHas('encuesta', fn ($q) => $q->where('estado', 'completado'));
 
         if ($user->role === 'admin_empresa') {
-            $query->whereHas('encuesta', fn ($q) => $q->where('empresa_id', $user->empresa_id)
+            $query->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $user->empresa_id)
             );
         } elseif ($this->filtroEmpresaId) {
-            $query->whereHas('encuesta', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId)
+            $query->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId)
             );
         }
 

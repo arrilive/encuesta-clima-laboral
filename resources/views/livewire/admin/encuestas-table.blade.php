@@ -140,7 +140,7 @@
                             </td>
                             @if(auth()->user()->role === 'super_admin')
                                 <td class="px-6 py-3 text-slate-700">
-                                    {{ $encuesta->empresa->nombre }}
+                                    {{ $encuesta->lote->empresa->nombre }}
                                 </td>
                             @endif
                             <td class="px-6 py-3">

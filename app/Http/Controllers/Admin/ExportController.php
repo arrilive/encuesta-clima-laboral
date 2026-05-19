@@ -13,14 +13,14 @@ class ExportController extends Controller
     {
         $user = auth()->user();
 
-        $encuestas = Encuesta::with('empresa')
-            ->when($user->role === 'admin_empresa', fn ($q) => $q->where('empresa_id', $user->empresa_id)
+        $encuestas = Encuesta::with('lote.empresa')
+            ->when($user->role === 'admin_empresa', fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $user->empresa_id))
             )
             ->when($request->estado, fn ($q) => $q->where('estado', $request->estado)
             )
             ->when($request->buscar, fn ($q) => $q->where('token', 'like', '%'.$request->buscar.'%')
             )
-            ->when($request->empresa, fn ($q) => $q->where('empresa_id', $request->empresa)
+            ->when($request->empresa, fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $request->empresa))
             )
             ->when($request->desde, fn ($q) => $q->whereDate('fecha_asignacion', '>=', $request->desde)
             )
@@ -48,7 +48,7 @@ class ExportController extends Controller
                     $encuesta->fecha_completada?->format('d/m/Y H:i') ?? '',
                 ];
                 if ($user->role === 'super_admin') {
-                    array_splice($row, 1, 0, [$encuesta->empresa->nombre]);
+                    array_splice($row, 1, 0, [$encuesta->lote->empresa->nombre]);
                 }
                 fputcsv($handle, $row);
             }
