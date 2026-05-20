@@ -52,9 +52,9 @@ class RespuestasAbiertas extends Component
         $query = Encuesta::query()->where('estado', 'completado');
 
         if ($user->role === 'admin_empresa') {
-            $query->where('empresa_id', $user->empresa_id);
+            $query->whereHas('lote', fn ($q) => $q->where('empresa_id', $user->empresa_id));
         } elseif (! empty($this->filtroEmpresaId)) {
-            $query->where('empresa_id', $this->filtroEmpresaId);
+            $query->whereHas('lote', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId));
         }
 
         if ($this->filtroEdadId) {

@@ -95,7 +95,7 @@ class Dashboard extends Component
                 $base = Respuesta::query()
                     ->whereHas('encuesta', fn ($q) => $q
                         ->where('estado', 'completado')
-                        ->where('empresa_id', $empresa->id)
+                        ->whereHas('lote', fn ($q) => $q->where('empresa_id', $empresa->id))
                     );
 
                 return [
