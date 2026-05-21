@@ -51,4 +51,9 @@ class Empresa extends Model
     {
         return $this->hasMany(Lote::class);
     }
+
+    public function encuestas(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    {
+        return $this->hasManyThrough(Encuesta::class, Lote::class);
+    }
 }
