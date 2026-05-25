@@ -1,7 +1,7 @@
-<div class="space-y-6 max-w-4xl">
+<div class="space-y-6 max-w-7xl">
 
     {{-- Formulario --}}
-    <div class="bg-white rounded-2xl border border-slate-200 p-6">
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 max-w-4xl">
         <h2 class="text-sm font-semibold text-slate-900 mb-5">Generar nuevos tokens</h2>
 
         @if($generado)
@@ -83,6 +83,44 @@
                 />
             </div>
 
+            {{-- Fecha de Inicio --}}
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Fecha de inicio <span class="text-red-400">*</span></label>
+                <input
+                    wire:model="fecha_inicio"
+                    type="date"
+                    class="w-full px-4 py-2.5 border rounded-xl text-sm text-slate-900
+                           focus:outline-none focus:border-blue-500 focus:ring-4
+                           focus:ring-blue-500/10 transition-all duration-200
+                           {{ $errors->has('fecha_inicio') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}"
+                />
+                @error('fecha_inicio')
+                    <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">
+                        <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        {{ $message }}
+                    </p>
+                @enderror
+            </div>
+
+            {{-- Fecha de Fin --}}
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Fecha de finalización <span class="text-red-400">*</span></label>
+                <input
+                    wire:model="fecha_fin"
+                    type="date"
+                    class="w-full px-4 py-2.5 border rounded-xl text-sm text-slate-900
+                           focus:outline-none focus:border-blue-500 focus:ring-4
+                           focus:ring-blue-500/10 transition-all duration-200
+                           {{ $errors->has('fecha_fin') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}"
+                />
+                @error('fecha_fin')
+                    <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">
+                        <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        {{ $message }}
+                    </p>
+                @enderror
+            </div>
+
         </div>
 
         <div class="mt-6">
@@ -113,54 +151,60 @@
 
     {{-- Historial de lotes --}}
     <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-200">
-            <h2 class="text-sm font-semibold text-slate-900">Historial de generaciones</h2>
-        </div>
-
-        <table class="w-full text-sm">
-            <thead>
-                <tr class="border-b border-slate-200 bg-slate-50">
-                    <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Fecha</th>
-                    @if(auth()->user()->role === 'super_admin')
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Empresa</th>
-                    @endif
-                    <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Nombre del lote</th>
-                    <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Cantidad</th>
-                    <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Generado por</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100">
-                @forelse($lotes as $lote)
-                    <tr class="hover:bg-slate-50 transition-colors duration-100">
-                        <td class="px-6 py-3 text-slate-500 text-xs">
-                            {{ $lote->created_at->format('d/m/Y H:i') }}
-                        </td>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-slate-200 bg-slate-50">
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Fecha</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Vigencia</th>
                         @if(auth()->user()->role === 'super_admin')
-                            <td class="px-6 py-3 text-slate-700">
-                                {{ $lote->empresa->nombre }}
-                            </td>
+                            <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Empresa</th>
                         @endif
-                        <td class="px-6 py-3 text-slate-700">
-                            {{ $lote->nombre ?? '—' }}
-                        </td>
-                        <td class="px-6 py-3">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                                {{ $lote->tokens_total }} tokens
-                            </span>
-                        </td>
-                        <td class="px-6 py-3 text-slate-500 text-xs">
-                            {{ $lote->user->name }}
-                        </td>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Nombre del lote</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Cantidad</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Generado por</th>
                     </tr>
-                @empty
-                    <tr>
-                        <td colspan="5" class="px-6 py-12 text-center text-slate-400 text-sm">
-                            Aún no se han generado tokens.
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @forelse($lotes as $lote)
+                        <tr class="hover:bg-slate-50 transition-colors duration-100">
+                            <td class="px-6 py-3 text-slate-500 text-xs whitespace-nowrap">
+                                {{ $lote->created_at->format('d/m/Y H:i') }}
+                            </td>
+                            <td class="px-6 py-3 text-slate-600 text-xs whitespace-nowrap">
+                                @if($lote->fecha_inicio && $lote->fecha_fin)
+                                    {{ \Carbon\Carbon::parse($lote->fecha_inicio)->format('d M Y') }} → {{ \Carbon\Carbon::parse($lote->fecha_fin)->format('d M Y') }}
+                                @else
+                                    <span class="text-slate-400 text-xs italic">Sin fecha registrada</span>
+                                @endif
+                            </td>
+                            @if(auth()->user()->role === 'super_admin')
+                                <td class="px-6 py-3 text-slate-700 whitespace-nowrap">
+                                    {{ $lote->empresa->nombre }}
+                                </td>
+                            @endif
+                            <td class="px-6 py-3 text-slate-700">
+                                {{ $lote->nombre ?? '—' }}
+                            </td>
+                            <td class="px-6 py-3 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 whitespace-nowrap">
+                                    {{ $lote->tokens_total }} {{ $lote->tokens_total == 1 ? 'token' : 'tokens' }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-3 text-slate-500 text-xs whitespace-nowrap">
+                                {{ $lote->user->name }}
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-slate-400 text-sm">
+                                Aún no se han generado tokens.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
 
 </div>

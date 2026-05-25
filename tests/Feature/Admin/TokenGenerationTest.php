@@ -14,6 +14,7 @@ it('super_admin puede generar tokens para cualquier empresa', function () {
         ->test(GenerarTokens::class)
         ->set('empresaId', (string) $empresa->id)
         ->set('tokens_total', '10')
+        ->set('fecha_fin', now()->addDays(30)->toDateString())
         ->call('generar');
 
     expect(Encuesta::whereHas('lote', fn ($q) => $q->where('empresa_id', $empresa->id))->count())->toBe(10);
@@ -26,6 +27,7 @@ it('admin_empresa puede generar tokens para su propia empresa', function () {
     Livewire::actingAs($admin)
         ->test(GenerarTokens::class)
         ->set('tokens_total', '5')
+        ->set('fecha_fin', now()->addDays(30)->toDateString())
         ->call('generar');
 
     expect(Encuesta::whereHas('lote', fn ($q) => $q->where('empresa_id', $empresa->id))->count())->toBe(5);
@@ -40,6 +42,7 @@ it('admin_empresa no puede generar tokens para otra empresa', function () {
         ->test(GenerarTokens::class)
         ->set('empresaId', (string) $empresa2->id)
         ->set('tokens_total', '5')
+        ->set('fecha_fin', now()->addDays(30)->toDateString())
         ->call('generar')
         ->assertHasErrors(['empresaId']);
 
@@ -54,6 +57,7 @@ it('super_admin no puede generar tokens para empresa inactiva', function () {
         ->test(GenerarTokens::class)
         ->set('empresaId', (string) $empresa->id)
         ->set('tokens_total', '10')
+        ->set('fecha_fin', now()->addDays(30)->toDateString())
         ->call('generar')
         ->assertHasErrors(['empresaId']);
 
@@ -68,6 +72,7 @@ it('admin_empresa no puede generar tokens si su empresa está inactiva', functio
         ->test(GenerarTokens::class)
         ->set('empresaId', (string) $empresa->id)
         ->set('tokens_total', '10')
+        ->set('fecha_fin', now()->addDays(30)->toDateString())
         ->call('generar')
         ->assertHasErrors(['empresaId']);
 

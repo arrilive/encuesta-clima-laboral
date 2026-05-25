@@ -53,8 +53,8 @@ class EncuestaController extends Controller
 
         // 3. Buscar lote activo y vigente para la entidad encontrada
         $query = Lote::where('activo', true)
-            ->whereDate('fecha_inicio', '<=', now())
-            ->whereDate('fecha_fin', '>=', now());
+            ->where(fn ($q) => $q->whereNull('fecha_inicio')->orWhereDate('fecha_inicio', '<=', now()))
+            ->where(fn ($q) => $q->whereNull('fecha_fin')->orWhereDate('fecha_fin', '>=', now()));
 
         if ($sucursal) {
             $query->where('sucursal_id', $sucursal->id);
@@ -97,8 +97,8 @@ class EncuestaController extends Controller
             ->whereHas('lotes', fn ($q) => $q
                 ->where('id', $lote_id)
                 ->where('activo', true)
-                ->whereDate('fecha_inicio', '<=', now())
-                ->whereDate('fecha_fin', '>=', now()))
+                ->where(fn ($q2) => $q2->whereNull('fecha_inicio')->orWhereDate('fecha_inicio', '<=', now()))
+                ->where(fn ($q2) => $q2->whereNull('fecha_fin')->orWhereDate('fecha_fin', '>=', now())))
             ->select('id', 'empresa_id')
             ->first();
 
@@ -110,8 +110,8 @@ class EncuestaController extends Controller
                 ->whereHas('lotes', fn ($q) => $q
                     ->where('id', $lote_id)
                     ->where('activo', true)
-                    ->whereDate('fecha_inicio', '<=', now())
-                    ->whereDate('fecha_fin', '>=', now()))
+                    ->where(fn ($q2) => $q2->whereNull('fecha_inicio')->orWhereDate('fecha_inicio', '<=', now()))
+                    ->where(fn ($q2) => $q2->whereNull('fecha_fin')->orWhereDate('fecha_fin', '>=', now())))
                 ->select('id')
                 ->first();
 

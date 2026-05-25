@@ -18,12 +18,18 @@ class GenerarTokens extends Component
 
     public string $empresaId = '';
 
+    public string $fecha_inicio = '';
+
+    public string $fecha_fin = '';
+
     protected function rules(): array
     {
         return [
             'tokens_total' => 'required|numeric|integer|min:1|max:500',
             'nombre' => 'nullable|string|max:100',
             'empresaId' => 'required|exists:empresas,id',
+            'fecha_inicio' => 'required|date|after_or_equal:today',
+            'fecha_fin' => 'required|date|after:fecha_inicio',
         ];
     }
 
@@ -51,6 +57,9 @@ class GenerarTokens extends Component
         if ($user->role === 'admin_empresa') {
             $this->empresaId = (string) $user->empresa_id;
         }
+
+        $this->fecha_inicio = now()->toDateString();
+        $this->fecha_fin = '';
     }
 
     public function generar(): void
@@ -79,6 +88,8 @@ class GenerarTokens extends Component
             'user_id' => $user->id,
             'tokens_total' => $this->tokens_total,
             'nombre' => $this->nombre ?: null,
+            'fecha_inicio' => $this->fecha_inicio,
+            'fecha_fin' => $this->fecha_fin,
         ]);
 
         // Generar tokens en lote — una sola query
@@ -98,6 +109,8 @@ class GenerarTokens extends Component
         // Reset del formulario
         $this->tokens_total = '10';
         $this->nombre = '';
+        $this->fecha_inicio = now()->toDateString();
+        $this->fecha_fin = '';
         if ($user->role === 'super_admin') {
             $this->empresaId = '';
         }
