@@ -69,7 +69,7 @@ test('verificarLlave devuelve llave_invalida con password incorrecto', function 
         ->assertJson(['error' => 'llave_invalida']);
 });
 
-test('verificarLlave devuelve sin_lote_activo si no hay lote vigente', function () {
+test('verificarLlave devuelve llave_invalida si no hay lote vigente', function () {
     $empresa = Empresa::factory()->create(['activa' => true, 'password' => 'secret123']);
 
     // Lote fuera de rango: fecha_inicio en el futuro
@@ -83,7 +83,7 @@ test('verificarLlave devuelve sin_lote_activo si no hay lote vigente', function 
 
     $this->postJson(route('encuesta.verificar-llave'), ['password' => 'secret123'])
         ->assertStatus(422)
-        ->assertJson(['error' => 'sin_lote_activo']);
+        ->assertJson(['error' => 'llave_invalida']);
 });
 
 // ---------------------------------------------------------------------------
