@@ -37,12 +37,24 @@ class EncuestaController extends Controller
         ]);
 
         // 2. Buscar entidad activa cuya llave maestra coincida (sucursal primero, luego empresa)
+        $vigenteFilter = function ($query) {
+            $query->where('activo', true)
+                ->where(fn ($q) => $q->whereNull('fecha_inicio')->orWhereDate('fecha_inicio', '<=', now()))
+                ->where(fn ($q) => $q->whereNull('fecha_fin')->orWhereDate('fecha_fin', '>=', now()));
+        };
+
+        // Camino rápido: Buscar únicamente entre las que tienen un lote vigente
         $sucursal = Sucursal::where('activa', true)
+            ->whereHas('lotes', $vigenteFilter)
             ->select('id', 'empresa_id', 'nombre', 'password')
             ->get()
             ->first(fn ($s) => Hash::check($request->password, $s->password));
 
         $empresa = $sucursal ? null : Empresa::where('activa', true)
+            ->whereHas('lotes', function ($query) use ($vigenteFilter) {
+                $query->whereNull('sucursal_id');
+                $vigenteFilter($query);
+            })
             ->select('id', 'nombre', 'password')
             ->get()
             ->first(fn ($e) => Hash::check($request->password, $e->password));
