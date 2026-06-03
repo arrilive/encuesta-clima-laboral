@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\Models\Empresa;
 use App\Models\Encuesta;
 use App\Models\Lote;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -82,26 +83,30 @@ class GenerarTokens extends Component
             return;
         }
 
-        // Crear el lote
-        $lote = Lote::create([
-            'empresa_id' => $this->empresaId,
-            'user_id' => $user->id,
-            'tokens_total' => $this->tokens_total,
-            'nombre' => $this->nombre ?: null,
-            'fecha_inicio' => $this->fecha_inicio,
-            'fecha_fin' => $this->fecha_fin,
-        ]);
+        $lote = null;
 
-        // Generar tokens en lote — una sola query
-        $tokens = collect(range(1, $this->tokens_total))->map(fn () => [
-            'token' => Str::random(64),
-            'lote_id' => $lote->id,
-            'estado' => 'disponible',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        // Crear el lote e insertar tokens de manera atómica
+        DB::transaction(function () use (&$lote, $user) {
+            $lote = Lote::create([
+                'empresa_id' => $this->empresaId,
+                'user_id' => $user->id,
+                'tokens_total' => $this->tokens_total,
+                'nombre' => $this->nombre ?: null,
+                'fecha_inicio' => $this->fecha_inicio,
+                'fecha_fin' => $this->fecha_fin,
+            ]);
 
-        Encuesta::insert($tokens->toArray());
+            // Generar tokens en lote — una sola query
+            $tokens = collect(range(1, $this->tokens_total))->map(fn () => [
+                'token' => Str::random(64),
+                'lote_id' => $lote->id,
+                'estado' => 'disponible',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            Encuesta::insert($tokens->toArray());
+        });
 
         $this->totalGenerado = (int) $this->tokens_total;
         $this->generado = true;
