@@ -100,9 +100,20 @@
                         <p class="text-sm text-slate-500 mb-5">Te enviaremos un código de un solo uso a tu WhatsApp.</p>
                         <div class="space-y-4">
                             <input id="phone-input" type="tel" placeholder="Número de WhatsApp"
-                                class="w-full px-4 py-2.5 border border-slate-300 rounded-xl text-sm text-slate-900
-                                       placeholder-slate-400 bg-white focus:outline-none focus:border-blue-500
+                                :class="phoneError ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white'"
+                                class="w-full px-4 py-2.5 border rounded-xl text-sm text-slate-900
+                                       placeholder-slate-400 focus:outline-none focus:border-blue-500
                                        focus:ring-4 focus:ring-blue-500/10 transition-all duration-200">
+                            
+                            <p x-show="phoneError !== ''" class="flex items-start gap-1.5 text-xs text-red-500 mt-1">
+                                <svg class="w-4 h-4 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="12" y1="8" x2="12" y2="12" />
+                                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                                </svg>
+                                <span x-text="phoneError"></span>
+                            </p>
+
                             <p class="text-sm text-slate-400 leading-relaxed">
                                 Tu número se usa únicamente para enviarte el código de verificación. No se almacena en
                                 nuestros sistemas.
@@ -232,6 +243,7 @@
                 otp: ['', '', '', '', '', ''],
                 intentosRestantes: 3,
                 errorMsg: '',
+                phoneError: '',
                 timer: null,
                 segundos: 600,
                 iti: null,
@@ -324,6 +336,12 @@
                 },
 
                 async solicitarOtp() {
+                    this.phoneError = '';
+                    if (this.iti && !this.iti.isValidNumber()) {
+                        this.phoneError = 'Ingresa un número de WhatsApp válido.';
+                        return;
+                    }
+
                     if (this.iti) {
                         this.numeroE164 = this.iti.getNumber();
                     }
