@@ -100,11 +100,17 @@
                         <p class="text-sm text-slate-500 mb-5">Te enviaremos un código de un solo uso a tu WhatsApp.</p>
                         <div class="space-y-4">
                             <input id="phone-input" type="tel" placeholder="Número de WhatsApp"
+                                x-on:input="
+                                    let val = $el.value;
+                                    let clean = val.startsWith('+') ? '+' + val.slice(1).replace(/\D/g, '') : val.replace(/\D/g, '');
+                                    if (val !== clean) {
+                                        $el.value = clean;
+                                    }
+                                "
                                 :class="phoneError ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white'"
                                 class="w-full px-4 py-2.5 border rounded-xl text-sm text-slate-900
                                        placeholder-slate-400 focus:outline-none focus:border-blue-500
                                        focus:ring-4 focus:ring-blue-500/10 transition-all duration-200">
-                            
                             <p x-show="phoneError !== ''" class="flex items-start gap-1.5 text-xs text-red-500 mt-1">
                                 <svg class="w-4 h-4 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <circle cx="12" cy="12" r="10" />
@@ -337,6 +343,7 @@
 
                 async solicitarOtp() {
                     this.phoneError = '';
+
                     if (this.iti && !this.iti.isValidNumber()) {
                         this.phoneError = 'Ingresa un número de WhatsApp válido.';
                         return;
