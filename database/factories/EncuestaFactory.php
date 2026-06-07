@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Models\Empresa;
 use App\Models\Encuesta;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -18,7 +17,7 @@ class EncuestaFactory extends Factory
     {
         return [
             'token' => (string) Str::uuid(),
-            'empresa_id' => Empresa::factory(),
+            'lote_id' => \App\Models\Lote::factory(),
             'estado' => 'disponible',
             'fecha_asignacion' => null,
             'fecha_completada' => null,

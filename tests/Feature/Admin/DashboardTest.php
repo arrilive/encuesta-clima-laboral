@@ -39,8 +39,8 @@ it('los KPIs del super_admin incluyen todas las empresas', function () {
     $empresa1 = Empresa::factory()->create();
     $empresa2 = Empresa::factory()->create();
 
-    Encuesta::factory()->count(3)->create(['empresa_id' => $empresa1->id, 'estado' => 'completado']);
-    Encuesta::factory()->count(2)->create(['empresa_id' => $empresa2->id, 'estado' => 'disponible']);
+    Encuesta::factory()->count(3)->create(['lote_id' => \App\Models\Lote::factory()->for($empresa1)->create()->id, 'estado' => 'completado']);
+    Encuesta::factory()->count(2)->create(['lote_id' => \App\Models\Lote::factory()->for($empresa2)->create()->id, 'estado' => 'disponible']);
 
     $admin = User::factory()->superAdmin()->create();
 
@@ -57,8 +57,8 @@ it('los KPIs del admin_empresa solo incluyen su empresa', function () {
     $empresa1 = Empresa::factory()->create();
     $empresa2 = Empresa::factory()->create();
 
-    Encuesta::factory()->count(3)->create(['empresa_id' => $empresa1->id]);
-    Encuesta::factory()->count(2)->create(['empresa_id' => $empresa2->id]);
+    Encuesta::factory()->count(3)->create(['lote_id' => \App\Models\Lote::factory()->for($empresa1)->create()->id]);
+    Encuesta::factory()->count(2)->create(['lote_id' => \App\Models\Lote::factory()->for($empresa2)->create()->id]);
 
     $admin = User::factory()->adminEmpresa($empresa1->id)->create();
 
@@ -86,8 +86,8 @@ it('alerta_tokens se activa cuando disponibles son menos del 10% del total', fun
     $empresa = Empresa::factory()->create();
     $admin = User::factory()->adminEmpresa($empresa->id)->create();
 
-    Encuesta::factory()->count(9)->create(['empresa_id' => $empresa->id, 'estado' => 'completado']);
-    Encuesta::factory()->create(['empresa_id' => $empresa->id, 'estado' => 'disponible']);
+    Encuesta::factory()->count(9)->create(['lote_id' => \App\Models\Lote::factory()->for($empresa)->create()->id, 'estado' => 'completado']);
+    Encuesta::factory()->create(['lote_id' => \App\Models\Lote::factory()->for($empresa)->create()->id, 'estado' => 'disponible']);
 
     $this->actingAs($admin);
 
@@ -96,7 +96,7 @@ it('alerta_tokens se activa cuando disponibles son menos del 10% del total', fun
     expect($kpis['alerta_tokens'])->toBeFalse()
         ->and($kpis['tasa_participacion'])->toBe(90.0);
 
-    Encuesta::where('empresa_id', $empresa->id)->where('estado', 'disponible')
+    Encuesta::whereHas('lote', fn ($q) => $q->where('empresa_id', $empresa->id))->where('estado', 'disponible')
         ->update(['estado' => 'completado']);
 
     $kpis = Livewire::test(Dashboard::class)->viewData('kpis');
@@ -110,21 +110,21 @@ it('en_riesgo y en_advertencia cuentan tokens asignados basados en 14 y 7 días'
 
     // En riesgo: asignado hace 15 días
     Encuesta::factory()->create([
-        'empresa_id' => $empresa->id,
+        'lote_id' => \App\Models\Lote::factory()->for($empresa)->create()->id,
         'estado' => 'asignado',
         'fecha_asignacion' => now()->subDays(15),
     ]);
 
     // En advertencia: asignado hace 8 días
     Encuesta::factory()->create([
-        'empresa_id' => $empresa->id,
+        'lote_id' => \App\Models\Lote::factory()->for($empresa)->create()->id,
         'estado' => 'asignado',
         'fecha_asignacion' => now()->subDays(8),
     ]);
 
     // No en riesgo ni advertencia: asignado hace 3 días
     Encuesta::factory()->create([
-        'empresa_id' => $empresa->id,
+        'lote_id' => \App\Models\Lote::factory()->for($empresa)->create()->id,
         'estado' => 'asignado',
         'fecha_asignacion' => now()->subDays(3),
     ]);
@@ -165,7 +165,7 @@ it('clima contiene promedio_general para admin_empresa cuando hay respuestas', f
 
     $empresa = Empresa::factory()->create();
     $admin = User::factory()->adminEmpresa($empresa->id)->create();
-    $encuesta = Encuesta::factory()->completada()->create(['empresa_id' => $empresa->id]);
+    $encuesta = Encuesta::factory()->completada()->create(['lote_id' => \App\Models\Lote::factory()->for($empresa)->create()->id]);
 
     $opcion = OpcionRespuesta::where('valor_numerico', 3)->first();
     $preguntas = Pregunta::all();

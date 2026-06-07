@@ -112,10 +112,10 @@ class Reportes extends Component
             ->whereHas('encuesta', fn ($q) => $q->where('estado', 'completado'));
 
         if ($user->role === 'admin_empresa') {
-            $query->whereHas('encuesta', fn ($q) => $q->where('empresa_id', $user->empresa_id)
+            $query->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $user->empresa_id)
             );
         } elseif ($this->filtroEmpresaId) {
-            $query->whereHas('encuesta', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId)
+            $query->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId)
             );
         }
 
@@ -153,9 +153,9 @@ class Reportes extends Component
         $query = \App\Models\Encuesta::where('estado', 'completado');
 
         if ($user->role === 'admin_empresa') {
-            $query->where('empresa_id', $user->empresa_id);
+            $query->whereHas('lote', fn ($q) => $q->where('empresa_id', $user->empresa_id));
         } elseif ($this->filtroEmpresaId) {
-            $query->where('empresa_id', $this->filtroEmpresaId);
+            $query->whereHas('lote', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId));
         }
 
         if ($soloSinFiltrosDemograficos) {
@@ -303,8 +303,8 @@ class Reportes extends Component
         $completadasFiltradas = $this->getEncuestasBaseQuery()->count();
 
         $totalTokens = \App\Models\Encuesta::query()
-            ->when($user->role === 'admin_empresa', fn ($q) => $q->where('empresa_id', $user->empresa_id))
-            ->when($user->role === 'super_admin' && $this->filtroEmpresaId, fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId))
+            ->when($user->role === 'admin_empresa', fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $user->empresa_id)))
+            ->when($user->role === 'super_admin' && $this->filtroEmpresaId, fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $this->filtroEmpresaId)))
             ->count();
 
         $scoringService = app(ClimaScoringService::class);

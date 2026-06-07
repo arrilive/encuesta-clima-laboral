@@ -37,12 +37,12 @@ class EncuestasTable extends Component
         $user = auth()->user();
 
         $encuestas = Encuesta::query()
-            ->with('empresa')
-            ->when($user->role === 'admin_empresa', fn ($q) => $q->where('empresa_id', $user->empresa_id)
+            ->with('lote.empresa')
+            ->when($user->role === 'admin_empresa', fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $user->empresa_id))
             )
             ->when($this->buscar, fn ($q) => $q->where('token', 'like', '%'.$this->buscar.'%')
             )
-            ->when($this->filtroEmpresa, fn ($q) => $q->where('empresa_id', $this->filtroEmpresa)
+            ->when($this->filtroEmpresa, fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $this->filtroEmpresa))
             )
             ->when($this->filtroEstado, fn ($q) => $q->where('estado', $this->filtroEstado)
             )

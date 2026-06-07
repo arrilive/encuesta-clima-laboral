@@ -2,6 +2,9 @@
 
 use App\Models\Empresa;
 use App\Models\Encuesta;
+use App\Models\EncuestaHash;
+use App\Models\Lote;
+use App\Models\Sucursal;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
@@ -17,44 +20,130 @@ test('muestra la página de bienvenida', function () {
 });
 
 // ---------------------------------------------------------------------------
-// Acceso — validación de contraseña
+// verificarLlave — #129
 // ---------------------------------------------------------------------------
 
-test('rechaza contraseña incorrecta', function () {
-    Empresa::factory()->create(); // empresa activa con contraseña 'test1234'
+test('verificarLlave devuelve llave_valida con password correcto de empresa', function () {
+    $empresa = Empresa::factory()->create(['activa' => true, 'password' => 'secret123']);
 
-    $this->post(route('encuesta.acceso'), ['password' => 'wrongpassword'])
-        ->assertSessionHasErrors('password');
+    Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'sucursal_id' => null,
+        'activo' => true,
+        'fecha_inicio' => now()->subDay(),
+        'fecha_fin' => now()->addDay(),
+    ]);
+
+    $this->postJson(route('encuesta.verificar-llave'), ['password' => 'secret123'])
+        ->assertOk()
+        ->assertJson(['status' => 'llave_valida'])
+        ->assertJsonStructure(['status', 'lote_id', 'nombre_entidad']);
 });
 
-test('rechaza empresa inactiva', function () {
-    Empresa::factory()->create(['activa' => false]);
+test('verificarLlave devuelve llave_valida con password correcto de sucursal', function () {
+    $empresa = Empresa::factory()->create(['activa' => true]);
+    $sucursal = Sucursal::factory()->create([
+        'empresa_id' => $empresa->id,
+        'activa' => true,
+        'password' => 'suc_secret',
+    ]);
 
-    $this->post(route('encuesta.acceso'), ['password' => 'test1234'])
-        ->assertSessionHasErrors('password');
+    Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'sucursal_id' => $sucursal->id,
+        'activo' => true,
+        'fecha_inicio' => now()->subDay(),
+        'fecha_fin' => now()->addDay(),
+    ]);
+
+    $this->postJson(route('encuesta.verificar-llave'), ['password' => 'suc_secret'])
+        ->assertOk()
+        ->assertJson(['status' => 'llave_valida', 'nombre_entidad' => $sucursal->nombre]);
 });
 
-test('redirige a pantalla de acceso cuando contraseña es correcta aunque no haya tokens', function () {
-    $empresa = Empresa::factory()->create();
-    Encuesta::factory()->for($empresa)->asignada()->create(); // sin tokens disponibles
+test('verificarLlave devuelve llave_invalida con password incorrecto', function () {
+    Empresa::factory()->create(['activa' => true, 'password' => 'correcto123']);
 
-    $this->post(route('encuesta.acceso'), ['password' => 'test1234'])
-        ->assertRedirect(route('encuesta.mostrar-acceso'));
+    $this->postJson(route('encuesta.verificar-llave'), ['password' => 'incorrecto'])
+        ->assertStatus(422)
+        ->assertJson(['error' => 'llave_invalida']);
+});
+
+test('verificarLlave devuelve llave_invalida si no hay lote vigente', function () {
+    $empresa = Empresa::factory()->create(['activa' => true, 'password' => 'secret123']);
+
+    // Lote fuera de rango: fecha_inicio en el futuro
+    Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'sucursal_id' => null,
+        'activo' => true,
+        'fecha_inicio' => now()->addDay(),
+        'fecha_fin' => now()->addDays(10),
+    ]);
+
+    $this->postJson(route('encuesta.verificar-llave'), ['password' => 'secret123'])
+        ->assertStatus(422)
+        ->assertJson(['error' => 'llave_invalida']);
 });
 
 // ---------------------------------------------------------------------------
-// Acceso — caso exitoso
+// solicitarOtp — #128
 // ---------------------------------------------------------------------------
 
-test('acceso con contraseña correcta redirige a pantalla de elección', function () {
-    $empresa = Empresa::factory()->create();
-    Encuesta::factory()->for($empresa)->create(); // disponible
+test('solicitarOtp devuelve otp_enviado con numero y lote validos', function () {
+    $empresa = Empresa::factory()->create(['activa' => true]);
 
-    $response = $this->post(route('encuesta.acceso'), ['password' => 'test1234']);
+    $lote = Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'activo' => true,
+        'fecha_inicio' => now()->subDay(),
+        'fecha_fin' => now()->addDay(),
+    ]);
 
-    $response->assertRedirect(route('encuesta.mostrar-acceso'));
+    $this->postJson(route('encuesta.solicitar-otp'), [
+        'numero_e164' => '+5219991234567',
+        'lote_id' => $lote->id,
+    ])->assertOk()
+        ->assertJson(['status' => 'otp_enviado']);
+});
 
-    $response->assertSessionHas('empresa_id', $empresa->id);
+test('solicitarOtp devuelve ya_participaste si el hash del numero ya existe en el lote', function () {
+    $empresa = Empresa::factory()->create(['activa' => true]);
+
+    $lote = Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'activo' => true,
+        'fecha_inicio' => now()->subDay(),
+        'fecha_fin' => now()->addDay(),
+    ]);
+
+    $numero = '+5219991234567';
+    $hashPhone = hash('sha256', $numero.$lote->id.config('app.phone_hash_salt'));
+
+    EncuestaHash::create(['phone_hash' => $hashPhone, 'lote_id' => $lote->id]);
+
+    $this->postJson(route('encuesta.solicitar-otp'), [
+        'numero_e164' => $numero,
+        'lote_id' => $lote->id,
+    ])->assertStatus(422)
+        ->assertJson(['error' => 'ya_participaste']);
+});
+
+test('solicitarOtp devuelve acceso_invalido si el lote no esta vigente', function () {
+    $empresa = Empresa::factory()->create(['activa' => true]);
+
+    $lote = Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'activo' => true,
+        'fecha_inicio' => now()->addDay(),
+        'fecha_fin' => now()->addDays(10),
+    ]);
+
+    $this->postJson(route('encuesta.solicitar-otp'), [
+        'numero_e164' => '+5219991234567',
+        'lote_id' => $lote->id,
+    ])->assertStatus(422)
+        ->assertJson(['error' => 'acceso_invalido']);
 });
 
 // ---------------------------------------------------------------------------

@@ -41,6 +41,10 @@
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
+        <env name="SUPER_ADMIN_EMAIL" value="super@admin.com"/>
+        <env name="ADMIN_EMPRESA_EMAIL" value="admin@demo.com"/>
+        <env name="ADMIN_PASSWORD" value="password"/>
+        <env name="EMPRESA_DEMO_PASSWORD" value="password"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
     </php>

@@ -5,10 +5,12 @@ namespace Database\Seeders;
 use App\Models\DatoDemografico;
 use App\Models\Empresa;
 use App\Models\Encuesta;
+use App\Models\Lote;
 use App\Models\OpcionRespuesta;
 use App\Models\Pregunta;
 use App\Models\PreguntaAbierta;
 use App\Models\Subdimension;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -22,6 +24,22 @@ class DemoSeeder extends Seeder
             // 1. Setup — cargar catálogos en memoria (una query cada uno)
             // ----------------------------------------------------------------
             $empresa = Empresa::where('nombre', 'Empresa Demo')->firstOrFail();
+
+            $adminUser = User::where('empresa_id', $empresa->id)
+                ->where('role', 'admin_empresa')
+                ->firstOrFail();
+
+            $lote = Lote::firstOrCreate(
+                ['empresa_id' => $empresa->id, 'nombre' => 'Lote Demo'],
+                [
+                    'sucursal_id' => null,
+                    'user_id' => $adminUser->id,
+                    'tokens_total' => 100,
+                    'fecha_inicio' => now()->subDays(60)->toDateString(),
+                    'fecha_fin' => now()->addDays(30)->toDateString(),
+                    'activo' => true,
+                ]
+            );
 
             /** @var \Illuminate\Database\Eloquent\Collection<int, Pregunta> */
             $preguntas = Pregunta::all();
@@ -159,7 +177,7 @@ class DemoSeeder extends Seeder
 
                 $encuesta = Encuesta::create([
                     'token' => Str::uuid()->toString(),
-                    'empresa_id' => $empresa->id,
+                    'lote_id' => $lote->id,
                     'estado' => 'completado',
                     'fecha_asignacion' => $fechaAsignacion,
                     'fecha_completada' => $fechaCompletada,
@@ -220,7 +238,7 @@ class DemoSeeder extends Seeder
 
                 Encuesta::create([
                     'token' => Str::uuid()->toString(),
-                    'empresa_id' => $empresa->id,
+                    'lote_id' => $lote->id,
                     'estado' => 'asignado',
                     'fecha_asignacion' => $fechaAsignacion,
                     'fecha_completada' => null,

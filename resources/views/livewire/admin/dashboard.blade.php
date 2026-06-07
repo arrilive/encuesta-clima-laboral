@@ -7,36 +7,48 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                 {{-- Promedio General — tarjeta hero --}}
-                <div class="bg-white rounded-2xl border border-slate-200 p-8 flex flex-col justify-between">
-                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Promedio general</p>
-                    <div class="my-4">
-                        @if($clima['promedio_general'] > 0)
-                            <p class="text-4xl font-extrabold text-slate-900 leading-none mb-3">
-                                {{ number_format($clima['promedio_general'], 1) }}
-                            </p>
-                            @php
-                                $p = $clima['promedio_general'];
-                                [$badgeColor, $badgeText] = match(true) {
-                                    $p >= 80 => ['bg-emerald-100 text-emerald-700', 'Excelente'],
-                                    $p >= 51 => ['bg-blue-100 text-blue-700',       'Buen clima'],
-                                    $p >= 25 => ['bg-amber-100 text-amber-700',     'Regular'],
-                                    default  => ['bg-red-100 text-red-700',         'Deficiente'],
-                                };
-                            @endphp
-                            <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $badgeColor }}">
-                                {{ $badgeText }}
-                            </span>
-                        @else
-                            <p class="text-3xl font-bold text-slate-300">Sin datos</p>
-                        @endif
+                <div class="bg-white rounded-2xl border border-slate-200 p-8">
+                    <div class="flex justify-between h-full">
+                        {{-- Izquierda: label + numero --}}
+                        <div class="flex flex-col justify-between">
+                            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Promedio general</p>
+                            <div class="mt-4">
+                                @if($clima['promedio_general'] > 0)
+                                    <p class="text-4xl font-extrabold text-slate-900 leading-none">
+                                        {{ number_format($clima['promedio_general'], 1) }}
+                                    </p>
+                                @else
+                                    <p class="text-3xl font-bold text-slate-300 leading-none">Sin datos</p>
+                                @endif
+                            </div>
+                        </div>
+
+                        {{-- Derecha: badge + accion --}}
+                        <div class="flex flex-col items-end justify-between text-right">
+                            @if($clima['promedio_general'] > 0)
+                                @php
+                                    $p = $clima['promedio_general'];
+                                    [$badgeColor, $badgeText] = match(true) {
+                                        $p >= 80 => ['bg-emerald-100 text-emerald-700', 'Excelente'],
+                                        $p >= 51 => ['bg-blue-100 text-blue-700',       'Buen clima'],
+                                        $p >= 25 => ['bg-amber-100 text-amber-700',     'Regular'],
+                                        default  => ['bg-red-100 text-red-700',         'Deficiente'],
+                                    };
+                                @endphp
+                                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $badgeColor }}">
+                                    {{ $badgeText }}
+                                </span>
+                            @endif
+
+                            <a href="{{ route('admin.reportes') }}"
+                               class="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors mt-auto">
+                                Ver análisis completo
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <polyline points="9 18 15 12 9 6"/>
+                                </svg>
+                            </a>
+                        </div>
                     </div>
-                    <a href="{{ route('admin.reportes') }}"
-                       class="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">
-                        Ver análisis completo
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <polyline points="9 18 15 12 9 6"/>
-                        </svg>
-                    </a>
                 </div>
 
                 {{-- Dimensiones destacadas --}}
@@ -218,7 +230,7 @@
                 </div>
 
                 <div class="bg-white rounded-xl border border-slate-200 p-5">
-                    <p class="text-sm text-slate-400 mb-1">Completadas</p>
+                    <p class="text-sm text-slate-400 mb-1">Completados</p>
                     <p class="text-3xl font-bold text-emerald-600 tabular-nums">{{ $kpis['completadas'] }}</p>
                 </div>
 
@@ -232,29 +244,11 @@
                     <p class="text-3xl font-bold text-amber-500 tabular-nums">{{ $kpis['asignados'] }}</p>
                 </div>
 
-                <div class="bg-white rounded-xl border p-5 h-full {{ $kpis['alerta_tokens'] ? 'border-amber-300 bg-amber-50' : 'border-slate-200' }}">
-                    <div class="flex justify-between h-full">
-                        <div class="flex flex-col justify-between">
-                            <p class="text-sm text-slate-400 mb-1">Disponibles</p>
-                            <p class="text-3xl font-bold tabular-nums {{ $kpis['alerta_tokens'] ? 'text-amber-500' : 'text-slate-500' }}">
-                                {{ $kpis['disponibles'] }}
-                            </p>
-                        </div>
-                        @if($kpis['alerta_tokens'])
-                            <div class="flex flex-col items-end justify-between text-right">
-                                <span class="text-xs text-amber-600 font-medium">
-                                    ⚠ Pocos disponibles
-                                </span>
-                                <a href="{{ route('admin.tokens') }}"
-                                   class="inline-flex items-center text-sm font-bold text-amber-600 hover:text-amber-700 transition-colors mt-auto">
-                                    Generar
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                        <polyline points="9 18 15 12 9 6"/>
-                                    </svg>
-                                </a>
-                            </div>
-                        @endif
-                    </div>
+                <div class="bg-white rounded-xl border border-slate-200 p-5">
+                    <p class="text-sm text-slate-400 mb-1">Disponibles</p>
+                    <p class="text-3xl font-bold text-slate-500 tabular-nums">
+                        {{ $kpis['disponibles'] }}
+                    </p>
                 </div>
 
             </div>

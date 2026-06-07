@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Empresa;
 use App\Models\Encuesta;
 
 test('puede crearse con factory y tiene token único', function () {
@@ -13,16 +12,7 @@ test('puede crearse con factory y tiene token único', function () {
     expect($encuesta1->token)->not->toBe($encuesta2->token);
 });
 
-test('la relación empresa retorna una instancia de Empresa', function () {
-    // Arrange
-    $encuesta = Encuesta::factory()->create();
-
-    // Act
-    $empresa = $encuesta->empresa;
-
-    // Assert
-    expect($empresa)->toBeInstanceOf(Empresa::class);
-});
+todo('relación encuesta->empresa eliminada en v1.1');
 
 test('la relación respuestas retorna una colección vacía por defecto', function () {
     // Arrange

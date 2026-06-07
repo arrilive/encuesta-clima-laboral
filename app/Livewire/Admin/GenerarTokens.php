@@ -4,7 +4,8 @@ namespace App\Livewire\Admin;
 
 use App\Models\Empresa;
 use App\Models\Encuesta;
-use App\Models\TokenLote;
+use App\Models\Lote;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -12,31 +13,43 @@ use Livewire\Component;
 #[Layout('components.layouts.admin', ['heading' => 'Tokens'])]
 class GenerarTokens extends Component
 {
-    public string $cantidad = '10';
+    public string $tokens_total = '10';
 
     public string $nombre = '';
 
     public string $empresaId = '';
 
+    public string $fecha_inicio = '';
+
+    public string $fecha_fin = '';
+
     protected function rules(): array
     {
         return [
-            'cantidad' => 'required|numeric|integer|min:1|max:500',
+            'tokens_total' => 'required|numeric|integer|min:1|max:500',
             'nombre' => 'nullable|string|max:100',
             'empresaId' => 'required|exists:empresas,id',
+            'fecha_inicio' => 'required|date|after_or_equal:today',
+            'fecha_fin' => 'required|date|after:fecha_inicio',
         ];
     }
 
     protected function messages(): array
     {
         return [
-            'cantidad.required' => 'Indica cuántos tokens quieres generar.',
-            'cantidad.numeric' => 'La cantidad debe ser un número.',
-            'cantidad.integer' => 'La cantidad debe ser un número entero.',
-            'cantidad.min' => 'El mínimo permitido es 1 token.',
-            'cantidad.max' => 'El máximo permitido son 500 tokens.',
+            'tokens_total.required' => 'Indica cuántos tokens quieres generar.',
+            'tokens_total.numeric' => 'La cantidad debe ser un número.',
+            'tokens_total.integer' => 'La cantidad debe ser un número entero.',
+            'tokens_total.min' => 'El mínimo permitido es 1 token.',
+            'tokens_total.max' => 'El máximo permitido son 500 tokens.',
             'empresaId.required' => 'Selecciona una empresa.',
             'empresaId.exists' => 'La empresa seleccionada no existe.',
+            'fecha_inicio.required' => 'La fecha de inicio es obligatoria.',
+            'fecha_inicio.date' => 'La fecha de inicio debe ser una fecha válida.',
+            'fecha_inicio.after_or_equal' => 'La fecha de inicio debe ser hoy o una fecha futura.',
+            'fecha_fin.required' => 'La fecha de fin es obligatoria.',
+            'fecha_fin.date' => 'La fecha de fin debe ser una fecha válida.',
+            'fecha_fin.after' => 'La fecha de cierre debe ser posterior a la fecha de inicio.',
         ];
     }
 
@@ -51,6 +64,9 @@ class GenerarTokens extends Component
         if ($user->role === 'admin_empresa') {
             $this->empresaId = (string) $user->empresa_id;
         }
+
+        $this->fecha_inicio = now()->toDateString();
+        $this->fecha_fin = '';
     }
 
     public function generar(): void
@@ -66,32 +82,46 @@ class GenerarTokens extends Component
             return;
         }
 
-        // Crear el lote
-        $lote = TokenLote::create([
-            'empresa_id' => $this->empresaId,
-            'user_id' => $user->id,
-            'cantidad' => $this->cantidad,
-            'nombre' => $this->nombre ?: null,
-        ]);
+        $empresa = Empresa::findOrFail($this->empresaId);
+        if (! $empresa->activa) {
+            $this->addError('empresaId', 'No se pueden generar tokens para una empresa inactiva. Actívala primero en el panel de Empresas.');
 
-        // Generar tokens en lote — una sola query
-        $tokens = collect(range(1, $this->cantidad))->map(fn () => [
-            'token' => Str::random(64),
-            'empresa_id' => $this->empresaId,
-            'lote_id' => $lote->id,
-            'estado' => 'disponible',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+            return;
+        }
 
-        Encuesta::insert($tokens->toArray());
+        $lote = null;
 
-        $this->totalGenerado = (int) $this->cantidad;
+        // Crear el lote e insertar tokens de manera atómica
+        DB::transaction(function () use (&$lote, $user) {
+            $lote = Lote::create([
+                'empresa_id' => $this->empresaId,
+                'user_id' => $user->id,
+                'tokens_total' => $this->tokens_total,
+                'nombre' => $this->nombre ?: null,
+                'fecha_inicio' => $this->fecha_inicio,
+                'fecha_fin' => $this->fecha_fin,
+            ]);
+
+            // Generar tokens en lote — una sola query
+            $tokens = collect(range(1, $this->tokens_total))->map(fn () => [
+                'token' => Str::random(64),
+                'lote_id' => $lote->id,
+                'estado' => 'disponible',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            Encuesta::insert($tokens->toArray());
+        });
+
+        $this->totalGenerado = (int) $this->tokens_total;
         $this->generado = true;
 
         // Reset del formulario
-        $this->cantidad = '10';
+        $this->tokens_total = '10';
         $this->nombre = '';
+        $this->fecha_inicio = now()->toDateString();
+        $this->fecha_fin = '';
         if ($user->role === 'super_admin') {
             $this->empresaId = '';
         }
@@ -102,10 +132,10 @@ class GenerarTokens extends Component
         $user = auth()->user();
 
         $empresas = $user->role === 'super_admin'
-            ? Empresa::orderBy('nombre')->get()
+            ? Empresa::orderByDesc('activa')->orderBy('nombre')->get()
             : collect();
 
-        $lotes = TokenLote::with('empresa', 'user')
+        $lotes = Lote::with('empresa', 'user')
             ->when($user->role === 'admin_empresa', fn ($q) => $q->where('empresa_id', $user->empresa_id)
             )
             ->orderByDesc('created_at')
