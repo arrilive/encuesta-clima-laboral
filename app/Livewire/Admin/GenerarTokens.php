@@ -44,6 +44,12 @@ class GenerarTokens extends Component
             'tokens_total.max' => 'El máximo permitido son 500 tokens.',
             'empresaId.required' => 'Selecciona una empresa.',
             'empresaId.exists' => 'La empresa seleccionada no existe.',
+            'fecha_inicio.required' => 'La fecha de inicio es obligatoria.',
+            'fecha_inicio.date' => 'La fecha de inicio debe ser una fecha válida.',
+            'fecha_inicio.after_or_equal' => 'La fecha de inicio debe ser hoy o una fecha futura.',
+            'fecha_fin.required' => 'La fecha de fin es obligatoria.',
+            'fecha_fin.date' => 'La fecha de fin debe ser una fecha válida.',
+            'fecha_fin.after' => 'La fecha de cierre debe ser posterior a la fecha de inicio.',
         ];
     }
 

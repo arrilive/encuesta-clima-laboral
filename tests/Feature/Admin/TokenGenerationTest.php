@@ -78,3 +78,28 @@ it('admin_empresa no puede generar tokens si su empresa está inactiva', functio
 
     expect(Encuesta::whereHas('lote', fn ($q) => $q->where('empresa_id', $empresa->id))->count())->toBe(0);
 });
+
+it('valida campos de fecha con mensajes en español personalizados', function () {
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->superAdmin()->create();
+
+    $component = Livewire::actingAs($admin)
+        ->test(GenerarTokens::class)
+        ->set('empresaId', (string) $empresa->id)
+        ->set('fecha_inicio', '')
+        ->set('fecha_fin', '')
+        ->call('generar');
+
+    expect($component->errors()->get('fecha_inicio'))->toContain('La fecha de inicio es obligatoria.');
+    expect($component->errors()->get('fecha_fin'))->toContain('La fecha de fin es obligatoria.');
+
+    $component2 = Livewire::actingAs($admin)
+        ->test(GenerarTokens::class)
+        ->set('empresaId', (string) $empresa->id)
+        ->set('fecha_inicio', now()->subDay()->toDateString())
+        ->set('fecha_fin', now()->subDays(2)->toDateString())
+        ->call('generar');
+
+    expect($component2->errors()->get('fecha_inicio'))->toContain('La fecha de inicio debe ser hoy o una fecha futura.');
+    expect($component2->errors()->get('fecha_fin'))->toContain('La fecha de cierre debe ser posterior a la fecha de inicio.');
+});
