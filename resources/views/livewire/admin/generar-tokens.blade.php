@@ -49,15 +49,15 @@
             <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1.5">Cantidad <span class="text-red-400">*</span></label>
                 <input
-                    wire:model="tokens_total"
+                    wire:model="tokensTotal"
                     type="text"
                     inputmode="numeric"
                     class="w-full px-4 py-2.5 border rounded-xl text-sm text-slate-900
                            focus:outline-none focus:border-blue-500 focus:ring-4
                            focus:ring-blue-500/10 transition-all duration-200
-                           {{ $errors->has('tokens_total') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}"
+                           {{ $errors->has('tokensTotal') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}"
                 />
-                @error('tokens_total')
+                @error('tokensTotal')
                     <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">
                         <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                         {{ $message }}
@@ -87,14 +87,14 @@
             <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1.5">Fecha de inicio <span class="text-red-400">*</span></label>
                 <input
-                    wire:model="fecha_inicio"
+                    wire:model="fechaInicio"
                     type="date"
                     class="w-full px-4 py-2.5 border rounded-xl text-sm text-slate-900
                            focus:outline-none focus:border-blue-500 focus:ring-4
                            focus:ring-blue-500/10 transition-all duration-200
-                           {{ $errors->has('fecha_inicio') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}"
+                           {{ $errors->has('fechaInicio') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}"
                 />
-                @error('fecha_inicio')
+                @error('fechaInicio')
                     <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">
                         <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                         {{ $message }}
@@ -106,14 +106,14 @@
             <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1.5">Fecha de finalización <span class="text-red-400">*</span></label>
                 <input
-                    wire:model="fecha_fin"
+                    wire:model="fechaFin"
                     type="date"
                     class="w-full px-4 py-2.5 border rounded-xl text-sm text-slate-900
                            focus:outline-none focus:border-blue-500 focus:ring-4
                            focus:ring-blue-500/10 transition-all duration-200
-                           {{ $errors->has('fecha_fin') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}"
+                           {{ $errors->has('fechaFin') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}"
                 />
-                @error('fecha_fin')
+                @error('fechaFin')
                     <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">
                         <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                         {{ $message }}
