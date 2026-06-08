@@ -30,6 +30,12 @@ class LimpiarOtpsExpirados extends Command
 
         $eliminados = OtpVerificacion::where('expira_en', '<', now())->delete();
 
+        $hashesEliminados = \App\Models\EncuestaHash::whereHas('lote', function ($q) {
+            $q->where('fecha_fin', '<', now()->toDateString());
+        })->delete();
+
+        $this->info("Hashes de participación eliminados: {$hashesEliminados}");
+
         $fin = microtime(true);
         $ms = round(($fin - $inicio) * 1000, 2);
         $ahora = now()->toDateTimeString();

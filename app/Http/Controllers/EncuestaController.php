@@ -198,6 +198,8 @@ class EncuestaController extends Controller
 
         // 4. Verificar intentos agotados
         if ($otpRecord->agotaronIntentos()) {
+            $otpRecord->delete();
+
             return response()->json(['error' => 'intentos_agotados'], 422);
         }
 

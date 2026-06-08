@@ -133,6 +133,9 @@ return [
     |
     */
 
-    'phone_hash_salt' => env('PHONE_HASH_SALT'),
+    'phone_hash_salt' => env('PHONE_HASH_SALT')
+        ?? throw new \RuntimeException(
+            'PHONE_HASH_SALT es requerida. El sistema no puede operar sin ella.'
+        ),
 
 ];
