@@ -192,7 +192,7 @@
                                 </span>
                             </td>
                             <td class="px-6 py-3 text-slate-500 text-xs whitespace-nowrap">
-                                {{ $lote->user->name }}
+                                {{ $lote->user?->name ?? '—' }}
                             </td>
                         </tr>
                     @empty

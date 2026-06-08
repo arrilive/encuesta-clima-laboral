@@ -48,7 +48,7 @@ class ExportController extends Controller
                     $encuesta->fecha_completada?->format('d/m/Y H:i') ?? '',
                 ];
                 if ($user->role === 'super_admin') {
-                    array_splice($row, 1, 0, [$encuesta->lote->empresa->nombre]);
+                    array_splice($row, 1, 0, [$encuesta->lote?->empresa?->nombre ?? 'Sin Lote']);
                 }
                 fputcsv($handle, $row);
             }
