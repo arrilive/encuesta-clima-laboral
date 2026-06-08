@@ -28,6 +28,12 @@ class PreguntasAbiertas extends Component
 
     public function updatedRespuestas(string $value, string $key): void
     {
+        abort_if(
+            $this->encuesta->estado === 'completado',
+            403,
+            'Esta encuesta ya ha sido completada y no puede ser modificada.'
+        );
+
         if (strlen($value) > 300) {
             return;
         }

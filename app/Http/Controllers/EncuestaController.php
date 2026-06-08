@@ -14,6 +14,7 @@ use App\Models\Respuesta;
 use App\Models\Sucursal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -162,7 +163,7 @@ class EncuestaController extends Controller
         ]);
 
         // 6. Simular envío (nunca loggear el número real)
-        Log::info('OTP generado', ['lote_id' => $lote->id, 'otp' => $otp]);
+        Log::info('OTP generado para lote', ['lote_id' => $lote->id]);
 
         return response()->json(['status' => 'otp_enviado'], 200);
     }
@@ -225,20 +226,26 @@ class EncuestaController extends Controller
         $token = 'TK-'.Str::upper(Str::random(4)).'-'.Str::upper(Str::random(4));
 
         // 6d. Buscar encuesta disponible
-        $encuesta = Encuesta::where('lote_id', $lote_id)
-            ->where('estado', 'disponible')
-            ->first();
+        $encuesta = DB::transaction(function () use ($lote_id, $token) {
+            $registro = Encuesta::where('lote_id', $lote_id)
+                ->where('estado', 'disponible')
+                ->lockForUpdate()
+                ->first();
+
+            if ($registro) {
+                $registro->update([
+                    'estado' => 'asignado',
+                    'fecha_asignacion' => now(),
+                    'token' => $token,
+                ]);
+            }
+
+            return $registro;
+        });
 
         if (! $encuesta) {
             return response()->json(['error' => 'sin_tokens'], 422);
         }
-
-        // 6e. Asignar token
-        $encuesta->update([
-            'estado' => 'asignado',
-            'fecha_asignacion' => now(),
-            'token' => $token,
-        ]);
 
         Log::info('Token asignado', ['lote_id' => $lote_id, 'token' => $token]);
 
