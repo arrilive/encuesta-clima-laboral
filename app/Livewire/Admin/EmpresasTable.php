@@ -16,7 +16,7 @@ class EmpresasTable extends Component
     use WithPagination;
 
     // ── Búsqueda ─────────────────────────────────────────────────────────────
-    public string $search = '';
+    public string $buscar = '';
 
     // ── Modales ──────────────────────────────────────────────────────────────
     public bool $modalCrear = false;
@@ -45,7 +45,7 @@ class EmpresasTable extends Component
     public ?string $passwordGenerada = null;
 
     // Reset paginación al buscar
-    public function updatingSearch(): void
+    public function updatingBuscar(): void
     {
         $this->resetPage();
     }
@@ -193,7 +193,7 @@ class EmpresasTable extends Component
     public function render()
     {
         $empresas = Empresa::query()
-            ->when($this->search, fn ($q) => $q->where('nombre', 'like', "%{$this->search}%"))
+            ->when($this->buscar, fn ($q) => $q->where('nombre', 'like', "%{$this->buscar}%"))
             ->withCount([
                 'encuestas as completadas' => fn ($q) => $q->where('estado', 'completado'),
                 'encuestas as disponibles' => fn ($q) => $q->where('estado', 'disponible'),

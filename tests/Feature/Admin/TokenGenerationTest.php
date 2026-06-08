@@ -13,8 +13,8 @@ it('super_admin puede generar tokens para cualquier empresa', function () {
     Livewire::actingAs($admin)
         ->test(GenerarTokens::class)
         ->set('empresaId', (string) $empresa->id)
-        ->set('tokens_total', '10')
-        ->set('fecha_fin', now()->addDays(30)->toDateString())
+        ->set('tokensTotal', '10')
+        ->set('fechaFin', now()->addDays(30)->toDateString())
         ->call('generar');
 
     expect(Encuesta::whereHas('lote', fn ($q) => $q->where('empresa_id', $empresa->id))->count())->toBe(10);
@@ -26,8 +26,8 @@ it('admin_empresa puede generar tokens para su propia empresa', function () {
 
     Livewire::actingAs($admin)
         ->test(GenerarTokens::class)
-        ->set('tokens_total', '5')
-        ->set('fecha_fin', now()->addDays(30)->toDateString())
+        ->set('tokensTotal', '5')
+        ->set('fechaFin', now()->addDays(30)->toDateString())
         ->call('generar');
 
     expect(Encuesta::whereHas('lote', fn ($q) => $q->where('empresa_id', $empresa->id))->count())->toBe(5);
@@ -41,8 +41,8 @@ it('admin_empresa no puede generar tokens para otra empresa', function () {
     Livewire::actingAs($admin)
         ->test(GenerarTokens::class)
         ->set('empresaId', (string) $empresa2->id)
-        ->set('tokens_total', '5')
-        ->set('fecha_fin', now()->addDays(30)->toDateString())
+        ->set('tokensTotal', '5')
+        ->set('fechaFin', now()->addDays(30)->toDateString())
         ->call('generar')
         ->assertHasErrors(['empresaId']);
 
@@ -56,8 +56,8 @@ it('super_admin no puede generar tokens para empresa inactiva', function () {
     Livewire::actingAs($admin)
         ->test(GenerarTokens::class)
         ->set('empresaId', (string) $empresa->id)
-        ->set('tokens_total', '10')
-        ->set('fecha_fin', now()->addDays(30)->toDateString())
+        ->set('tokensTotal', '10')
+        ->set('fechaFin', now()->addDays(30)->toDateString())
         ->call('generar')
         ->assertHasErrors(['empresaId']);
 
@@ -71,8 +71,8 @@ it('admin_empresa no puede generar tokens si su empresa está inactiva', functio
     Livewire::actingAs($admin)
         ->test(GenerarTokens::class)
         ->set('empresaId', (string) $empresa->id)
-        ->set('tokens_total', '10')
-        ->set('fecha_fin', now()->addDays(30)->toDateString())
+        ->set('tokensTotal', '10')
+        ->set('fechaFin', now()->addDays(30)->toDateString())
         ->call('generar')
         ->assertHasErrors(['empresaId']);
 
@@ -86,20 +86,20 @@ it('valida campos de fecha con mensajes en español personalizados', function ()
     $component = Livewire::actingAs($admin)
         ->test(GenerarTokens::class)
         ->set('empresaId', (string) $empresa->id)
-        ->set('fecha_inicio', '')
-        ->set('fecha_fin', '')
+        ->set('fechaInicio', '')
+        ->set('fechaFin', '')
         ->call('generar');
 
-    expect($component->errors()->get('fecha_inicio'))->toContain('La fecha de inicio es obligatoria.');
-    expect($component->errors()->get('fecha_fin'))->toContain('La fecha de fin es obligatoria.');
+    expect($component->errors()->get('fechaInicio'))->toContain('La fecha de inicio es obligatoria.');
+    expect($component->errors()->get('fechaFin'))->toContain('La fecha de fin es obligatoria.');
 
     $component2 = Livewire::actingAs($admin)
         ->test(GenerarTokens::class)
         ->set('empresaId', (string) $empresa->id)
-        ->set('fecha_inicio', now()->subDay()->toDateString())
-        ->set('fecha_fin', now()->subDays(2)->toDateString())
+        ->set('fechaInicio', now()->subDay()->toDateString())
+        ->set('fechaFin', now()->subDays(2)->toDateString())
         ->call('generar');
 
-    expect($component2->errors()->get('fecha_inicio'))->toContain('La fecha de inicio debe ser hoy o una fecha futura.');
-    expect($component2->errors()->get('fecha_fin'))->toContain('La fecha de cierre debe ser posterior a la fecha de inicio.');
+    expect($component2->errors()->get('fechaInicio'))->toContain('La fecha de inicio debe ser hoy o una fecha futura.');
+    expect($component2->errors()->get('fechaFin'))->toContain('La fecha de cierre debe ser posterior a la fecha de inicio.');
 });

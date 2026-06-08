@@ -26,7 +26,7 @@
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
         <input
-            wire:model.live.debounce.300ms="search"
+            wire:model.live.debounce.300ms="buscar"
             type="text"
             placeholder="Buscar empresa…"
             class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl text-sm text-slate-900

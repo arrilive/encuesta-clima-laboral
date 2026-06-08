@@ -13,43 +13,43 @@ use Livewire\Component;
 #[Layout('components.layouts.admin', ['heading' => 'Tokens'])]
 class GenerarTokens extends Component
 {
-    public string $tokens_total = '10';
+    public string $tokensTotal = '10';
 
     public string $nombre = '';
 
     public string $empresaId = '';
 
-    public string $fecha_inicio = '';
+    public string $fechaInicio = '';
 
-    public string $fecha_fin = '';
+    public string $fechaFin = '';
 
     protected function rules(): array
     {
         return [
-            'tokens_total' => 'required|numeric|integer|min:1|max:500',
+            'tokensTotal' => 'required|numeric|integer|min:1|max:500',
             'nombre' => 'nullable|string|max:100',
             'empresaId' => 'required|exists:empresas,id',
-            'fecha_inicio' => 'required|date|after_or_equal:today',
-            'fecha_fin' => 'required|date|after:fecha_inicio',
+            'fechaInicio' => 'required|date|after_or_equal:today',
+            'fechaFin' => 'required|date|after:fechaInicio',
         ];
     }
 
     protected function messages(): array
     {
         return [
-            'tokens_total.required' => 'Indica cuántos tokens quieres generar.',
-            'tokens_total.numeric' => 'La cantidad debe ser un número.',
-            'tokens_total.integer' => 'La cantidad debe ser un número entero.',
-            'tokens_total.min' => 'El mínimo permitido es 1 token.',
-            'tokens_total.max' => 'El máximo permitido son 500 tokens.',
+            'tokensTotal.required' => 'Indica cuántos tokens quieres generar.',
+            'tokensTotal.numeric' => 'La cantidad debe ser un número.',
+            'tokensTotal.integer' => 'La cantidad debe ser un número entero.',
+            'tokensTotal.min' => 'El mínimo permitido es 1 token.',
+            'tokensTotal.max' => 'El máximo permitido son 500 tokens.',
             'empresaId.required' => 'Selecciona una empresa.',
             'empresaId.exists' => 'La empresa seleccionada no existe.',
-            'fecha_inicio.required' => 'La fecha de inicio es obligatoria.',
-            'fecha_inicio.date' => 'La fecha de inicio debe ser una fecha válida.',
-            'fecha_inicio.after_or_equal' => 'La fecha de inicio debe ser hoy o una fecha futura.',
-            'fecha_fin.required' => 'La fecha de fin es obligatoria.',
-            'fecha_fin.date' => 'La fecha de fin debe ser una fecha válida.',
-            'fecha_fin.after' => 'La fecha de cierre debe ser posterior a la fecha de inicio.',
+            'fechaInicio.required' => 'La fecha de inicio es obligatoria.',
+            'fechaInicio.date' => 'La fecha de inicio debe ser una fecha válida.',
+            'fechaInicio.after_or_equal' => 'La fecha de inicio debe ser hoy o una fecha futura.',
+            'fechaFin.required' => 'La fecha de fin es obligatoria.',
+            'fechaFin.date' => 'La fecha de fin debe ser una fecha válida.',
+            'fechaFin.after' => 'La fecha de cierre debe ser posterior a la fecha de inicio.',
         ];
     }
 
@@ -65,8 +65,8 @@ class GenerarTokens extends Component
             $this->empresaId = (string) $user->empresa_id;
         }
 
-        $this->fecha_inicio = now()->toDateString();
-        $this->fecha_fin = '';
+        $this->fechaInicio = now()->toDateString();
+        $this->fechaFin = '';
     }
 
     public function generar(): void
@@ -96,14 +96,14 @@ class GenerarTokens extends Component
             $lote = Lote::create([
                 'empresa_id' => $this->empresaId,
                 'user_id' => $user->id,
-                'tokens_total' => $this->tokens_total,
+                'tokens_total' => $this->tokensTotal,
                 'nombre' => $this->nombre ?: null,
-                'fecha_inicio' => $this->fecha_inicio,
-                'fecha_fin' => $this->fecha_fin,
+                'fecha_inicio' => $this->fechaInicio,
+                'fecha_fin' => $this->fechaFin,
             ]);
 
             // Generar tokens en lote — una sola query
-            $tokens = collect(range(1, $this->tokens_total))->map(fn () => [
+            $tokens = collect(range(1, $this->tokensTotal))->map(fn () => [
                 'token' => Str::random(64),
                 'lote_id' => $lote->id,
                 'estado' => 'disponible',
@@ -114,14 +114,14 @@ class GenerarTokens extends Component
             Encuesta::insert($tokens->toArray());
         });
 
-        $this->totalGenerado = (int) $this->tokens_total;
+        $this->totalGenerado = (int) $this->tokensTotal;
         $this->generado = true;
 
         // Reset del formulario
-        $this->tokens_total = '10';
+        $this->tokensTotal = '10';
         $this->nombre = '';
-        $this->fecha_inicio = now()->toDateString();
-        $this->fecha_fin = '';
+        $this->fechaInicio = now()->toDateString();
+        $this->fechaFin = '';
         if ($user->role === 'super_admin') {
             $this->empresaId = '';
         }

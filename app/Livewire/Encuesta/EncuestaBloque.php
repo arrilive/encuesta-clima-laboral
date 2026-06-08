@@ -7,6 +7,7 @@ use App\Models\Encuesta;
 use App\Models\OpcionRespuesta;
 use App\Models\Pregunta;
 use Illuminate\View\View;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class EncuestaBloque extends Component
@@ -20,9 +21,6 @@ class EncuestaBloque extends Component
     public string $dimensionNombre = '';
 
     public int $totalDimensiones;
-
-    // Escucha el evento que disparan los hijos
-    protected $listeners = ['pregunta-respondida' => 'refrescarProgreso'];
 
     public function mount(string $token, int $dimension): void
     {
@@ -40,6 +38,7 @@ class EncuestaBloque extends Component
     public array $preguntasSinRespuesta = [];
 
     // El hijo avisa que respondió — Livewire re-renderiza automáticamente
+    #[On('pregunta-respondida')]
     public function refrescarProgreso($preguntaId = null): void
     {
         // Removemos la pregunta del arreglo de errores si la acaban de responder

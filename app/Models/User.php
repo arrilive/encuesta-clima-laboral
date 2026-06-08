@@ -3,7 +3,6 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -65,20 +64,5 @@ class User extends Authenticatable
     public function sucursal(): BelongsTo
     {
         return $this->belongsTo(Sucursal::class);
-    }
-
-    public function scopeSuperAdmins(Builder $query): Builder
-    {
-        return $query->where('role', 'super_admin');
-    }
-
-    public function esSuperAdmin(): bool
-    {
-        return $this->role === 'super_admin';
-    }
-
-    public function esAdminEmpresa(): bool
-    {
-        return $this->role === 'admin_empresa';
     }
 }
