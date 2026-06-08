@@ -299,14 +299,26 @@ class EncuestaController extends Controller
     private function ultimaDimensionCompletada(Encuesta $encuesta): int
     {
         $dimensiones = Dimension::with('subdimensiones')->orderBy('orden')->get();
+
+        // Query 1 — total de preguntas por dimensión
+        $preguntasPorDim = Pregunta::join('subdimensiones', 'preguntas.subdimension_id', '=', 'subdimensiones.id')
+            ->selectRaw('subdimensiones.dimension_id, COUNT(*) as total')
+            ->groupBy('subdimensiones.dimension_id')
+            ->pluck('total', 'dimension_id');
+
+        // Query 2 — respuestas del encuestado por dimensión
+        $respuestasPorDim = Respuesta::where('encuesta_id', $encuesta->id)
+            ->join('preguntas', 'respuestas.pregunta_id', '=', 'preguntas.id')
+            ->join('subdimensiones', 'preguntas.subdimension_id', '=', 'subdimensiones.id')
+            ->selectRaw('subdimensiones.dimension_id, COUNT(*) as total')
+            ->groupBy('subdimensiones.dimension_id')
+            ->pluck('total', 'dimension_id');
+
         $ultima = 0;
 
         foreach ($dimensiones as $dim) {
-            $total = Pregunta::whereHas('subdimension', fn ($q) => $q->where('dimension_id', $dim->id)
-            )->count();
-
-            $respondidas = Respuesta::whereHas('pregunta.subdimension', fn ($q) => $q->where('dimension_id', $dim->id)
-            )->where('encuesta_id', $encuesta->id)->count();
+            $total = $preguntasPorDim->get($dim->id, 0);
+            $respondidas = $respuestasPorDim->get($dim->id, 0);
 
             if ($respondidas >= $total && $total > 0) {
                 $ultima = $dim->orden;
@@ -344,12 +356,23 @@ class EncuestaController extends Controller
             return redirect()->route('encuesta.demograficos', $token);
         }
 
-        $dimensiones = Dimension::with('subdimensiones')->orderBy('orden')->get()->map(function ($dimension) use ($encuesta) {
-            $totalPreguntas = Pregunta::whereHas('subdimension', fn ($q) => $q->where('dimension_id', $dimension->id)
-            )->count();
+        // Query 1 — total de preguntas por dimensión
+        $preguntasPorDim = Pregunta::join('subdimensiones', 'preguntas.subdimension_id', '=', 'subdimensiones.id')
+            ->selectRaw('subdimensiones.dimension_id, COUNT(*) as total')
+            ->groupBy('subdimensiones.dimension_id')
+            ->pluck('total', 'dimension_id');
 
-            $respondidas = Respuesta::whereHas('pregunta.subdimension', fn ($q) => $q->where('dimension_id', $dimension->id)
-            )->where('encuesta_id', $encuesta->id)->count();
+        // Query 2 — respuestas del encuestado por dimensión
+        $respuestasPorDim = Respuesta::where('encuesta_id', $encuesta->id)
+            ->join('preguntas', 'respuestas.pregunta_id', '=', 'preguntas.id')
+            ->join('subdimensiones', 'preguntas.subdimension_id', '=', 'subdimensiones.id')
+            ->selectRaw('subdimensiones.dimension_id, COUNT(*) as total')
+            ->groupBy('subdimensiones.dimension_id')
+            ->pluck('total', 'dimension_id');
+
+        $dimensiones = Dimension::with('subdimensiones')->orderBy('orden')->get()->map(function ($dimension) use ($preguntasPorDim, $respuestasPorDim) {
+            $totalPreguntas = $preguntasPorDim->get($dimension->id, 0);
+            $respondidas = $respuestasPorDim->get($dimension->id, 0);
 
             $dimension->total = $totalPreguntas;
             $dimension->respondidas = $respondidas;

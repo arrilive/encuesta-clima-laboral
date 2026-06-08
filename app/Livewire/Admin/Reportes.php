@@ -235,45 +235,47 @@ class Reportes extends Component
             return [];
         }
 
-        return \App\Models\Pregunta::where('subdimension_id', $this->subdimensionActivaId)
+        $preguntas = \App\Models\Pregunta::where('subdimension_id', $this->subdimensionActivaId)
             ->orderBy('orden')
-            ->get()
-            ->map(function ($pregunta) {
-                $baseQuery = clone $this->getBaseQuery();
+            ->get();
 
-                // Distribución: todas las opciones incluyendo "No responde" (valor_numerico = 0)
-                $distribucion = (clone $baseQuery)
-                    ->where('pregunta_id', $pregunta->id)
-                    ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
-                    ->selectRaw('opciones_respuesta.id, opciones_respuesta.opcion, opciones_respuesta.valor_numerico, COUNT(*) as total')
-                    ->groupBy('opciones_respuesta.id', 'opciones_respuesta.opcion', 'opciones_respuesta.valor_numerico')
-                    ->orderBy('opciones_respuesta.orden')
-                    ->get();
+        $preguntasIds = $preguntas->pluck('id')->toArray();
 
-                $totalRespuestas = $distribucion->sum('total');
+        $respuestasRaw = $this->getBaseQuery()
+            ->whereIn('respuestas.pregunta_id', $preguntasIds)
+            ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
+            ->selectRaw('respuestas.pregunta_id, opciones_respuesta.opcion, opciones_respuesta.valor_numerico, opciones_respuesta.orden, COUNT(*) as total')
+            ->groupBy('respuestas.pregunta_id', 'opciones_respuesta.opcion', 'opciones_respuesta.valor_numerico', 'opciones_respuesta.orden')
+            ->orderBy('opciones_respuesta.orden')
+            ->get();
 
-                // Puntaje: excluye valor_numerico = 0
-                $puntaje = (clone $baseQuery)
-                    ->where('pregunta_id', $pregunta->id)
-                    ->whereHas('opcionRespuesta', fn ($q) => $q->where('valor_numerico', '!=', 0))
-                    ->join('opciones_respuesta as or2', 'respuestas.opcion_respuesta_id', '=', 'or2.id')
-                    ->avg('or2.valor_numerico');
+        $grouped = $respuestasRaw->groupBy('pregunta_id');
 
-                return [
-                    'id' => $pregunta->id,
-                    'texto' => $pregunta->texto,
-                    'puntaje' => $puntaje !== null ? round((($puntaje - 1) / 2) * 100, 1) : 0.0,
-                    'total' => $totalRespuestas,
-                    'distribucion' => $distribucion->map(fn ($op) => [
-                        'opcion' => $op->opcion,
-                        'valor_numerico' => $op->valor_numerico,
-                        'total' => $op->total,
-                        'porcentaje' => $totalRespuestas > 0
-                                            ? round($op->total / $totalRespuestas * 100)
-                                            : 0,
-                    ])->toArray(),
-                ];
-            })->toArray();
+        return $preguntas->map(function ($pregunta) use ($grouped) {
+            $respuestasPregunta = $grouped->get($pregunta->id, collect());
+            $totalRespuestas = $respuestasPregunta->sum('total');
+
+            // Calcular promedio excluyendo valor_numerico = 0
+            $respuestasValidas = $respuestasPregunta->filter(fn ($op) => $op->valor_numerico != 0);
+            $sumaValores = $respuestasValidas->sum(fn ($op) => $op->valor_numerico * $op->total);
+            $cuentaValores = $respuestasValidas->sum('total');
+            $promedio = $cuentaValores > 0 ? ($sumaValores / $cuentaValores) : null;
+
+            return [
+                'id' => $pregunta->id,
+                'texto' => $pregunta->texto,
+                'puntaje' => $promedio !== null ? round((($promedio - 1) / 2) * 100, 1) : 0.0,
+                'total' => $totalRespuestas,
+                'distribucion' => $respuestasPregunta->map(fn ($op) => [
+                    'opcion' => $op->opcion,
+                    'valor_numerico' => $op->valor_numerico,
+                    'total' => $op->total,
+                    'porcentaje' => $totalRespuestas > 0
+                                        ? round($op->total / $totalRespuestas * 100)
+                                        : 0,
+                ])->toArray(),
+            ];
+        })->toArray();
     }
 
     private function despacharEventos(array $datosNivel1, array $datosNivel2, array $distribucionAgregada): void
