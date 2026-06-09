@@ -6,11 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Respuesta;
 use App\Models\Subdimension;
 use App\Services\ClimaScoringService;
+use App\Traits\HasTenantScope;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 class PdfController extends Controller
 {
+    use HasTenantScope;
+
     public function reportePDF(Request $request)
     {
         set_time_limit(120);
@@ -57,9 +60,12 @@ class PdfController extends Controller
         $query = Respuesta::query()
             ->whereHas('encuesta', fn ($q) => $q->where('estado', 'completado'));
 
-        if ($user->role === 'admin_empresa') {
-            $query->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $user->empresa_id));
-        } elseif ($request->filled('empresa_id')) {
+        $query->whereHas('encuesta.lote', fn ($q) => $this->scopeByRole($q));
+
+        if (in_array($user->role, [
+            \App\Enums\Role::SUPER_ADMIN->value,
+            \App\Enums\Role::ADMIN_CORPORATIVO->value,
+        ]) && $request->filled('empresa_id')) {
             $query->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $request->empresa_id));
         }
 
@@ -138,8 +144,11 @@ class PdfController extends Controller
         $preguntasAbiertas = \App\Models\PreguntaAbierta::orderBy('orden')->get();
 
         $encuestasIds = \App\Models\Encuesta::where('estado', 'completado')
-            ->when($user->role === 'admin_empresa', fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $user->empresa_id)))
-            ->when($user->role === 'super_admin' && $request->filled('empresa_id'), fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $request->empresa_id)))
+            ->whereHas('lote', fn ($q) => $this->scopeByRole($q))
+            ->when(in_array($user->role, [
+                \App\Enums\Role::SUPER_ADMIN->value,
+                \App\Enums\Role::ADMIN_CORPORATIVO->value,
+            ]) && $request->filled('empresa_id'), fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $request->empresa_id)))
             ->when($request->filled('edad_id'), fn ($q) => $q->whereHas('datoDemografico', fn ($q2) => $q2->where('edad_id', $request->edad_id)))
             ->when($request->filled('sexo_id'), fn ($q) => $q->whereHas('datoDemografico', fn ($q2) => $q2->where('sexo_id', $request->sexo_id)))
             ->when($request->filled('cargo_id'), fn ($q) => $q->whereHas('datoDemografico', fn ($q2) => $q2->where('cargo_id', $request->cargo_id)))

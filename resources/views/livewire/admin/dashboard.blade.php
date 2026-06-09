@@ -1,6 +1,10 @@
     <div class="space-y-8">
 
-        @if(auth()->user()->role === 'admin_empresa')
+        @if(in_array(auth()->user()->role, [
+            \App\Enums\Role::ADMIN_EMPRESA->value,
+            \App\Enums\Role::ADMIN_CORPORATIVO->value,
+            \App\Enums\Role::ADMIN_SUCURSAL->value,
+        ]))
         {{-- ── CLIMA (protagonista) ─────────────────────────────────────────── --}}
         <div>
             <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Clima laboral</p>
@@ -109,7 +113,11 @@
         </div>
         @endif
 
-        @if(auth()->user()->role === 'admin_empresa')
+        @if(in_array(auth()->user()->role, [
+            \App\Enums\Role::ADMIN_EMPRESA->value,
+            \App\Enums\Role::ADMIN_CORPORATIVO->value,
+            \App\Enums\Role::ADMIN_SUCURSAL->value,
+        ]))
         {{-- ── PARTICIPACIÓN Y ALERTAS ──────────────────────────────────────── --}}
         <div>
             <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Participación</p>
@@ -255,7 +263,10 @@
         </div>
 
         {{-- ── RANKING EMPRESAS (solo super_admin) ──────────────────────────── --}}
-        @if(auth()->user()->role === 'super_admin' && $rankingEmpresas->isNotEmpty())
+        @if(in_array(auth()->user()->role, [
+            \App\Enums\Role::SUPER_ADMIN->value,
+            \App\Enums\Role::ADMIN_CORPORATIVO->value,
+        ]) && $rankingEmpresas->isNotEmpty())
             <div>
                 <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Ranking de empresas</p>
                 <div class="bg-white rounded-2xl border border-slate-200 p-6">
