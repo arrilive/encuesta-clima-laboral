@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Encuesta;
+use App\Traits\HasTenantScope;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -10,7 +11,7 @@ use Livewire\WithPagination;
 #[Layout('components.layouts.admin', ['heading' => 'Encuestas'])]
 class EncuestasTable extends Component
 {
-    use WithPagination;
+    use HasTenantScope, WithPagination;
 
     public string $buscar = '';
 
@@ -38,18 +39,15 @@ class EncuestasTable extends Component
 
         $encuestas = Encuesta::query()
             ->with('lote.empresa')
-            ->when($user->role === 'admin_empresa', fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $user->empresa_id))
-            )
-            ->when($this->buscar, fn ($q) => $q->where('token', 'like', '%'.$this->buscar.'%')
-            )
-            ->when($this->filtroEmpresa, fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $this->filtroEmpresa))
-            )
-            ->when($this->filtroEstado, fn ($q) => $q->where('estado', $this->filtroEstado)
-            )
-            ->when($this->filtroDesde, fn ($q) => $q->whereDate('fecha_asignacion', '>=', $this->filtroDesde)
-            )
-            ->when($this->filtroHasta, fn ($q) => $q->whereDate('fecha_asignacion', '<=', $this->filtroHasta)
-            )
+            ->whereHas('lote', fn ($q) => $this->scopeByRole($q))
+            ->when($this->buscar, fn ($q) => $q->where('token', 'like', '%'.$this->buscar.'%'))
+            ->when(in_array($user->role, [
+                \App\Enums\Role::SUPER_ADMIN->value,
+                \App\Enums\Role::ADMIN_CORPORATIVO->value,
+            ]) && $this->filtroEmpresa, fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $this->filtroEmpresa)))
+            ->when($this->filtroEstado, fn ($q) => $q->where('estado', $this->filtroEstado))
+            ->when($this->filtroDesde, fn ($q) => $q->whereDate('fecha_asignacion', '>=', $this->filtroDesde))
+            ->when($this->filtroHasta, fn ($q) => $q->whereDate('fecha_asignacion', '<=', $this->filtroHasta))
             ->orderByDesc('fecha_asignacion')
             ->paginate(14);
 

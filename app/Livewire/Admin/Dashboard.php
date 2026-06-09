@@ -6,6 +6,7 @@ use App\Models\Empresa;
 use App\Models\Encuesta;
 use App\Models\Respuesta;
 use App\Services\ClimaScoringService;
+use App\Traits\HasTenantScope;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -13,15 +14,13 @@ use Livewire\Component;
 
 class Dashboard extends Component
 {
+    use HasTenantScope;
+
     public function liberarTokens(): void
     {
-        $user = auth()->user();
-
         $query = Encuesta::enRiesgo();
 
-        if ($user->role === 'admin_empresa') {
-            $query->whereHas('lote', fn ($q) => $q->where('empresa_id', $user->empresa_id));
-        }
+        $query->whereHas('lote', fn ($q) => $this->scopeByRole($q));
 
         $query->update([
             'estado' => 'disponible',
@@ -34,13 +33,24 @@ class Dashboard extends Component
         $user = auth()->user();
 
         $base = Encuesta::when(
-            $user->role === 'admin_empresa',
-            fn ($q) => $q->whereHas('lote', fn ($q) => $q->where('empresa_id', $user->empresa_id))
+            in_array($user->role, [
+                \App\Enums\Role::ADMIN_EMPRESA->value,
+                \App\Enums\Role::ADMIN_CORPORATIVO->value,
+                \App\Enums\Role::ADMIN_SUCURSAL->value,
+            ]),
+            fn ($q) => $q->whereHas('lote', fn ($loteQuery) => $this->scopeByRole($loteQuery))
         );
 
         $kpis = $this->calcularKpis($base);
-        $clima = $user->role === 'admin_empresa' ? $this->calcularClima($scoring, $user->empresa_id) : [];
-        $rankingEmpresas = $user->role === 'super_admin' ? $this->calcularRanking($scoring) : collect();
+        $clima = in_array($user->role, [
+            \App\Enums\Role::ADMIN_EMPRESA->value,
+            \App\Enums\Role::ADMIN_CORPORATIVO->value,
+            \App\Enums\Role::ADMIN_SUCURSAL->value,
+        ]) ? $this->calcularClima($scoring, $user) : [];
+        $rankingEmpresas = in_array($user->role, [
+            \App\Enums\Role::SUPER_ADMIN->value,
+            \App\Enums\Role::ADMIN_CORPORATIVO->value,
+        ]) ? $this->calcularRanking($scoring) : collect();
 
         return view('livewire.admin.dashboard', compact('kpis', 'clima', 'rankingEmpresas'));
     }
@@ -68,12 +78,12 @@ class Dashboard extends Component
         ];
     }
 
-    private function calcularClima(ClimaScoringService $scoring, int $empresaId): array
+    private function calcularClima(ClimaScoringService $scoring, $user): array
     {
         $respuestasBase = Respuesta::query()
             ->whereHas('encuesta', fn ($q) => $q
                 ->where('estado', 'completado')
-                ->whereHas('lote', fn ($q) => $q->where('empresa_id', $empresaId))
+                ->whereHas('lote', fn ($loteQuery) => $this->scopeByRole($loteQuery))
             );
 
         $scoresDimensiones = $scoring->scoresPorDimension($respuestasBase);
@@ -98,7 +108,13 @@ class Dashboard extends Component
      */
     private function calcularRanking(ClimaScoringService $scoring): \Illuminate\Support\Collection
     {
-        return Empresa::orderBy('nombre')->get()
+        $user = auth()->user();
+
+        $empresas = Empresa::orderBy('nombre')
+            ->when($user->role === \App\Enums\Role::ADMIN_CORPORATIVO->value, fn ($q) => $q->where('corporativo_id', $user->corporativo_id))
+            ->get();
+
+        return $empresas
             ->map(function ($empresa) use ($scoring) {
                 $base = Respuesta::query()
                     ->whereHas('encuesta', fn ($q) => $q

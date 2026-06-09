@@ -7,12 +7,15 @@ use App\Models\Empresa;
 use App\Models\Respuesta;
 use App\Models\Subdimension;
 use App\Services\ClimaScoringService;
+use App\Traits\HasTenantScope;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('components.layouts.admin', ['heading' => 'Reportes'])]
 class Reportes extends Component
 {
+    use HasTenantScope;
+
     // Navegación drill-down
     public int $nivel = 1;
 
@@ -111,12 +114,13 @@ class Reportes extends Component
         $query = Respuesta::query()
             ->whereHas('encuesta', fn ($q) => $q->where('estado', 'completado'));
 
-        if ($user->role === 'admin_empresa') {
-            $query->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $user->empresa_id)
-            );
-        } elseif ($this->filtroEmpresaId) {
-            $query->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId)
-            );
+        $query->whereHas('encuesta.lote', fn ($q) => $this->scopeByRole($q));
+
+        if (in_array($user->role, [
+            \App\Enums\Role::SUPER_ADMIN->value,
+            \App\Enums\Role::ADMIN_CORPORATIVO->value,
+        ]) && $this->filtroEmpresaId) {
+            $query->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId));
         }
 
         if ($this->filtroEdadId) {
@@ -152,9 +156,12 @@ class Reportes extends Component
         $user = auth()->user();
         $query = \App\Models\Encuesta::where('estado', 'completado');
 
-        if ($user->role === 'admin_empresa') {
-            $query->whereHas('lote', fn ($q) => $q->where('empresa_id', $user->empresa_id));
-        } elseif ($this->filtroEmpresaId) {
+        $query->whereHas('lote', fn ($q) => $this->scopeByRole($q));
+
+        if (in_array($user->role, [
+            \App\Enums\Role::SUPER_ADMIN->value,
+            \App\Enums\Role::ADMIN_CORPORATIVO->value,
+        ]) && $this->filtroEmpresaId) {
             $query->whereHas('lote', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId));
         }
 
@@ -305,8 +312,11 @@ class Reportes extends Component
         $completadasFiltradas = $this->getEncuestasBaseQuery()->count();
 
         $totalTokens = \App\Models\Encuesta::query()
-            ->when($user->role === 'admin_empresa', fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $user->empresa_id)))
-            ->when($user->role === 'super_admin' && $this->filtroEmpresaId, fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $this->filtroEmpresaId)))
+            ->whereHas('lote', fn ($q) => $this->scopeByRole($q))
+            ->when(in_array($user->role, [
+                \App\Enums\Role::SUPER_ADMIN->value,
+                \App\Enums\Role::ADMIN_CORPORATIVO->value,
+            ]) && $this->filtroEmpresaId, fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $this->filtroEmpresaId)))
             ->count();
 
         $scoringService = app(ClimaScoringService::class);
@@ -317,7 +327,12 @@ class Reportes extends Component
             'completadasFiltradas' => $completadasFiltradas,
             'totalTokens' => $totalTokens,
             'sinDatos' => $completadasFiltradas === 0,
-            'empresas' => $user->role === 'super_admin' ? Empresa::orderBy('nombre')->get() : collect(),
+            'empresas' => in_array($user->role, [
+                \App\Enums\Role::SUPER_ADMIN->value,
+                \App\Enums\Role::ADMIN_CORPORATIVO->value,
+            ])
+                ? ($user->role === \App\Enums\Role::SUPER_ADMIN->value ? Empresa::orderBy('nombre')->get() : Empresa::where('corporativo_id', $user->corporativo_id)->orderBy('nombre')->get())
+                : collect(),
             'dimensionActiva' => $this->dimensionActivaId ? Dimension::find($this->dimensionActivaId) : null,
             'subdimensionActiva' => $this->subdimensionActivaId ? Subdimension::find($this->subdimensionActivaId) : null,
             'datosNivel1' => $datosNivel1,
