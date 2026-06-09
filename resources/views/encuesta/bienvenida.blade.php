@@ -82,7 +82,7 @@
 
                     {{-- ── Estado: validando_llave ──────────────────────────── --}}
                     <div x-show="estado === 'validando_llave'" class="flex flex-col items-center gap-3 py-6">
-                        <svg class="animate-spin text-blue-600" width="28" height="28" viewBox="0 0 24 24"
+                        <svg aria-hidden="true" class="animate-spin text-blue-600" width="28" height="28" viewBox="0 0 24 24"
                             fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                             <circle cx="12" cy="12" r="10" stroke-opacity="0.25" />
                             <path d="M12 2a10 10 0 0 1 10 10" />
@@ -112,7 +112,7 @@
                                        placeholder-slate-400 focus:outline-none focus:border-blue-500
                                        focus:ring-4 focus:ring-blue-500/10 transition-all duration-200">
                             <p x-show="phoneError !== ''" class="flex items-start gap-1.5 text-xs text-red-500 mt-1">
-                                <svg class="w-4 h-4 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <svg aria-hidden="true" class="w-4 h-4 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <circle cx="12" cy="12" r="10" />
                                     <line x1="12" y1="8" x2="12" y2="12" />
                                     <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -125,11 +125,13 @@
                                 nuestros sistemas.
                             </p>
                             <button x-on:click="solicitarOtp()"
+                                :disabled="estado === 'enviando_otp'"
                                 class="w-full inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700
                                        text-white font-semibold text-sm px-6 py-2.5 rounded-xl
                                        transition-all duration-200 hover:-translate-y-px
                                        hover:shadow-[0_4px_16px_rgba(37,99,235,.25)]
-                                       active:translate-y-0 active:shadow-none">
+                                       active:translate-y-0 active:shadow-none
+                                       disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none">
                                 Enviar código
                             </button>
                         </div>
@@ -137,7 +139,7 @@
 
                     {{-- ── Estado: enviando_otp ─────────────────────────────── --}}
                     <div x-show="estado === 'enviando_otp'" class="flex flex-col items-center gap-3 py-6">
-                        <svg class="animate-spin text-blue-600" width="28" height="28" viewBox="0 0 24 24"
+                        <svg aria-hidden="true" class="animate-spin text-blue-600" width="28" height="28" viewBox="0 0 24 24"
                             fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                             <circle cx="12" cy="12" r="10" stroke-opacity="0.25" />
                             <path d="M12 2a10 10 0 0 1 10 10" />
@@ -175,7 +177,7 @@
 
                     {{-- ── Estado: verificando ──────────────────────────────── --}}
                     <div x-show="estado === 'verificando'" class="flex flex-col items-center gap-3 py-6">
-                        <svg class="animate-spin text-blue-600" width="28" height="28" viewBox="0 0 24 24"
+                        <svg aria-hidden="true" class="animate-spin text-blue-600" width="28" height="28" viewBox="0 0 24 24"
                             fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                             <circle cx="12" cy="12" r="10" stroke-opacity="0.25" />
                             <path d="M12 2a10 10 0 0 1 10 10" />
@@ -186,7 +188,7 @@
                     {{-- ── Estado: error ────────────────────────────────────── --}}
                     <div x-show="estado === 'error'">
                         <div class="flex items-start gap-3 p-4 rounded-lg bg-red-50 border border-red-200 mb-5">
-                            <svg class="w-4 h-4 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                            <svg aria-hidden="true" class="w-4 h-4 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor"
                                 stroke-width="2" viewBox="0 0 24 24">
                                 <circle cx="12" cy="12" r="10" />
                                 <line x1="12" y1="8" x2="12" y2="12" />
@@ -212,7 +214,7 @@
                     {{-- ── Estado: bloqueado ────────────────────────────────── --}}
                     <div x-show="estado === 'bloqueado'">
                         <div class="flex items-start gap-3 p-4 rounded-lg bg-amber-50 border border-amber-200 mb-5">
-                            <svg class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                            <svg aria-hidden="true" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor"
                                 stroke-width="2" viewBox="0 0 24 24">
                                 <path
                                     d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
