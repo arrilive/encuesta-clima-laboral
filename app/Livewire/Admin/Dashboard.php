@@ -88,6 +88,14 @@ class Dashboard extends Component
         ];
     }
 
+    /**
+     * Calcula el ranking de empresas por promedio de clima laboral.
+     *
+     * @warning Este método produce N+1 queries complejas — una por empresa registrada.
+     * Es aceptable con volúmenes pequeños de tenants (<20 empresas). Si el volumen
+     * escala, debe rediseñarse con caché (Redis) o procesamiento en segundo plano.
+     * Ver backlog: optimización de calcularRanking() post-v1.2.0.
+     */
     private function calcularRanking(ClimaScoringService $scoring): \Illuminate\Support\Collection
     {
         return Empresa::orderBy('nombre')->get()

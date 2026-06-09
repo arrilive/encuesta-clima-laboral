@@ -159,7 +159,7 @@ class EncuestaController extends Controller
             'lote_id' => $lote->id,
             'empresa_id' => $empresa_id,
             'intentos' => 0,
-            'expira_en' => now()->addMinutes(10),
+            'expira_en' => now()->addMinutes(config('encuesta.otp.expiracion_minutos')),
         ]);
 
         // 6. Simular envío (nunca loggear el número real)
@@ -210,7 +210,7 @@ class EncuestaController extends Controller
 
             return response()->json([
                 'error' => 'otp_invalido',
-                'intentos_restantes' => 3 - $otpRecord->intentos,
+                'intentos_restantes' => config('encuesta.otp.max_intentos') - $otpRecord->intentos,
             ], 422);
         }
 
