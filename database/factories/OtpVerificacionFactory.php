@@ -27,7 +27,7 @@ class OtpVerificacionFactory extends Factory
             'lote_id' => Lote::factory(),
             'empresa_id' => Empresa::factory(),
             'intentos' => 0,
-            'expira_en' => now()->addMinutes(10),
+            'expira_en' => now()->addMinutes(config('encuesta.otp.expiracion_minutos')),
         ];
     }
 
@@ -47,7 +47,7 @@ class OtpVerificacionFactory extends Factory
     public function agotada(): static
     {
         return $this->state(fn (array $attributes) => [
-            'intentos' => 3,
+            'intentos' => config('encuesta.otp.max_intentos'),
         ]);
     }
 }
