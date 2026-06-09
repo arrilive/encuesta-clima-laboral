@@ -21,9 +21,10 @@
                     Rango de edad
                 </label>
                 <select id="edad_id" wire:model.live="edad_id"
-                    class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800
+                    class="w-full rounded-xl border px-4 py-2.5 text-sm text-slate-800
                            shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none
-                           transition-all duration-200">
+                           transition-all duration-200
+                           {{ $errors->has('edad_id') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}">
                     <option value="">— Selecciona —</option>
                     @foreach ($edades as $opcion)
                         <option value="{{ $opcion->id }}">{{ $opcion->opcion }}</option>
@@ -40,9 +41,10 @@
                     Sexo
                 </label>
                 <select id="sexo_id" wire:model.live="sexo_id"
-                    class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800
+                    class="w-full rounded-xl border px-4 py-2.5 text-sm text-slate-800
                            shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none
-                           transition-all duration-200">
+                           transition-all duration-200
+                           {{ $errors->has('sexo_id') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}">
                     <option value="">— Selecciona —</option>
                     @foreach ($sexos as $opcion)
                         <option value="{{ $opcion->id }}">{{ $opcion->opcion }}</option>
@@ -59,9 +61,10 @@
                     Antigüedad en la empresa
                 </label>
                 <select id="antiguedad_id" wire:model.live="antiguedad_id"
-                    class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800
+                    class="w-full rounded-xl border px-4 py-2.5 text-sm text-slate-800
                            shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none
-                           transition-all duration-200">
+                           transition-all duration-200
+                           {{ $errors->has('antiguedad_id') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}">
                     <option value="">— Selecciona —</option>
                     @foreach ($antiguedades as $opcion)
                         <option value="{{ $opcion->id }}">{{ $opcion->opcion }}</option>
@@ -78,9 +81,10 @@
                     Lugar de trabajo
                 </label>
                 <select id="lugar_trabajo_id" wire:model.live="lugar_trabajo_id"
-                    class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800
+                    class="w-full rounded-xl border px-4 py-2.5 text-sm text-slate-800
                            shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none
-                           transition-all duration-200">
+                           transition-all duration-200
+                           {{ $errors->has('lugar_trabajo_id') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}">
                     <option value="">— Selecciona —</option>
                     @foreach ($lugaresTrabajo as $opcion)
                         <option value="{{ $opcion->id }}">{{ $opcion->opcion }}</option>
@@ -97,9 +101,10 @@
                     Grado académico
                 </label>
                 <select id="grado_academico_id" wire:model.live="grado_academico_id"
-                    class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800
+                    class="w-full rounded-xl border px-4 py-2.5 text-sm text-slate-800
                            shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none
-                           transition-all duration-200">
+                           transition-all duration-200
+                           {{ $errors->has('grado_academico_id') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}">
                     <option value="">— Selecciona —</option>
                     @foreach ($gradosAcademicos as $opcion)
                         <option value="{{ $opcion->id }}">{{ $opcion->opcion }}</option>
@@ -116,9 +121,10 @@
                     Cargo o nivel jerárquico
                 </label>
                 <select id="cargo_id" wire:model.live="cargo_id"
-                    class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800
+                    class="w-full rounded-xl border px-4 py-2.5 text-sm text-slate-800
                            shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none
-                           transition-all duration-200">
+                           transition-all duration-200
+                           {{ $errors->has('cargo_id') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}">
                     <option value="">— Selecciona —</option>
                     @foreach ($cargos as $opcion)
                         <option value="{{ $opcion->id }}">{{ $opcion->opcion }}</option>

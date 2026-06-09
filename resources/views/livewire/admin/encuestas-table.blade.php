@@ -176,9 +176,11 @@
         </div>
 
         {{-- Paginación --}}
-        <div class="px-6 py-4 border-t border-slate-200">
-            {{ $encuestas->links() }}
-        </div>
+        @if($encuestas->hasPages())
+            <div class="px-6 py-4 border-t border-slate-200">
+                {{ $encuestas->links(data: ['scrollTo' => false]) }}
+            </div>
+        @endif
     </div>
 
 </div>
