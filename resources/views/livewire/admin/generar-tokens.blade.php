@@ -1,6 +1,7 @@
 <div class="space-y-6 max-w-7xl">
 
     {{-- Formulario --}}
+    @if(auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value)
     <div class="bg-white rounded-2xl border border-slate-200 p-6 max-w-4xl">
         <h2 class="text-sm font-semibold text-slate-900 mb-5">Generar nuevos tokens</h2>
 
@@ -20,7 +21,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
             {{-- Empresa (solo super_admin) --}}
-            @if(auth()->user()->role === 'super_admin')
+            @if(auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value)
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1.5">Empresa <span class="text-red-400">*</span></label>
                     <select
@@ -150,6 +151,7 @@
             </button>
         </div>
     </div>
+    @endif
 
     {{-- Historial de lotes --}}
     <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
@@ -159,7 +161,7 @@
                     <tr class="border-b border-slate-200 bg-slate-50">
                         <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Fecha</th>
                         <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Vigencia</th>
-                        @if(auth()->user()->role === 'super_admin')
+                        @if(auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value)
                             <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Empresa</th>
                         @endif
                         <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Nombre del lote</th>
@@ -180,7 +182,7 @@
                                     <span class="text-slate-400 text-xs italic">Sin fecha registrada</span>
                                 @endif
                             </td>
-                            @if(auth()->user()->role === 'super_admin')
+                            @if(auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value)
                                 <td class="px-6 py-3 text-slate-700 whitespace-nowrap">
                                     {{ $lote->empresa->nombre }}
                                 </td>

@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Admin;
 
+use App\Enums\Role;
 use App\Models\Empresa;
 use App\Models\Encuesta;
 use App\Models\Lote;
+use App\Traits\HasTenantScope;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
@@ -13,7 +15,9 @@ use Livewire\Component;
 #[Layout('components.layouts.admin', ['heading' => 'Tokens'])]
 class GenerarTokens extends Component
 {
-    public string $tokensTotal = '10';
+    use HasTenantScope;
+
+    public string $tokensTotal = '';
 
     public string $nombre = '';
 
@@ -61,26 +65,23 @@ class GenerarTokens extends Component
     {
         $user = auth()->user();
 
-        if ($user->role === 'admin_empresa') {
-            $this->empresaId = (string) $user->empresa_id;
+        if ($user->role === Role::SUPER_ADMIN->value) {
+            $this->tokensTotal = '10';
+            $this->fechaInicio = now()->toDateString();
+            $this->fechaFin = '';
+            $this->empresaId = '';
         }
-
-        $this->fechaInicio = now()->toDateString();
-        $this->fechaFin = '';
     }
 
     public function generar(): void
     {
+        if (auth()->user()->role !== Role::SUPER_ADMIN->value) {
+            return;
+        }
+
         $this->validate($this->rules(), $this->messages());
 
         $user = auth()->user();
-
-        // Seguridad: admin_empresa no puede generar para otra empresa
-        if ($user->role === 'admin_empresa' && (int) $this->empresaId !== $user->empresa_id) {
-            $this->addError('empresaId', 'No tienes permiso para generar tokens para otra empresa.');
-
-            return;
-        }
 
         $empresa = Empresa::findOrFail($this->empresaId);
         if (! $empresa->activa) {
@@ -122,22 +123,18 @@ class GenerarTokens extends Component
         $this->nombre = '';
         $this->fechaInicio = now()->toDateString();
         $this->fechaFin = '';
-        if ($user->role === 'super_admin') {
-            $this->empresaId = '';
-        }
+        $this->empresaId = '';
     }
 
     public function render()
     {
         $user = auth()->user();
 
-        $empresas = $user->role === 'super_admin'
+        $empresas = $user->role === Role::SUPER_ADMIN->value
             ? Empresa::orderByDesc('activa')->orderBy('nombre')->get()
             : collect();
 
-        $lotes = Lote::with('empresa', 'user')
-            ->when($user->role === 'admin_empresa', fn ($q) => $q->where('empresa_id', $user->empresa_id)
-            )
+        $lotes = $this->scopeByRole(Lote::with('empresa', 'user'))
             ->orderByDesc('created_at')
             ->get();
 
