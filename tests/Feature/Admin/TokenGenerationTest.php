@@ -20,7 +20,7 @@ it('super_admin puede generar tokens para cualquier empresa', function () {
     expect(Encuesta::whereHas('lote', fn ($q) => $q->where('empresa_id', $empresa->id))->count())->toBe(10);
 });
 
-it('admin_empresa puede generar tokens para su propia empresa', function () {
+it('admin_empresa no puede generar tokens para su propia empresa', function () {
     $empresa = Empresa::factory()->create();
     $admin = User::factory()->adminEmpresa($empresa->id)->create();
 
@@ -30,7 +30,8 @@ it('admin_empresa puede generar tokens para su propia empresa', function () {
         ->set('fechaFin', now()->addDays(30)->toDateString())
         ->call('generar');
 
-    expect(Encuesta::whereHas('lote', fn ($q) => $q->where('empresa_id', $empresa->id))->count())->toBe(5);
+    expect(Encuesta::count())->toBe(0);
+    expect(\App\Models\Lote::count())->toBe(0);
 });
 
 it('admin_empresa no puede generar tokens para otra empresa', function () {
@@ -43,10 +44,10 @@ it('admin_empresa no puede generar tokens para otra empresa', function () {
         ->set('empresaId', (string) $empresa2->id)
         ->set('tokensTotal', '5')
         ->set('fechaFin', now()->addDays(30)->toDateString())
-        ->call('generar')
-        ->assertHasErrors(['empresaId']);
+        ->call('generar');
 
-    expect(Encuesta::whereHas('lote', fn ($q) => $q->where('empresa_id', $empresa2->id))->count())->toBe(0);
+    expect(Encuesta::count())->toBe(0);
+    expect(\App\Models\Lote::count())->toBe(0);
 });
 
 it('super_admin no puede generar tokens para empresa inactiva', function () {
@@ -73,10 +74,10 @@ it('admin_empresa no puede generar tokens si su empresa está inactiva', functio
         ->set('empresaId', (string) $empresa->id)
         ->set('tokensTotal', '10')
         ->set('fechaFin', now()->addDays(30)->toDateString())
-        ->call('generar')
-        ->assertHasErrors(['empresaId']);
+        ->call('generar');
 
-    expect(Encuesta::whereHas('lote', fn ($q) => $q->where('empresa_id', $empresa->id))->count())->toBe(0);
+    expect(Encuesta::count())->toBe(0);
+    expect(\App\Models\Lote::count())->toBe(0);
 });
 
 it('valida campos de fecha con mensajes en español personalizados', function () {
