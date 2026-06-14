@@ -37,6 +37,10 @@ Route::prefix('admin')
                 ->name('tokens');
             Route::get('/empresas', \App\Livewire\Admin\EmpresasTable::class)
                 ->name('empresas');
+            Route::get('/corporativos', \App\Livewire\Admin\CorporativosTable::class)
+                ->name('corporativos');
+            Route::get('/administradores', \App\Livewire\Admin\AdministradoresTable::class)
+                ->name('administradores');
         });
     });
 

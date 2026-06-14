@@ -2,7 +2,9 @@
 
 namespace App\Livewire\Admin;
 
+use App\Models\Corporativo;
 use App\Models\Empresa;
+use App\Models\Sucursal;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -21,13 +23,20 @@ class EmpresasTable extends Component
     // ── Modales ──────────────────────────────────────────────────────────────
     public bool $modalCrear = false;
 
-    public bool $modalEditarNombre = false;
+    public bool $modalEditarEmpresa = false;
 
     public bool $modalLlaveMaestra = false;
 
-    public bool $modalPasswordAdmin = false;
-
     public bool $modalPasswordGenerada = false;
+
+    // Modales de Sucursales
+    public bool $modalSucursales = false;
+
+    public bool $modalCrearSucursal = false;
+
+    public bool $modalEditarSucursal = false;
+
+    public bool $modalLlaveSucursal = false;
 
     // ── Campos de formulario ─────────────────────────────────────────────────
     public ?int $empresaId = null;
@@ -40,9 +49,18 @@ class EmpresasTable extends Component
 
     public string $llaveMaestra = '';
 
-    public string $passwordAdmin = '';
-
     public ?string $passwordGenerada = null;
+
+    public ?int $corporativoId = null;
+
+    // Campos de formulario Sucursales
+    public ?int $sucursalId = null;
+
+    public string $sucursalNombre = '';
+
+    public string $sucursalLlave = '';
+
+    public ?int $empresaSeleccionadaId = null;
 
     // Reset paginación al buscar
     public function updatingBuscar(): void
@@ -54,7 +72,7 @@ class EmpresasTable extends Component
 
     public function abrirModalCrear(): void
     {
-        $this->reset(['nombre', 'adminNombre', 'adminEmail', 'llaveMaestra', 'passwordGenerada']);
+        $this->reset(['nombre', 'adminNombre', 'adminEmail', 'llaveMaestra', 'passwordGenerada', 'corporativoId']);
         $this->resetErrorBag();
         $this->modalCrear = true;
     }
@@ -66,6 +84,7 @@ class EmpresasTable extends Component
             'adminNombre' => 'required|string|max:255',
             'adminEmail' => 'required|email|unique:users,email',
             'llaveMaestra' => 'required|string|min:8',
+            'corporativoId' => 'nullable|exists:corporativos,id',
         ], [
             'nombre.required' => 'El nombre de la empresa es obligatorio.',
             'nombre.unique' => 'Ya existe una empresa con ese nombre.',
@@ -84,6 +103,7 @@ class EmpresasTable extends Component
                 'nombre' => $this->nombre,
                 'password' => $this->llaveMaestra,
                 'activa' => true,
+                'corporativo_id' => $this->corporativoId ?: null,
             ]);
 
             User::create([
@@ -100,29 +120,34 @@ class EmpresasTable extends Component
         $this->modalPasswordGenerada = true;
     }
 
-    // ── Editar nombre ────────────────────────────────────────────────────────
+    // ── Editar empresa ───────────────────────────────────────────────────────
 
-    public function abrirEditarNombre(int $id): void
+    public function abrirEditarEmpresa(int $id): void
     {
         $empresa = Empresa::findOrFail($id);
         $this->empresaId = $empresa->id;
         $this->nombre = $empresa->nombre;
+        $this->corporativoId = $empresa->corporativo_id;
         $this->resetErrorBag();
-        $this->modalEditarNombre = true;
+        $this->modalEditarEmpresa = true;
     }
 
-    public function editarNombre(): void
+    public function editarEmpresa(): void
     {
         $this->validate([
             'nombre' => "required|string|max:255|unique:empresas,nombre,{$this->empresaId}",
+            'corporativoId' => 'nullable|exists:corporativos,id',
         ], [
             'nombre.required' => 'El nombre es obligatorio.',
             'nombre.unique' => 'Ya existe una empresa con ese nombre.',
         ]);
 
-        Empresa::findOrFail($this->empresaId)->update(['nombre' => $this->nombre]);
+        Empresa::findOrFail($this->empresaId)->update([
+            'nombre' => $this->nombre,
+            'corporativo_id' => $this->corporativoId ?: null,
+        ]);
 
-        $this->modalEditarNombre = false;
+        $this->modalEditarEmpresa = false;
     }
 
     // ── Cambiar llave maestra ────────────────────────────────────────────────
@@ -149,29 +174,6 @@ class EmpresasTable extends Component
         $this->modalLlaveMaestra = false;
     }
 
-    // ── Cambiar password del admin ───────────────────────────────────────────
-
-    public function abrirPasswordAdmin(int $id): void
-    {
-        $this->empresaId = $id;
-        $this->resetErrorBag();
-        $this->modalPasswordAdmin = true;
-    }
-
-    public function cambiarPasswordAdmin(): void
-    {
-        $passwordPlana = Str::password(12);
-
-        User::where('empresa_id', $this->empresaId)
-            ->where('role', 'admin_empresa')
-            ->firstOrFail()
-            ->update(['password' => $passwordPlana]);
-
-        $this->passwordGenerada = $passwordPlana;
-        $this->modalPasswordAdmin = false;
-        $this->modalPasswordGenerada = true;
-    }
-
     // ── Toggle activa ────────────────────────────────────────────────────────
 
     public function toggleActiva(int $id): void
@@ -188,6 +190,99 @@ class EmpresasTable extends Component
         $this->modalPasswordGenerada = false;
     }
 
+    // ── CRUD Sucursales ──────────────────────────────────────────────────────
+
+    public function abrirModalSucursales(int $empresaId): void
+    {
+        $this->empresaSeleccionadaId = $empresaId;
+        $this->modalSucursales = true;
+    }
+
+    public function abrirCrearSucursal(): void
+    {
+        $this->reset(['sucursalNombre', 'sucursalLlave']);
+        $this->resetErrorBag();
+        $this->modalCrearSucursal = true;
+    }
+
+    public function crearSucursal(): void
+    {
+        $this->validate([
+            'sucursalNombre' => "required|string|max:255|unique:sucursales,nombre,NULL,id,empresa_id,{$this->empresaSeleccionadaId}",
+            'sucursalLlave' => 'required|string|min:8',
+        ], [
+            'sucursalNombre.required' => 'El nombre de la sucursal es obligatorio.',
+            'sucursalNombre.unique' => 'Ya existe una sucursal con ese nombre en esta empresa.',
+            'sucursalLlave.required' => 'La llave maestra es obligatoria.',
+            'sucursalLlave.min' => 'La llave maestra debe tener al menos 8 caracteres.',
+        ]);
+
+        Sucursal::create([
+            'empresa_id' => $this->empresaSeleccionadaId,
+            'nombre' => $this->sucursalNombre,
+            'password' => $this->sucursalLlave, // Auto-hashed by model cast
+            'activa' => true,
+        ]);
+
+        $this->modalCrearSucursal = false;
+        $this->reset(['sucursalNombre', 'sucursalLlave']);
+    }
+
+    public function abrirEditarSucursal(int $id): void
+    {
+        $sucursal = Sucursal::findOrFail($id);
+        $this->sucursalId = $sucursal->id;
+        $this->sucursalNombre = $sucursal->nombre;
+        $this->resetErrorBag();
+        $this->modalEditarSucursal = true;
+    }
+
+    public function editarSucursal(): void
+    {
+        $this->validate([
+            'sucursalNombre' => "required|string|max:255|unique:sucursales,nombre,{$this->sucursalId},id,empresa_id,{$this->empresaSeleccionadaId}",
+        ], [
+            'sucursalNombre.required' => 'El nombre de la sucursal es obligatorio.',
+            'sucursalNombre.unique' => 'Ya existe una sucursal con ese nombre en esta empresa.',
+        ]);
+
+        Sucursal::findOrFail($this->sucursalId)->update([
+            'nombre' => $this->sucursalNombre,
+        ]);
+
+        $this->modalEditarSucursal = false;
+    }
+
+    public function abrirLlaveSucursal(int $id): void
+    {
+        $this->sucursalId = $id;
+        $this->sucursalLlave = '';
+        $this->resetErrorBag();
+        $this->modalLlaveSucursal = true;
+    }
+
+    public function cambiarLlaveSucursal(): void
+    {
+        $this->validate([
+            'sucursalLlave' => 'required|string|min:8',
+        ], [
+            'sucursalLlave.required' => 'La nueva llave maestra es obligatoria.',
+            'sucursalLlave.min' => 'La llave maestra debe tener al menos 8 caracteres.',
+        ]);
+
+        Sucursal::findOrFail($this->sucursalId)->update([
+            'password' => $this->sucursalLlave, // Auto-hashed by model cast
+        ]);
+
+        $this->modalLlaveSucursal = false;
+    }
+
+    public function toggleActivaSucursal(int $id): void
+    {
+        $sucursal = Sucursal::findOrFail($id);
+        $sucursal->update(['activa' => ! $sucursal->activa]);
+    }
+
     // ── Render ───────────────────────────────────────────────────────────────
 
     public function render()
@@ -198,10 +293,21 @@ class EmpresasTable extends Component
                 'encuestas as completadas' => fn ($q) => $q->where('estado', 'completado'),
                 'encuestas as disponibles' => fn ($q) => $q->where('estado', 'disponible'),
             ])
-            ->with('users')
+            ->with(['users', 'corporativo'])
             ->orderBy('nombre')
             ->paginate(10);
 
-        return view('livewire.admin.empresas-table', compact('empresas'));
+        $corporativos = Corporativo::where('activa', true)->orderBy('nombre')->get();
+
+        $sucursales = [];
+        $empresaSeleccionada = null;
+        if ($this->empresaSeleccionadaId) {
+            $empresaSeleccionada = Empresa::find($this->empresaSeleccionadaId);
+            $sucursales = Sucursal::where('empresa_id', $this->empresaSeleccionadaId)
+                ->orderBy('nombre')
+                ->get();
+        }
+
+        return view('livewire.admin.empresas-table', compact('empresas', 'corporativos', 'sucursales', 'empresaSeleccionada'));
     }
 }
