@@ -18,6 +18,13 @@ it('super_admin puede generar tokens para cualquier empresa', function () {
         ->call('generar');
 
     expect(Encuesta::whereHas('lote', fn ($q) => $q->where('empresa_id', $empresa->id))->count())->toBe(10);
+
+    // Verificar formato de token TK-XXXX-XXXX
+    $encuestas = Encuesta::all();
+    expect($encuestas)->not->toBeEmpty();
+    foreach ($encuestas as $encuesta) {
+        expect($encuesta->token)->toMatch('/^TK-[A-Z0-9]{4}-[A-Z0-9]{4}$/');
+    }
 });
 
 it('admin_empresa no puede generar tokens para su propia empresa', function () {
@@ -103,4 +110,215 @@ it('valida campos de fecha con mensajes en español personalizados', function ()
 
     expect($component2->errors()->get('fechaInicio'))->toContain('La fecha de inicio debe ser hoy o una fecha futura.');
     expect($component2->errors()->get('fechaFin'))->toContain('La fecha de cierre debe ser posterior a la fecha de inicio.');
+});
+
+it('inyectar() agrega tokens a lote existente y actualiza tokens_total', function () {
+    $empresa = Empresa::factory()->create();
+    $lote = \App\Models\Lote::create([
+        'empresa_id' => $empresa->id,
+        'user_id' => User::factory()->superAdmin()->create()->id,
+        'tokens_total' => 10,
+        'nombre' => 'Lote original',
+        'fecha_inicio' => now()->toDateString(),
+        'fecha_fin' => now()->addDays(10)->toDateString(),
+        'activo' => true,
+    ]);
+
+    $admin = User::factory()->superAdmin()->create();
+
+    Livewire::actingAs($admin)
+        ->test(GenerarTokens::class)
+        ->set('modo', 'b')
+        ->set('empresaIdModoB', (string) $empresa->id)
+        ->set('loteId', (string) $lote->id)
+        ->set('cantidadModoB', '5')
+        ->call('inyectar');
+
+    $lote->refresh();
+    expect($lote->tokens_total)->toBe(15);
+    expect(Encuesta::where('lote_id', $lote->id)->count())->toBe(5);
+
+    // Verificar formato de token TK-XXXX-XXXX en inyección
+    $encuestas = Encuesta::where('lote_id', $lote->id)->get();
+    expect($encuestas)->not->toBeEmpty();
+    foreach ($encuestas as $encuesta) {
+        expect($encuesta->token)->toMatch('/^TK-[A-Z0-9]{4}-[A-Z0-9]{4}$/');
+    }
+});
+
+it('inyectar() actualiza fecha_fin si se provee nuevaFechaFin valida', function () {
+    $empresa = Empresa::factory()->create();
+    $lote = \App\Models\Lote::create([
+        'empresa_id' => $empresa->id,
+        'user_id' => User::factory()->superAdmin()->create()->id,
+        'tokens_total' => 10,
+        'nombre' => 'Lote original',
+        'fecha_inicio' => now()->toDateString(),
+        'fecha_fin' => now()->addDays(10)->toDateString(),
+        'activo' => true,
+    ]);
+
+    $admin = User::factory()->superAdmin()->create();
+    $nuevaFecha = now()->addDays(20)->toDateString();
+
+    Livewire::actingAs($admin)
+        ->test(GenerarTokens::class)
+        ->set('modo', 'b')
+        ->set('empresaIdModoB', (string) $empresa->id)
+        ->set('loteId', (string) $lote->id)
+        ->set('cantidadModoB', '5')
+        ->set('nuevaFechaFin', $nuevaFecha)
+        ->call('inyectar');
+
+    $lote->refresh();
+    expect($lote->fecha_fin->toDateString())->toBe($nuevaFecha);
+});
+
+it('inyectar() no actualiza fecha_fin si nuevaFechaFin esta vacio', function () {
+    $empresa = Empresa::factory()->create();
+    $fechaOriginal = now()->addDays(10)->toDateString();
+    $lote = \App\Models\Lote::create([
+        'empresa_id' => $empresa->id,
+        'user_id' => User::factory()->superAdmin()->create()->id,
+        'tokens_total' => 10,
+        'nombre' => 'Lote original',
+        'fecha_inicio' => now()->toDateString(),
+        'fecha_fin' => $fechaOriginal,
+        'activo' => true,
+    ]);
+
+    $admin = User::factory()->superAdmin()->create();
+
+    Livewire::actingAs($admin)
+        ->test(GenerarTokens::class)
+        ->set('modo', 'b')
+        ->set('empresaIdModoB', (string) $empresa->id)
+        ->set('loteId', (string) $lote->id)
+        ->set('cantidadModoB', '5')
+        ->set('nuevaFechaFin', '')
+        ->call('inyectar');
+
+    $lote->refresh();
+    expect($lote->fecha_fin->toDateString())->toBe($fechaOriginal);
+});
+
+it('inyectar() falla si loteId no existe', function () {
+    $admin = User::factory()->superAdmin()->create();
+
+    Livewire::actingAs($admin)
+        ->test(GenerarTokens::class)
+        ->set('modo', 'b')
+        ->set('loteId', '999999')
+        ->set('cantidadModoB', '5')
+        ->call('inyectar')
+        ->assertHasErrors(['loteId']);
+
+    expect(Encuesta::count())->toBe(0);
+});
+
+it('inyectar() falla si cantidadModoB excede 500', function () {
+    $empresa = Empresa::factory()->create();
+    $lote = \App\Models\Lote::create([
+        'empresa_id' => $empresa->id,
+        'user_id' => User::factory()->superAdmin()->create()->id,
+        'tokens_total' => 10,
+        'nombre' => 'Lote original',
+        'fecha_inicio' => now()->toDateString(),
+        'fecha_fin' => now()->addDays(10)->toDateString(),
+        'activo' => true,
+    ]);
+
+    $admin = User::factory()->superAdmin()->create();
+
+    Livewire::actingAs($admin)
+        ->test(GenerarTokens::class)
+        ->set('modo', 'b')
+        ->set('empresaIdModoB', (string) $empresa->id)
+        ->set('loteId', (string) $lote->id)
+        ->set('cantidadModoB', '501')
+        ->call('inyectar')
+        ->assertHasErrors(['cantidadModoB']);
+
+    expect(Encuesta::count())->toBe(0);
+});
+
+it('inyectar() falla si nuevaFechaFin es anterior a today', function () {
+    $empresa = Empresa::factory()->create();
+    $lote = \App\Models\Lote::create([
+        'empresa_id' => $empresa->id,
+        'user_id' => User::factory()->superAdmin()->create()->id,
+        'tokens_total' => 10,
+        'nombre' => 'Lote original',
+        'fecha_inicio' => now()->toDateString(),
+        'fecha_fin' => now()->addDays(10)->toDateString(),
+        'activo' => true,
+    ]);
+
+    $admin = User::factory()->superAdmin()->create();
+
+    Livewire::actingAs($admin)
+        ->test(GenerarTokens::class)
+        ->set('modo', 'b')
+        ->set('empresaIdModoB', (string) $empresa->id)
+        ->set('loteId', (string) $lote->id)
+        ->set('cantidadModoB', '5')
+        ->set('nuevaFechaFin', now()->subDay()->toDateString())
+        ->call('inyectar')
+        ->assertHasErrors(['nuevaFechaFin']);
+
+    expect(Encuesta::count())->toBe(0);
+});
+
+it('inyectar() no ejecuta si modo !== b', function () {
+    $empresa = Empresa::factory()->create();
+    $lote = \App\Models\Lote::create([
+        'empresa_id' => $empresa->id,
+        'user_id' => User::factory()->superAdmin()->create()->id,
+        'tokens_total' => 10,
+        'nombre' => 'Lote original',
+        'fecha_inicio' => now()->toDateString(),
+        'fecha_fin' => now()->addDays(10)->toDateString(),
+        'activo' => true,
+    ]);
+
+    $admin = User::factory()->superAdmin()->create();
+
+    Livewire::actingAs($admin)
+        ->test(GenerarTokens::class)
+        ->set('modo', 'a')
+        ->set('empresaIdModoB', (string) $empresa->id)
+        ->set('loteId', (string) $lote->id)
+        ->set('cantidadModoB', '5')
+        ->call('inyectar');
+
+    $lote->refresh();
+    expect($lote->tokens_total)->toBe(10);
+    expect(Encuesta::count())->toBe(0);
+});
+
+it('inyectar() no ejecuta si rol !== super_admin', function () {
+    $empresa = Empresa::factory()->create();
+    $lote = \App\Models\Lote::create([
+        'empresa_id' => $empresa->id,
+        'user_id' => User::factory()->superAdmin()->create()->id,
+        'tokens_total' => 10,
+        'nombre' => 'Lote original',
+        'fecha_inicio' => now()->toDateString(),
+        'fecha_fin' => now()->addDays(10)->toDateString(),
+        'activo' => true,
+    ]);
+
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    Livewire::actingAs($admin)
+        ->test(GenerarTokens::class)
+        ->set('modo', 'b')
+        ->set('empresaIdModoB', (string) $empresa->id)
+        ->set('loteId', (string) $lote->id)
+        ->set('cantidadModoB', '5')
+        ->call('inyectar');
+
+    $lote->refresh();
+    expect($lote->tokens_total)->toBe(10);
+    expect(Encuesta::count())->toBe(0);
 });
