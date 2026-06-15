@@ -41,7 +41,7 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 @if (auth()->user()->role === 'super_admin') lg:grid-cols-4 @endif gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {{-- Edad --}}
             <div class="space-y-1.5">
                 <label class="text-slate-500 text-sm font-medium">Edad</label>
@@ -127,6 +127,27 @@
                     </select>
                 </div>
             @endif
+
+            {{-- Lote / Período --}}
+            <div class="space-y-1.5">
+                <label class="text-slate-500 text-sm font-medium">Lote / Período</label>
+                @php
+                    $loteDeshabilitado = in_array(auth()->user()->role, [
+                        \App\Enums\Role::SUPER_ADMIN->value,
+                        \App\Enums\Role::ADMIN_CORPORATIVO->value,
+                    ]) && !$filtroEmpresaId;
+                @endphp
+                <select wire:model.live="filtroLoteId"
+                    @if($loteDeshabilitado) disabled @endif
+                    class="w-full border border-slate-300 rounded-xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 {{ $loteDeshabilitado ? 'opacity-50 cursor-not-allowed bg-slate-50' : '' }}">
+                    <option value="">Todos los períodos</option>
+                    @foreach ($lotes as $lote)
+                        <option value="{{ $lote->id }}">
+                            {{ $lote->nombre ?? 'Lote #'.$lote->id }} ({{ $lote->sucursal ? $lote->sucursal->nombre : 'General' }})
+                        </option>
+                    @endforeach
+                </select>
+            </div>
         </div>
     </div>
 
@@ -735,6 +756,7 @@
                 // Agregar filtros activos
                 const filtros = {
                     empresa_id: $wire.filtroEmpresaId,
+                    lote_id: $wire.filtroLoteId,
                     sexo_id: $wire.filtroSexoId,
                     edad_id: $wire.filtroEdadId,
                     cargo_id: $wire.filtroCargoId,

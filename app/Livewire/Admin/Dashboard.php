@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\Empresa;
 use App\Models\Encuesta;
+use App\Models\Lote;
 use App\Models\Respuesta;
 use App\Services\ClimaScoringService;
 use App\Traits\HasTenantScope;
@@ -15,6 +16,15 @@ use Livewire\Component;
 class Dashboard extends Component
 {
     use HasTenantScope;
+
+    public string $filtroLoteId = '';
+
+    public function getLotesProperty()
+    {
+        $query = Lote::with('sucursal');
+
+        return $this->scopeByRole($query)->orderByDesc('fecha_inicio')->get();
+    }
 
     public function liberarTokens(): void
     {
@@ -41,6 +51,10 @@ class Dashboard extends Component
             fn ($q) => $q->whereHas('lote', fn ($loteQuery) => $this->scopeByRole($loteQuery))
         );
 
+        if ($this->filtroLoteId) {
+            $base->where('lote_id', $this->filtroLoteId);
+        }
+
         $kpis = $this->calcularKpis($base);
         $clima = in_array($user->role, [
             \App\Enums\Role::ADMIN_EMPRESA->value,
@@ -52,7 +66,9 @@ class Dashboard extends Component
             \App\Enums\Role::ADMIN_CORPORATIVO->value,
         ]) ? $this->calcularRanking($scoring) : collect();
 
-        return view('livewire.admin.dashboard', compact('kpis', 'clima', 'rankingEmpresas'));
+        $lotes = $this->lotes;
+
+        return view('livewire.admin.dashboard', compact('kpis', 'clima', 'rankingEmpresas', 'lotes'));
     }
 
     private function calcularKpis($base): array
@@ -85,6 +101,10 @@ class Dashboard extends Component
                 ->where('estado', 'completado')
                 ->whereHas('lote', fn ($loteQuery) => $this->scopeByRole($loteQuery))
             );
+
+        if ($this->filtroLoteId) {
+            $respuestasBase->whereHas('encuesta', fn ($q) => $q->where('lote_id', $this->filtroLoteId));
+        }
 
         $scoresDimensiones = $scoring->scoresPorDimension($respuestasBase);
         $scoresSubdimensiones = $scoring->scoresPorSubdimension($respuestasBase);
