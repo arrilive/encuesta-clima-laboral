@@ -6,6 +6,7 @@ use App\Enums\Role;
 use App\Models\Empresa;
 use App\Models\Encuesta;
 use App\Models\Lote;
+use App\Models\Sucursal;
 use App\Traits\HasTenantScope;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -22,6 +23,8 @@ class GenerarTokens extends Component
     public string $nombre = '';
 
     public string $empresaId = '';
+
+    public string $sucursalId = '';
 
     public string $fechaInicio = '';
 
@@ -43,8 +46,9 @@ class GenerarTokens extends Component
     {
         return [
             'tokensTotal' => 'required|numeric|integer|min:1|max:500',
-            'nombre' => 'nullable|string|max:100',
+            'nombre' => 'nullable|string|max:75',
             'empresaId' => 'required|exists:empresas,id',
+            'sucursalId' => 'nullable|exists:sucursales,id',
             'fechaInicio' => 'required|date|after_or_equal:today',
             'fechaFin' => 'required|date|after:fechaInicio',
         ];
@@ -60,6 +64,7 @@ class GenerarTokens extends Component
             'tokensTotal.max' => 'El máximo permitido son 500 tokens.',
             'empresaId.required' => 'Selecciona una empresa.',
             'empresaId.exists' => 'La empresa seleccionada no existe.',
+            'sucursalId.exists' => 'La sucursal seleccionada no existe.',
             'fechaInicio.required' => 'La fecha de inicio es obligatoria.',
             'fechaInicio.date' => 'La fecha de inicio debe ser una fecha válida.',
             'fechaInicio.after_or_equal' => 'La fecha de inicio debe ser hoy o una fecha futura.',
@@ -82,6 +87,7 @@ class GenerarTokens extends Component
             $this->fechaInicio = now()->toDateString();
             $this->fechaFin = '';
             $this->empresaId = '';
+            $this->sucursalId = '';
         }
     }
 
@@ -102,12 +108,27 @@ class GenerarTokens extends Component
             return;
         }
 
+        if ($this->sucursalId) {
+            $sucursal = Sucursal::findOrFail($this->sucursalId);
+            if (! $sucursal->activa) {
+                $this->addError('sucursalId', 'No se pueden generar tokens para una sucursal inactiva. Actívala primero en el panel de Empresas.');
+
+                return;
+            }
+            if ($sucursal->empresa_id !== (int) $this->empresaId) {
+                $this->addError('sucursalId', 'La sucursal seleccionada no pertenece a la empresa elegida.');
+
+                return;
+            }
+        }
+
         $lote = null;
 
         // Crear el lote e insertar tokens de manera atómica
         DB::transaction(function () use (&$lote, $user) {
             $lote = Lote::create([
                 'empresa_id' => $this->empresaId,
+                'sucursal_id' => $this->sucursalId ?: null,
                 'user_id' => $user->id,
                 'tokens_total' => $this->tokensTotal,
                 'nombre' => $this->nombre ?: null,
@@ -142,6 +163,12 @@ class GenerarTokens extends Component
         $this->fechaInicio = now()->toDateString();
         $this->fechaFin = '';
         $this->empresaId = '';
+        $this->sucursalId = '';
+    }
+
+    public function updatedEmpresaId(): void
+    {
+        $this->sucursalId = '';
     }
 
     public function updatedEmpresaIdModoB(): void
@@ -274,7 +301,8 @@ class GenerarTokens extends Component
             return collect();
         }
 
-        return Lote::where('empresa_id', $this->empresaIdModoB)
+        return Lote::with('sucursal')
+            ->where('empresa_id', $this->empresaIdModoB)
             ->where('activo', 1)
             ->where('fecha_fin', '>=', today())
             ->orderBy('nombre')
@@ -287,7 +315,19 @@ class GenerarTokens extends Component
             return null;
         }
 
-        return Lote::find($this->loteId);
+        return Lote::with('sucursal')->find($this->loteId);
+    }
+
+    public function getSucursalesProperty()
+    {
+        if (empty($this->empresaId)) {
+            return collect();
+        }
+
+        return Sucursal::where('empresa_id', $this->empresaId)
+            ->where('activa', true)
+            ->orderBy('nombre')
+            ->get();
     }
 
     public function render()
@@ -298,13 +338,14 @@ class GenerarTokens extends Component
             ? Empresa::orderByDesc('activa')->orderBy('nombre')->get()
             : collect();
 
-        $lotes = $this->scopeByRole(Lote::with('empresa', 'user'))
+        $lotes = $this->scopeByRole(Lote::with('empresa', 'user', 'sucursal'))
             ->orderByDesc('created_at')
             ->get();
 
         $lotesVigentes = $this->lotesVigentes;
         $loteSeleccionado = $this->loteSeleccionado;
+        $sucursales = $this->sucursales;
 
-        return view('livewire.admin.generar-tokens', compact('empresas', 'lotes', 'lotesVigentes', 'loteSeleccionado'));
+        return view('livewire.admin.generar-tokens', compact('empresas', 'lotes', 'lotesVigentes', 'loteSeleccionado', 'sucursales'));
     }
 }

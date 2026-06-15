@@ -71,7 +71,7 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1.5">Empresa <span class="text-red-400">*</span></label>
                     <select
-                        wire:model="empresaId"
+                        wire:model.live="empresaId"
                         class="w-full rounded-xl border px-4 py-2.5 text-sm
                                text-slate-800 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10
                                focus:outline-none transition-all duration-200
@@ -90,6 +90,33 @@
                         </p>
                     @enderror
                 </div>
+
+                {{-- Sucursal (opcional, aparece al seleccionar empresa) --}}
+                @if($empresaId)
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+                        Sucursal
+                        <span class="text-slate-400 font-normal ml-1">(opcional)</span>
+                    </label>
+                    <select
+                        wire:model.live="sucursalId"
+                        class="w-full rounded-xl border px-4 py-2.5 text-sm
+                               text-slate-800 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10
+                               focus:outline-none transition-all duration-200
+                               {{ $errors->has('sucursalId') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}">
+                        <option value="">General (toda la empresa)</option>
+                        @foreach($sucursales as $suc)
+                            <option value="{{ $suc->id }}">{{ $suc->nombre }}</option>
+                        @endforeach
+                    </select>
+                    @error('sucursalId')
+                        <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">
+                            <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            {{ $message }}
+                        </p>
+                    @enderror
+                </div>
+                @endif
             @endif
 
             {{-- Cantidad --}}
@@ -125,7 +152,7 @@
                     wire:model="nombre"
                     type="text"
                     placeholder="ej. Campaña Marzo 2026"
-                    maxlength="100"
+                    maxlength="75"
                     class="w-full px-4 py-2.5 border border-slate-300 rounded-xl text-sm text-slate-900
                            placeholder-slate-400 bg-white focus:outline-none focus:border-blue-500
                            focus:ring-4 focus:ring-blue-500/10 transition-all duration-200"
@@ -245,7 +272,9 @@
                         <option value="">Selecciona un lote vigente</option>
                         @foreach($lotesVigentes as $l)
                             <option value="{{ $l->id }}">
-                                {{ $l->nombre ?? 'Lote sin nombre' }} ({{ $l->tokens_total }} tokens · Exp: {{ $l->fecha_fin ? $l->fecha_fin->format('d/m/Y') : 'sin fecha' }})
+                                {{ $l->nombre ?? 'Lote #'.$l->id }}
+                                ({{ $l->sucursal ? $l->sucursal->nombre : 'General' }})
+                                — vence {{ $l->fecha_fin->format('d/m/Y') }}
                             </option>
                         @endforeach
                     </select>
@@ -384,6 +413,14 @@
                             @if($loteSeleccionado)
                                 <div class="mt-4 text-sm text-slate-600 text-left bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
                                     <div><span class="font-semibold text-slate-700">Empresa:</span> {{ $loteSeleccionado->empresa->nombre }}</div>
+                                    <div>
+                                        <span class="font-semibold text-slate-700">Sucursal:</span>
+                                        @if($loteSeleccionado->sucursal)
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-violet-50 text-violet-700 ml-1">{{ $loteSeleccionado->sucursal->nombre }}</span>
+                                        @else
+                                            <span class="text-slate-400 italic">General (toda la empresa)</span>
+                                        @endif
+                                    </div>
                                     <div><span class="font-semibold text-slate-700">Lote destino:</span> {{ $loteSeleccionado->nombre ?? 'Lote sin nombre' }}</div>
                                     
                                     <div class="border-t border-slate-200 my-2 pt-2 flex justify-between">
@@ -472,6 +509,7 @@
                             <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Vigencia</th>
                             @if(auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value)
                                 <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Empresa</th>
+                                <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Sucursal</th>
                             @endif
                             <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Nombre del lote</th>
                             <th class="text-center px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Cantidad</th>
@@ -495,6 +533,15 @@
                             @if(auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value)
                                 <td class="px-6 py-3 text-slate-700 whitespace-nowrap">
                                     {{ $lote->empresa->nombre }}
+                                </td>
+                                <td class="px-6 py-3 whitespace-nowrap">
+                                    @if($lote->sucursal)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-violet-50 text-violet-700">
+                                            {{ $lote->sucursal->nombre }}
+                                        </span>
+                                    @else
+                                        <span class="text-slate-400 text-xs">—</span>
+                                    @endif
                                 </td>
                             @endif
                             <td class="px-6 py-3 text-slate-700">
@@ -520,7 +567,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-12 text-center text-slate-400 text-sm">
+                            <td colspan="8" class="px-6 py-12 text-center text-slate-400 text-sm">
                                 Aún no se han generado tokens.
                             </td>
                         </tr>

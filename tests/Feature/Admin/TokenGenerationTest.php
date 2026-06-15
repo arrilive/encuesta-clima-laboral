@@ -322,3 +322,124 @@ it('inyectar() no ejecuta si rol !== super_admin', function () {
     expect($lote->tokens_total)->toBe(10);
     expect(Encuesta::count())->toBe(0);
 });
+
+it('generar() crea lote con sucursal_id cuando se selecciona sucursal', function () {
+    $empresa = Empresa::factory()->create();
+    $sucursal = \App\Models\Sucursal::factory()->create(['empresa_id' => $empresa->id, 'activa' => true]);
+    $admin = User::factory()->superAdmin()->create();
+
+    Livewire::actingAs($admin)
+        ->test(GenerarTokens::class)
+        ->set('empresaId', (string) $empresa->id)
+        ->set('sucursalId', (string) $sucursal->id)
+        ->set('tokensTotal', '5')
+        ->set('fechaInicio', now()->toDateString())
+        ->set('fechaFin', now()->addDays(30)->toDateString())
+        ->call('generar');
+
+    $lote = \App\Models\Lote::first();
+    expect($lote)->not->toBeNull();
+    expect($lote->sucursal_id)->toBe($sucursal->id);
+    expect($lote->empresa_id)->toBe($empresa->id);
+    expect(Encuesta::where('lote_id', $lote->id)->count())->toBe(5);
+});
+
+it('generar() falla si la sucursal no pertenece a la empresa seleccionada', function () {
+    $empresa1 = Empresa::factory()->create();
+    $empresa2 = Empresa::factory()->create();
+    $sucursalDeOtraEmpresa = \App\Models\Sucursal::factory()->create(['empresa_id' => $empresa2->id, 'activa' => true]);
+    $admin = User::factory()->superAdmin()->create();
+
+    Livewire::actingAs($admin)
+        ->test(GenerarTokens::class)
+        ->set('empresaId', (string) $empresa1->id)
+        ->set('sucursalId', (string) $sucursalDeOtraEmpresa->id)
+        ->set('tokensTotal', '5')
+        ->set('fechaInicio', now()->toDateString())
+        ->set('fechaFin', now()->addDays(30)->toDateString())
+        ->call('generar')
+        ->assertHasErrors(['sucursalId']);
+
+    expect(\App\Models\Lote::count())->toBe(0);
+});
+
+it('generar() falla si la sucursal está inactiva', function () {
+    $empresa = Empresa::factory()->create();
+    $sucursal = \App\Models\Sucursal::factory()->create(['empresa_id' => $empresa->id, 'activa' => false]);
+    $admin = User::factory()->superAdmin()->create();
+
+    Livewire::actingAs($admin)
+        ->test(GenerarTokens::class)
+        ->set('empresaId', (string) $empresa->id)
+        ->set('sucursalId', (string) $sucursal->id)
+        ->set('tokensTotal', '5')
+        ->set('fechaInicio', now()->toDateString())
+        ->set('fechaFin', now()->addDays(30)->toDateString())
+        ->call('generar')
+        ->assertHasErrors(['sucursalId']);
+
+    expect(\App\Models\Lote::count())->toBe(0);
+});
+
+it('generar() crea lote general cuando sucursalId está vacío', function () {
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->superAdmin()->create();
+
+    Livewire::actingAs($admin)
+        ->test(GenerarTokens::class)
+        ->set('empresaId', (string) $empresa->id)
+        ->set('sucursalId', '')
+        ->set('tokensTotal', '5')
+        ->set('fechaInicio', now()->toDateString())
+        ->set('fechaFin', now()->addDays(30)->toDateString())
+        ->call('generar');
+
+    $lote = \App\Models\Lote::first();
+    expect($lote)->not->toBeNull();
+    expect($lote->sucursal_id)->toBeNull();
+    expect($lote->empresa_id)->toBe($empresa->id);
+});
+
+it('lotesVigentes incluye nombre de sucursal en modo B', function () {
+    $empresa = Empresa::factory()->create();
+    $sucursal = \App\Models\Sucursal::factory()->create(['empresa_id' => $empresa->id, 'activa' => true]);
+    $admin = User::factory()->superAdmin()->create();
+
+    \App\Models\Lote::create([
+        'empresa_id' => $empresa->id,
+        'sucursal_id' => $sucursal->id,
+        'user_id' => $admin->id,
+        'tokens_total' => 10,
+        'nombre' => 'Lote Sucursal Norte',
+        'fecha_inicio' => now()->toDateString(),
+        'fecha_fin' => now()->addDays(30)->toDateString(),
+        'activo' => true,
+    ]);
+
+    \App\Models\Lote::create([
+        'empresa_id' => $empresa->id,
+        'sucursal_id' => null,
+        'user_id' => $admin->id,
+        'tokens_total' => 20,
+        'nombre' => 'Lote General',
+        'fecha_inicio' => now()->toDateString(),
+        'fecha_fin' => now()->addDays(30)->toDateString(),
+        'activo' => true,
+    ]);
+
+    $component = Livewire::actingAs($admin)
+        ->test(GenerarTokens::class)
+        ->set('modo', 'b')
+        ->set('empresaIdModoB', (string) $empresa->id);
+
+    $lotesVigentes = $component->get('lotesVigentes');
+
+    expect($lotesVigentes)->toHaveCount(2);
+
+    $loteConSucursal = $lotesVigentes->firstWhere('sucursal_id', $sucursal->id);
+    expect($loteConSucursal->sucursal)->not->toBeNull();
+    expect($loteConSucursal->sucursal->nombre)->toBe($sucursal->nombre);
+
+    $loteGeneral = $lotesVigentes->firstWhere('sucursal_id', null);
+    expect($loteGeneral->sucursal)->toBeNull();
+});
