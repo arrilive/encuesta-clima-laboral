@@ -70,19 +70,18 @@
             @if(auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value)
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1.5">Empresa <span class="text-red-400">*</span></label>
-                    <select
-                        wire:model.live="empresaId"
-                        class="w-full rounded-xl border px-4 py-2.5 text-sm
-                               text-slate-800 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10
-                               focus:outline-none transition-all duration-200
-                               {{ $errors->has('empresaId') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}">
+                    <x-admin.combobox-entidad
+                        wire-model="empresaId"
+                        placeholder="Buscar empresa..."
+                        :has-error="$errors->has('empresaId')"
+                        :disabled="false">
                         <option value="">Selecciona una empresa</option>
                         @foreach($empresas as $empresa)
                             <option value="{{ $empresa->id }}" @disabled(!$empresa->activa)>
                                 {{ $empresa->nombre }}{{ !$empresa->activa ? ' (Inactiva)' : '' }}
                             </option>
                         @endforeach
-                    </select>
+                    </x-admin.combobox-entidad>
                     @error('empresaId')
                         <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">
                             <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -98,17 +97,16 @@
                         Sucursal
                         <span class="text-slate-400 font-normal ml-1">(opcional)</span>
                     </label>
-                    <select
-                        wire:model.live="sucursalId"
-                        class="w-full rounded-xl border px-4 py-2.5 text-sm
-                               text-slate-800 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10
-                               focus:outline-none transition-all duration-200
-                               {{ $errors->has('sucursalId') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}">
+                    <x-admin.combobox-entidad
+                        wire-model="sucursalId"
+                        placeholder="Buscar sucursal..."
+                        :has-error="$errors->has('sucursalId')"
+                        :disabled="false">
                         <option value="">General (toda la empresa)</option>
                         @foreach($sucursales as $suc)
                             <option value="{{ $suc->id }}">{{ $suc->nombre }}</option>
                         @endforeach
-                    </select>
+                    </x-admin.combobox-entidad>
                     @error('sucursalId')
                         <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">
                             <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -238,19 +236,18 @@
                 {{-- Empresa Selector --}}
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1.5">Empresa <span class="text-red-400">*</span></label>
-                    <select
-                        wire:model.live="empresaIdModoB"
-                        class="w-full rounded-xl border px-4 py-2.5 text-sm
-                               text-slate-800 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10
-                               focus:outline-none transition-all duration-200
-                               {{ $errors->has('empresaIdModoB') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}">
+                    <x-admin.combobox-entidad
+                        wire-model="empresaIdModoB"
+                        placeholder="Buscar empresa..."
+                        :has-error="$errors->has('empresaIdModoB')"
+                        :disabled="false">
                         <option value="">Selecciona una empresa</option>
                         @foreach($empresas as $empresa)
                             <option value="{{ $empresa->id }}" @disabled(!$empresa->activa)>
                                 {{ $empresa->nombre }}{{ !$empresa->activa ? ' (Inactiva)' : '' }}
                             </option>
                         @endforeach
-                    </select>
+                    </x-admin.combobox-entidad>
                     @error('empresaIdModoB')
                         <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">
                             <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -262,13 +259,11 @@
                 {{-- Lote Selector --}}
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1.5">Lote de destino <span class="text-red-400">*</span></label>
-                    <select
-                        wire:model.live="loteId"
-                        @disabled(empty($empresaIdModoB))
-                        class="w-full rounded-xl border px-4 py-2.5 text-sm
-                               text-slate-800 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10
-                               focus:outline-none transition-all duration-200
-                               {{ $errors->has('loteId') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}">
+                    <x-admin.combobox-entidad
+                        wire-model="loteId"
+                        placeholder="Buscar lote..."
+                        :has-error="$errors->has('loteId')"
+                        :disabled="empty($empresaIdModoB)">
                         <option value="">Selecciona un lote vigente</option>
                         @foreach($lotesVigentes as $l)
                             <option value="{{ $l->id }}">
@@ -277,7 +272,7 @@
                                 — vence {{ $l->fecha_fin->format('d/m/Y') }}
                             </option>
                         @endforeach
-                    </select>
+                    </x-admin.combobox-entidad>
                     @error('loteId')
                         <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">
                             <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>

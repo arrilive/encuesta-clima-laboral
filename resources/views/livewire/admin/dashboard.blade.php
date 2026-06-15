@@ -17,13 +17,18 @@
                     @if(auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value)
                         <div class="flex items-center gap-1.5">
                             <span class="text-sm font-medium text-slate-400">Corporativo:</span>
-                            <select wire:model.live="filtroCorporativoId"
-                                class="border-slate-300 rounded-xl text-sm py-2 pl-3 pr-10 bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm font-semibold text-slate-700 cursor-pointer transition-all">
-                                <option value="">Todos</option>
-                                @foreach($corporativos as $corp)
-                                    <option value="{{ $corp->id }}">{{ $corp->nombre }}</option>
-                                @endforeach
-                            </select>
+                            <div class="w-48 sm:w-56">
+                                <x-admin.combobox-entidad
+                                    wire-model="filtroCorporativoId"
+                                    placeholder="Buscar corporativo..."
+                                    :has-error="$errors->has('filtroCorporativoId')"
+                                    :disabled="false">
+                                    <option value="">Todos</option>
+                                    @foreach($corporativos as $corp)
+                                        <option value="{{ $corp->id }}">{{ $corp->nombre }}</option>
+                                    @endforeach
+                                </x-admin.combobox-entidad>
+                            </div>
                         </div>
                     @endif
 
@@ -34,14 +39,18 @@
                         @endphp
                         <div class="flex items-center gap-1.5">
                             <span class="text-sm font-medium text-slate-400">Empresa:</span>
-                            <select wire:model.live="filtroEmpresaId"
-                                @if($empresaDeshabilitada) disabled @endif
-                                class="border-slate-300 rounded-xl text-sm py-2 pl-3 pr-10 bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm font-semibold text-slate-700 cursor-pointer transition-all {{ $empresaDeshabilitada ? 'opacity-50 cursor-not-allowed bg-slate-50' : '' }}">
-                                <option value="">Todas</option>
-                                @foreach($empresas as $emp)
-                                    <option value="{{ $emp->id }}">{{ $emp->nombre }}</option>
-                                @endforeach
-                            </select>
+                            <div class="w-48 sm:w-56">
+                                <x-admin.combobox-entidad
+                                    wire-model="filtroEmpresaId"
+                                    placeholder="Buscar empresa..."
+                                    :has-error="$errors->has('filtroEmpresaId')"
+                                    :disabled="$empresaDeshabilitada">
+                                    <option value="">Todas</option>
+                                    @foreach($empresas as $emp)
+                                        <option value="{{ $emp->id }}">{{ $emp->nombre }}</option>
+                                    @endforeach
+                                </x-admin.combobox-entidad>
+                            </div>
                         </div>
                     @endif
 
@@ -55,14 +64,18 @@
                         @endphp
                         <div class="flex items-center gap-1.5">
                             <span class="text-sm font-medium text-slate-400">Sucursal:</span>
-                            <select wire:model.live="filtroSucursalId"
-                                @if($sucursalDeshabilitada) disabled @endif
-                                class="border-slate-300 rounded-xl text-sm py-2 pl-3 pr-10 bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm font-semibold text-slate-700 cursor-pointer transition-all {{ $sucursalDeshabilitada ? 'opacity-50 cursor-not-allowed bg-slate-50' : '' }}">
-                                <option value="">Todas</option>
-                                @foreach($sucursales as $suc)
-                                    <option value="{{ $suc->id }}">{{ $suc->nombre }}</option>
-                                @endforeach
-                            </select>
+                            <div class="w-48 sm:w-56">
+                                <x-admin.combobox-entidad
+                                    wire-model="filtroSucursalId"
+                                    placeholder="Buscar sucursal..."
+                                    :has-error="$errors->has('filtroSucursalId')"
+                                    :disabled="$sucursalDeshabilitada">
+                                    <option value="">Todas</option>
+                                    @foreach($sucursales as $suc)
+                                        <option value="{{ $suc->id }}">{{ $suc->nombre }}</option>
+                                    @endforeach
+                                </x-admin.combobox-entidad>
+                            </div>
                         </div>
                     @endif
 
@@ -70,20 +83,25 @@
                     @if($lotes->isNotEmpty())
                         <div class="flex items-center gap-1.5">
                             <span class="text-sm font-medium text-slate-400">Período:</span>
-                            <select wire:model.live="filtroLoteId"
-                                class="border-slate-300 rounded-xl text-sm py-2 pl-3 pr-10 bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm font-semibold text-slate-700 cursor-pointer transition-all">
-                                <option value="">Todos los períodos</option>
-                                @foreach ($lotes as $lote)
-                                    @php
-                                        $nombreEmpresa = auth()->user()->role === \App\Enums\Role::ADMIN_CORPORATIVO->value 
-                                            ? '[' . $lote->empresa->nombre . '] ' 
-                                            : '';
-                                    @endphp
-                                    <option value="{{ $lote->id }}">
-                                        {{ $nombreEmpresa }}{{ $lote->nombre ?? 'Lote #'.$lote->id }} ({{ $lote->sucursal ? $lote->sucursal->nombre : 'General' }})
-                                    </option>
-                                @endforeach
-                            </select>
+                            <div class="w-56 sm:w-64">
+                                <x-admin.combobox-entidad
+                                    wire-model="filtroLoteId"
+                                    placeholder="Buscar período..."
+                                    :has-error="$errors->has('filtroLoteId')"
+                                    :disabled="false">
+                                    <option value="">Todos los períodos</option>
+                                    @foreach ($lotes as $lote)
+                                        @php
+                                            $nombreEmpresa = auth()->user()->role === \App\Enums\Role::ADMIN_CORPORATIVO->value 
+                                                ? '[' . $lote->empresa->nombre . '] ' 
+                                                : '';
+                                        @endphp
+                                        <option value="{{ $lote->id }}">
+                                            {{ $nombreEmpresa }}{{ $lote->nombre ?? 'Lote #'.$lote->id }} ({{ $lote->sucursal ? $lote->sucursal->nombre : 'General' }})
+                                        </option>
+                                    @endforeach
+                                </x-admin.combobox-entidad>
+                            </div>
                         </div>
                     @endif
                 </div>

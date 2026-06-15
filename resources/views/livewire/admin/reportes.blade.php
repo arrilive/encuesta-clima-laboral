@@ -118,13 +118,16 @@
             @if(auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value)
             <div class="space-y-1.5">
                 <label class="text-slate-500 text-sm font-medium">Corporativo</label>
-                <select wire:model.live="filtroCorporativoId"
-                    class="w-full border border-slate-300 rounded-xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+                <x-admin.combobox-entidad
+                    wire-model="filtroCorporativoId"
+                    placeholder="Buscar corporativo..."
+                    :has-error="$errors->has('filtroCorporativoId')"
+                    :disabled="false">
                     <option value="">Todos</option>
                     @foreach($corporativos as $corp)
                         <option value="{{ $corp->id }}">{{ $corp->nombre }}</option>
                     @endforeach
-                </select>
+                </x-admin.combobox-entidad>
             </div>
             @endif
 
@@ -132,13 +135,16 @@
             @if(in_array(auth()->user()->role, [\App\Enums\Role::SUPER_ADMIN->value, \App\Enums\Role::ADMIN_CORPORATIVO->value]))
                 <div class="space-y-1.5">
                     <label class="text-slate-500 text-sm font-medium">Empresa</label>
-                    <select wire:model.live="filtroEmpresaId"
-                        class="w-full border border-slate-300 rounded-xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+                    <x-admin.combobox-entidad
+                        wire-model="filtroEmpresaId"
+                        placeholder="Buscar empresa..."
+                        :has-error="$errors->has('filtroEmpresaId')"
+                        :disabled="false">
                         <option value="">Todas las empresas</option>
                         @foreach ($empresas as $empresa)
                             <option value="{{ $empresa->id }}">{{ $empresa->nombre }}</option>
                         @endforeach
-                    </select>
+                    </x-admin.combobox-entidad>
                 </div>
             @endif
 
@@ -152,14 +158,16 @@
             @endphp
             <div class="space-y-1.5">
                 <label class="text-slate-500 text-sm font-medium">Sucursal</label>
-                <select wire:model.live="filtroSucursalId"
-                    @if($sucursalDeshabilitada) disabled @endif
-                    class="w-full border border-slate-300 rounded-xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 {{ $sucursalDeshabilitada ? 'opacity-50 cursor-not-allowed bg-slate-50' : '' }}">
+                <x-admin.combobox-entidad
+                    wire-model="filtroSucursalId"
+                    placeholder="Buscar sucursal..."
+                    :has-error="$errors->has('filtroSucursalId')"
+                    :disabled="$sucursalDeshabilitada">
                     <option value="">Todas</option>
                     @foreach($sucursales as $suc)
                         <option value="{{ $suc->id }}">{{ $suc->nombre }}</option>
                     @endforeach
-                </select>
+                </x-admin.combobox-entidad>
             </div>
             @endif
 
@@ -172,16 +180,18 @@
                         \App\Enums\Role::ADMIN_CORPORATIVO->value,
                     ]) && !$filtroEmpresaId;
                 @endphp
-                <select wire:model.live="filtroLoteId"
-                    @if($loteDeshabilitado) disabled @endif
-                    class="w-full border border-slate-300 rounded-xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 {{ $loteDeshabilitado ? 'opacity-50 cursor-not-allowed bg-slate-50' : '' }}">
+                <x-admin.combobox-entidad
+                    wire-model="filtroLoteId"
+                    placeholder="Buscar período..."
+                    :has-error="$errors->has('filtroLoteId')"
+                    :disabled="$loteDeshabilitado">
                     <option value="">Todos los períodos</option>
                     @foreach ($lotes as $lote)
                         <option value="{{ $lote->id }}">
                             {{ $lote->nombre ?? 'Lote #'.$lote->id }} ({{ $lote->sucursal ? $lote->sucursal->nombre : 'General' }})
                         </option>
                     @endforeach
-                </select>
+                </x-admin.combobox-entidad>
             </div>
         </div>
     </div>
