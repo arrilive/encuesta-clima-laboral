@@ -5,9 +5,31 @@
             \App\Enums\Role::ADMIN_CORPORATIVO->value,
             \App\Enums\Role::ADMIN_SUCURSAL->value,
         ]))
-        {{-- ── CLIMA (protagonista) ─────────────────────────────────────────── --}}
-        <div>
-            <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Clima laboral</p>
+            {{-- ── CLIMA (protagonista) ─────────────────────────────────────────── --}}
+            <div>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest">Clima laboral</p>
+                    
+                    @if($lotes->isNotEmpty())
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-slate-400">Período:</span>
+                            <select wire:model.live="filtroLoteId"
+                                class="border-slate-300 rounded-xl text-sm py-2 pl-3 pr-10 bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm font-semibold text-slate-700 cursor-pointer transition-all">
+                                <option value="">Todos los períodos</option>
+                                @foreach ($lotes as $lote)
+                                    @php
+                                        $nombreEmpresa = auth()->user()->role === \App\Enums\Role::ADMIN_CORPORATIVO->value 
+                                            ? '[' . $lote->empresa->nombre . '] ' 
+                                            : '';
+                                    @endphp
+                                    <option value="{{ $lote->id }}">
+                                        {{ $nombreEmpresa }}{{ $lote->nombre ?? 'Lote #'.$lote->id }} ({{ $lote->sucursal ? $lote->sucursal->nombre : 'General' }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endif
+                </div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                 {{-- Promedio General — tarjeta hero --}}

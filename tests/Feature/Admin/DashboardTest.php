@@ -184,3 +184,25 @@ it('clima contiene promedio_general para admin_empresa cuando hay respuestas', f
 
     expect($clima['promedio_general'])->toBe(100.0);
 });
+
+it('filtroLoteId filtra KPIs al lote seleccionado', function () {
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    $lote1 = \App\Models\Lote::factory()->for($empresa)->create();
+    $lote2 = \App\Models\Lote::factory()->for($empresa)->create();
+
+    Encuesta::factory()->count(3)->create(['lote_id' => $lote1->id]);
+    Encuesta::factory()->count(2)->create(['lote_id' => $lote2->id]);
+
+    $this->actingAs($admin);
+
+    $component = Livewire::test(Dashboard::class);
+    expect($component->viewData('kpis')['total_tokens'])->toBe(5);
+
+    $component->set('filtroLoteId', (string) $lote1->id);
+    expect($component->viewData('kpis')['total_tokens'])->toBe(3);
+
+    $component->set('filtroLoteId', (string) $lote2->id);
+    expect($component->viewData('kpis')['total_tokens'])->toBe(2);
+});

@@ -69,6 +69,10 @@ class PdfController extends Controller
             $query->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $request->empresa_id));
         }
 
+        if ($request->filled('lote_id')) {
+            $query->whereHas('encuesta.lote', fn ($q) => $q->where('lotes.id', $request->lote_id));
+        }
+
         $filtros = [
             'edad_id' => 'edad_id',
             'sexo_id' => 'sexo_id',
@@ -92,6 +96,7 @@ class PdfController extends Controller
         $filtros = [];
         $map = [
             'empresa_id' => ['label' => 'Empresa', 'model' => \App\Models\Empresa::class, 'attr' => 'nombre'],
+            'lote_id' => ['label' => 'Lote', 'model' => \App\Models\Lote::class, 'attr' => 'nombre'],
             'edad_id' => ['label' => 'Edad', 'model' => \App\Models\Edad::class, 'attr' => 'opcion'],
             'sexo_id' => ['label' => 'Sexo', 'model' => \App\Models\Sexo::class, 'attr' => 'opcion'],
             'cargo_id' => ['label' => 'Cargo', 'model' => \App\Models\Cargo::class, 'attr' => 'opcion'],
@@ -102,9 +107,17 @@ class PdfController extends Controller
 
         foreach ($map as $key => $config) {
             if ($request->filled($key)) {
-                $item = $config['model']::find($request->$key);
+                $query = $config['model']::query();
+                if ($key === 'lote_id') {
+                    $query->with('sucursal');
+                }
+                $item = $query->find($request->$key);
                 if ($item) {
-                    $filtros[$config['label']] = $item->{$config['attr']};
+                    if ($key === 'lote_id') {
+                        $filtros[$config['label']] = ($item->nombre ?? 'Lote #'.$item->id).' ('.($item->sucursal ? $item->sucursal->nombre : 'General').')';
+                    } else {
+                        $filtros[$config['label']] = $item->{$config['attr']};
+                    }
                 }
             }
         }
@@ -149,6 +162,7 @@ class PdfController extends Controller
                 \App\Enums\Role::SUPER_ADMIN->value,
                 \App\Enums\Role::ADMIN_CORPORATIVO->value,
             ]) && $request->filled('empresa_id'), fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $request->empresa_id)))
+            ->when($request->filled('lote_id'), fn ($q) => $q->where('lote_id', $request->lote_id))
             ->when($request->filled('edad_id'), fn ($q) => $q->whereHas('datoDemografico', fn ($q2) => $q2->where('edad_id', $request->edad_id)))
             ->when($request->filled('sexo_id'), fn ($q) => $q->whereHas('datoDemografico', fn ($q2) => $q2->where('sexo_id', $request->sexo_id)))
             ->when($request->filled('cargo_id'), fn ($q) => $q->whereHas('datoDemografico', fn ($q2) => $q2->where('cargo_id', $request->cargo_id)))

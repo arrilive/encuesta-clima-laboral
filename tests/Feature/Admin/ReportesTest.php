@@ -252,3 +252,101 @@ it('limpiarFiltros resetea todos los filtros y vuelve a nivel 1', function () {
         ->assertSet('filtroSexoId', '')
         ->assertSet('dimensionActivaId', null);
 });
+
+it('filtroLoteId filtra respuestas al lote seleccionado', function () {
+    $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
+
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    $lote1 = \App\Models\Lote::factory()->for($empresa)->create();
+    $lote2 = \App\Models\Lote::factory()->for($empresa)->create();
+
+    $encuesta1 = Encuesta::factory()->completada()->create(['lote_id' => $lote1->id]);
+    $encuesta2 = Encuesta::factory()->completada()->create(['lote_id' => $lote2->id]);
+
+    $dimension = Dimension::first();
+    $opcionVerdadero = OpcionRespuesta::where('valor_numerico', 3)->first();
+    $opcionFalso = OpcionRespuesta::where('valor_numerico', 1)->first();
+    $preguntas = Pregunta::whereHas('subdimension', fn ($q) => $q->where('dimension_id', $dimension->id))->get();
+
+    foreach ($preguntas as $pregunta) {
+        Respuesta::create([
+            'encuesta_id' => $encuesta1->id,
+            'pregunta_id' => $pregunta->id,
+            'opcion_respuesta_id' => $opcionVerdadero->id,
+        ]);
+    }
+
+    foreach ($preguntas as $pregunta) {
+        Respuesta::create([
+            'encuesta_id' => $encuesta2->id,
+            'pregunta_id' => $pregunta->id,
+            'opcion_respuesta_id' => $opcionFalso->id,
+        ]);
+    }
+
+    $component = Livewire::actingAs($admin)->test(Reportes::class);
+    $datosNivel1 = $component->instance()->getDatosNivel1();
+    $puntajeMezclado = collect($datosNivel1)->firstWhere('id', $dimension->id)['puntaje'];
+    expect($puntajeMezclado)->toBe(50.0);
+
+    $component->set('filtroLoteId', (string) $lote1->id);
+    $datosNivel1 = $component->instance()->getDatosNivel1();
+    $puntajeLote1 = collect($datosNivel1)->firstWhere('id', $dimension->id)['puntaje'];
+    expect($puntajeLote1)->toBe(100.0);
+
+    $component->set('filtroLoteId', (string) $lote2->id);
+    $datosNivel1 = $component->instance()->getDatosNivel1();
+    $puntajeLote2 = collect($datosNivel1)->firstWhere('id', $dimension->id)['puntaje'];
+    expect($puntajeLote2)->toBe(0.0);
+});
+
+it('limpiarFiltros resetea filtroLoteId', function () {
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    Livewire::actingAs($admin)
+        ->test(Reportes::class)
+        ->set('filtroLoteId', '123')
+        ->call('limpiarFiltros')
+        ->assertSet('filtroLoteId', '');
+});
+
+it('updatedFiltroEmpresaId resetea filtroLoteId', function () {
+    $empresa = Empresa::factory()->create();
+    $superAdmin = User::factory()->superAdmin()->create();
+
+    Livewire::actingAs($superAdmin)
+        ->test(Reportes::class)
+        ->set('filtroEmpresaId', (string) $empresa->id)
+        ->set('filtroLoteId', '123')
+        ->set('filtroEmpresaId', '456')
+        ->assertSet('filtroLoteId', '');
+});
+
+it('la exportacion a PDF aplica el filtro por lote y formatea correctamente su etiqueta', function () {
+    $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
+
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    $lote = \App\Models\Lote::factory()->for($empresa)->create(['nombre' => null]);
+    $encuesta = Encuesta::factory()->completada()->create(['lote_id' => $lote->id]);
+
+    $opcion = OpcionRespuesta::where('valor_numerico', 3)->first();
+    Respuesta::create([
+        'encuesta_id' => $encuesta->id,
+        'pregunta_id' => Pregunta::first()->id,
+        'opcion_respuesta_id' => $opcion->id,
+    ]);
+
+    $this->actingAs($admin);
+
+    $response = $this->get(route('admin.reportes.pdf', [
+        'lote_id' => $lote->id,
+        'alcance' => 'dimensiones',
+    ]));
+
+    $response->assertOk();
+});
