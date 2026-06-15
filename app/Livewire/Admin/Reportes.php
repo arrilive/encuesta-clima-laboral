@@ -2,11 +2,13 @@
 
 namespace App\Livewire\Admin;
 
+use App\Models\Corporativo;
 use App\Models\Dimension;
 use App\Models\Empresa;
 use App\Models\Lote;
 use App\Models\Respuesta;
 use App\Models\Subdimension;
+use App\Models\Sucursal;
 use App\Services\ClimaScoringService;
 use App\Traits\HasTenantScope;
 use Livewire\Attributes\Layout;
@@ -39,6 +41,10 @@ class Reportes extends Component
 
     // Filtro empresa (solo super_admin)
     public string $filtroEmpresaId = '';
+
+    public string $filtroCorporativoId = '';
+
+    public string $filtroSucursalId = '';
 
     public string $filtroLoteId = '';
 
@@ -101,14 +107,64 @@ class Reportes extends Component
         $this->filtroLugarTrabajoId = '';
         $this->filtroGradoAcademicoId = '';
         $this->filtroAntiguedadId = '';
+        $this->filtroCorporativoId = '';
         $this->filtroEmpresaId = '';
+        $this->filtroSucursalId = '';
         $this->filtroLoteId = '';
         $this->irNivel1();
     }
 
+    public function updatedFiltroCorporativoId(): void
+    {
+        $this->filtroEmpresaId = '';
+        $this->filtroSucursalId = '';
+        $this->filtroLoteId = '';
+    }
+
     public function updatedFiltroEmpresaId(): void
     {
+        $this->filtroSucursalId = '';
         $this->filtroLoteId = '';
+    }
+
+    public function updatedFiltroSucursalId(): void
+    {
+        $this->filtroLoteId = '';
+    }
+
+    public function getCorporativosProperty()
+    {
+        $user = auth()->user();
+        if ($user->role !== \App\Enums\Role::SUPER_ADMIN->value) {
+            return collect();
+        }
+
+        return Corporativo::where('activa', true)->orderBy('nombre')->get();
+    }
+
+    public function getSucursalesProperty()
+    {
+        $user = auth()->user();
+
+        // admin_sucursal: no necesita selector, su scope está fijo en HasTenantScope
+        if ($user->role === \App\Enums\Role::ADMIN_SUCURSAL->value) {
+            return collect();
+        }
+
+        // Sin empresa seleccionada para roles que la requieren
+        if (in_array($user->role, [
+            \App\Enums\Role::SUPER_ADMIN->value,
+            \App\Enums\Role::ADMIN_CORPORATIVO->value,
+        ]) && ! $this->filtroEmpresaId) {
+            return collect();
+        }
+
+        $empresaId = $this->filtroEmpresaId ?: $user->empresa_id;
+
+        return Sucursal::where('empresa_id', $empresaId)
+            ->where('activa', true)
+            ->orderBy('nombre')
+            ->get();
     }
 
     public function getLotesProperty()
@@ -129,6 +185,10 @@ class Reportes extends Component
             $query->where('empresa_id', $this->filtroEmpresaId);
         }
 
+        if ($this->filtroSucursalId) {
+            $query->where('sucursal_id', $this->filtroSucursalId);
+        }
+
         return $query->orderByDesc('fecha_inicio')->get();
     }
 
@@ -146,11 +206,19 @@ class Reportes extends Component
 
         $query->whereHas('encuesta.lote', fn ($q) => $this->scopeByRole($q));
 
+        if ($user->role === \App\Enums\Role::SUPER_ADMIN->value && $this->filtroCorporativoId) {
+            $query->whereHas('encuesta.lote.empresa', fn ($q) => $q->where('corporativo_id', $this->filtroCorporativoId));
+        }
+
         if (in_array($user->role, [
             \App\Enums\Role::SUPER_ADMIN->value,
             \App\Enums\Role::ADMIN_CORPORATIVO->value,
         ]) && $this->filtroEmpresaId) {
             $query->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId));
+        }
+
+        if ($this->filtroSucursalId) {
+            $query->whereHas('encuesta.lote', fn ($q) => $q->where('lotes.sucursal_id', $this->filtroSucursalId));
         }
 
         if ($this->filtroLoteId) {
@@ -192,11 +260,21 @@ class Reportes extends Component
 
         $query->whereHas('lote', fn ($q) => $this->scopeByRole($q));
 
+        if ($user->role === \App\Enums\Role::SUPER_ADMIN->value && $this->filtroCorporativoId) {
+            $query->whereHas('lote.empresa', fn ($q) => $q->where('corporativo_id', $this->filtroCorporativoId));
+        }
+
         if (in_array($user->role, [
             \App\Enums\Role::SUPER_ADMIN->value,
             \App\Enums\Role::ADMIN_CORPORATIVO->value,
         ]) && $this->filtroEmpresaId) {
             $query->whereHas('lote', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId));
+        }
+
+        if ($this->filtroSucursalId) {
+            $query->where(function ($q) {
+                $q->whereHas('lote', fn ($q2) => $q2->where('sucursal_id', $this->filtroSucursalId));
+            });
         }
 
         if ($this->filtroLoteId) {
@@ -356,6 +434,9 @@ class Reportes extends Component
                 \App\Enums\Role::ADMIN_CORPORATIVO->value,
             ]) && $this->filtroEmpresaId, fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $this->filtroEmpresaId)))
             ->when($this->filtroLoteId, fn ($q) => $q->where('lote_id', $this->filtroLoteId))
+            ->when($this->filtroCorporativoId && $user->role === \App\Enums\Role::SUPER_ADMIN->value,
+                fn ($q) => $q->whereHas('lote.empresa', fn ($q2) => $q2->where('corporativo_id', $this->filtroCorporativoId)))
+            ->when($this->filtroSucursalId, fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('sucursal_id', $this->filtroSucursalId)))
             ->count();
 
         $scoringService = app(ClimaScoringService::class);
@@ -370,8 +451,16 @@ class Reportes extends Component
                 \App\Enums\Role::SUPER_ADMIN->value,
                 \App\Enums\Role::ADMIN_CORPORATIVO->value,
             ])
-                ? ($user->role === \App\Enums\Role::SUPER_ADMIN->value ? Empresa::orderBy('nombre')->get() : Empresa::where('corporativo_id', $user->corporativo_id)->orderBy('nombre')->get())
+                ? (match ($user->role) {
+                    \App\Enums\Role::SUPER_ADMIN->value => $this->filtroCorporativoId
+                        ? Empresa::where('corporativo_id', $this->filtroCorporativoId)->orderBy('nombre')->get()
+                        : Empresa::orderBy('nombre')->get(),
+                    \App\Enums\Role::ADMIN_CORPORATIVO->value => Empresa::where('corporativo_id', $user->corporativo_id)->orderBy('nombre')->get(),
+                    default => collect(),
+                })
                 : collect(),
+            'corporativos' => $this->corporativos,
+            'sucursales' => $this->sucursales,
             'lotes' => $this->lotes,
             'dimensionActiva' => $this->dimensionActivaId ? Dimension::find($this->dimensionActivaId) : null,
             'subdimensionActiva' => $this->subdimensionActivaId ? Subdimension::find($this->subdimensionActivaId) : null,
