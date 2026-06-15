@@ -350,3 +350,124 @@ it('la exportacion a PDF aplica el filtro por lote y formatea correctamente su e
 
     $response->assertOk();
 });
+
+it('filtroSucursalId filtra respuestas a la sucursal seleccionada', function () {
+    $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
+
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    $sucursal = \App\Models\Sucursal::factory()->create(['empresa_id' => $empresa->id]);
+
+    $loteGeneral = \App\Models\Lote::factory()->for($empresa)->create(['sucursal_id' => null]);
+    $loteSucursal = \App\Models\Lote::factory()->for($empresa)->create(['sucursal_id' => $sucursal->id]);
+
+    $encuestaGeneral = Encuesta::factory()->completada()->create(['lote_id' => $loteGeneral->id]);
+    $encuestaSucursal = Encuesta::factory()->completada()->create(['lote_id' => $loteSucursal->id]);
+
+    $dimension = Dimension::first();
+    $opcionVerdadero = OpcionRespuesta::where('valor_numerico', 3)->first();
+    $opcionFalso = OpcionRespuesta::where('valor_numerico', 1)->first();
+    $preguntas = Pregunta::whereHas('subdimension', fn ($q) => $q->where('dimension_id', $dimension->id))->get();
+
+    foreach ($preguntas as $pregunta) {
+        Respuesta::create([
+            'encuesta_id' => $encuestaSucursal->id,
+            'pregunta_id' => $pregunta->id,
+            'opcion_respuesta_id' => $opcionVerdadero->id,
+        ]);
+        Respuesta::create([
+            'encuesta_id' => $encuestaGeneral->id,
+            'pregunta_id' => $pregunta->id,
+            'opcion_respuesta_id' => $opcionFalso->id,
+        ]);
+    }
+
+    $component = Livewire::actingAs($admin)->test(Reportes::class);
+    $datosNivel1 = $component->instance()->getDatosNivel1();
+    $puntajeMezclado = collect($datosNivel1)->firstWhere('id', $dimension->id)['puntaje'];
+    expect($puntajeMezclado)->toBe(50.0);
+
+    $component->set('filtroSucursalId', (string) $sucursal->id);
+    $datosNivel1 = $component->instance()->getDatosNivel1();
+    $puntajeSucursal = collect($datosNivel1)->firstWhere('id', $dimension->id)['puntaje'];
+    expect($puntajeSucursal)->toBe(100.0);
+});
+
+it('filtroCorporativoId filtra respuestas al corporativo seleccionado', function () {
+    $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
+
+    $superAdmin = User::factory()->superAdmin()->create();
+
+    $corp1 = \App\Models\Corporativo::factory()->create();
+    $corp2 = \App\Models\Corporativo::factory()->create();
+
+    $empresa1 = Empresa::factory()->create(['corporativo_id' => $corp1->id]);
+    $empresa2 = Empresa::factory()->create(['corporativo_id' => $corp2->id]);
+
+    $lote1 = \App\Models\Lote::factory()->for($empresa1)->create();
+    $lote2 = \App\Models\Lote::factory()->for($empresa2)->create();
+
+    $encuesta1 = Encuesta::factory()->completada()->create(['lote_id' => $lote1->id]);
+    $encuesta2 = Encuesta::factory()->completada()->create(['lote_id' => $lote2->id]);
+
+    $dimension = Dimension::first();
+    $opcionVerdadero = OpcionRespuesta::where('valor_numerico', 3)->first();
+    $opcionFalso = OpcionRespuesta::where('valor_numerico', 1)->first();
+    $preguntas = Pregunta::whereHas('subdimension', fn ($q) => $q->where('dimension_id', $dimension->id))->get();
+
+    foreach ($preguntas as $pregunta) {
+        Respuesta::create([
+            'encuesta_id' => $encuesta1->id,
+            'pregunta_id' => $pregunta->id,
+            'opcion_respuesta_id' => $opcionVerdadero->id,
+        ]);
+        Respuesta::create([
+            'encuesta_id' => $encuesta2->id,
+            'pregunta_id' => $pregunta->id,
+            'opcion_respuesta_id' => $opcionFalso->id,
+        ]);
+    }
+
+    $component = Livewire::actingAs($superAdmin)->test(Reportes::class);
+    $datosNivel1 = $component->instance()->getDatosNivel1();
+    $puntajeMezclado = collect($datosNivel1)->firstWhere('id', $dimension->id)['puntaje'];
+    expect($puntajeMezclado)->toBe(50.0);
+
+    $component->set('filtroCorporativoId', (string) $corp1->id);
+    $datosNivel1 = $component->instance()->getDatosNivel1();
+    $puntajeCorp1 = collect($datosNivel1)->firstWhere('id', $dimension->id)['puntaje'];
+    expect($puntajeCorp1)->toBe(100.0);
+
+    $component->set('filtroCorporativoId', (string) $corp2->id);
+    $datosNivel1 = $component->instance()->getDatosNivel1();
+    $puntajeCorp2 = collect($datosNivel1)->firstWhere('id', $dimension->id)['puntaje'];
+    expect($puntajeCorp2)->toBe(0.0);
+});
+
+it('limpiarFiltros resetea filtroCorporativoId y filtroSucursalId', function () {
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    Livewire::actingAs($admin)
+        ->test(Reportes::class)
+        ->set('filtroCorporativoId', '12')
+        ->set('filtroSucursalId', '34')
+        ->call('limpiarFiltros')
+        ->assertSet('filtroCorporativoId', '')
+        ->assertSet('filtroSucursalId', '');
+});
+
+it('updatedFiltroCorporativoId limpia empresa sucursal y lote', function () {
+    $superAdmin = User::factory()->superAdmin()->create();
+
+    Livewire::actingAs($superAdmin)
+        ->test(Reportes::class)
+        ->set('filtroEmpresaId', '1')
+        ->set('filtroSucursalId', '2')
+        ->set('filtroLoteId', '3')
+        ->set('filtroCorporativoId', '4')
+        ->assertSet('filtroEmpresaId', '')
+        ->assertSet('filtroSucursalId', '')
+        ->assertSet('filtroLoteId', '');
+});

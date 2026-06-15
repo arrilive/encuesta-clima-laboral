@@ -69,6 +69,14 @@ class PdfController extends Controller
             $query->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $request->empresa_id));
         }
 
+        if ($user->role === \App\Enums\Role::SUPER_ADMIN->value && $request->filled('corporativo_id')) {
+            $query->whereHas('encuesta.lote.empresa', fn ($q) => $q->where('corporativo_id', $request->corporativo_id));
+        }
+
+        if ($request->filled('sucursal_id')) {
+            $query->whereHas('encuesta.lote', fn ($q) => $q->where('lotes.sucursal_id', $request->sucursal_id));
+        }
+
         if ($request->filled('lote_id')) {
             $query->whereHas('encuesta.lote', fn ($q) => $q->where('lotes.id', $request->lote_id));
         }
@@ -95,6 +103,8 @@ class PdfController extends Controller
     {
         $filtros = [];
         $map = [
+            'corporativo_id' => ['label' => 'Corporativo', 'model' => \App\Models\Corporativo::class, 'attr' => 'nombre'],
+            'sucursal_id' => ['label' => 'Sucursal', 'model' => \App\Models\Sucursal::class, 'attr' => 'nombre'],
             'empresa_id' => ['label' => 'Empresa', 'model' => \App\Models\Empresa::class, 'attr' => 'nombre'],
             'lote_id' => ['label' => 'Lote', 'model' => \App\Models\Lote::class, 'attr' => 'nombre'],
             'edad_id' => ['label' => 'Edad', 'model' => \App\Models\Edad::class, 'attr' => 'opcion'],
@@ -162,6 +172,10 @@ class PdfController extends Controller
                 \App\Enums\Role::SUPER_ADMIN->value,
                 \App\Enums\Role::ADMIN_CORPORATIVO->value,
             ]) && $request->filled('empresa_id'), fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $request->empresa_id)))
+            ->when($user->role === \App\Enums\Role::SUPER_ADMIN->value && $request->filled('corporativo_id'),
+                fn ($q) => $q->whereHas('lote.empresa', fn ($q2) => $q2->where('corporativo_id', $request->corporativo_id)))
+            ->when($request->filled('sucursal_id'),
+                fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('sucursal_id', $request->sucursal_id)))
             ->when($request->filled('lote_id'), fn ($q) => $q->where('lote_id', $request->lote_id))
             ->when($request->filled('edad_id'), fn ($q) => $q->whereHas('datoDemografico', fn ($q2) => $q2->where('edad_id', $request->edad_id)))
             ->when($request->filled('sexo_id'), fn ($q) => $q->whereHas('datoDemografico', fn ($q2) => $q2->where('sexo_id', $request->sexo_id)))

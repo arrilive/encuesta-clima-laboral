@@ -114,8 +114,22 @@
                 </select>
             </div>
 
-            {{-- Empresa (Solo super_admin) --}}
-            @if (auth()->user()->role === 'super_admin')
+            {{-- Corporativo (Solo super_admin) --}}
+            @if(auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value)
+            <div class="space-y-1.5">
+                <label class="text-slate-500 text-sm font-medium">Corporativo</label>
+                <select wire:model.live="filtroCorporativoId"
+                    class="w-full border border-slate-300 rounded-xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+                    <option value="">Todos</option>
+                    @foreach($corporativos as $corp)
+                        <option value="{{ $corp->id }}">{{ $corp->nombre }}</option>
+                    @endforeach
+                </select>
+            </div>
+            @endif
+
+            {{-- Empresa (super_admin y admin_corporativo) --}}
+            @if(in_array(auth()->user()->role, [\App\Enums\Role::SUPER_ADMIN->value, \App\Enums\Role::ADMIN_CORPORATIVO->value]))
                 <div class="space-y-1.5">
                     <label class="text-slate-500 text-sm font-medium">Empresa</label>
                     <select wire:model.live="filtroEmpresaId"
@@ -126,6 +140,27 @@
                         @endforeach
                     </select>
                 </div>
+            @endif
+
+            {{-- Sucursal (super_admin, admin_corporativo y admin_empresa) --}}
+            @if(auth()->user()->role !== \App\Enums\Role::ADMIN_SUCURSAL->value)
+            @php
+                $sucursalDeshabilitada = in_array(auth()->user()->role, [
+                    \App\Enums\Role::SUPER_ADMIN->value,
+                    \App\Enums\Role::ADMIN_CORPORATIVO->value,
+                ]) && !$filtroEmpresaId;
+            @endphp
+            <div class="space-y-1.5">
+                <label class="text-slate-500 text-sm font-medium">Sucursal</label>
+                <select wire:model.live="filtroSucursalId"
+                    @if($sucursalDeshabilitada) disabled @endif
+                    class="w-full border border-slate-300 rounded-xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 {{ $sucursalDeshabilitada ? 'opacity-50 cursor-not-allowed bg-slate-50' : '' }}">
+                    <option value="">Todas</option>
+                    @foreach($sucursales as $suc)
+                        <option value="{{ $suc->id }}">{{ $suc->nombre }}</option>
+                    @endforeach
+                </select>
+            </div>
             @endif
 
             {{-- Lote / Período --}}
@@ -755,6 +790,8 @@
 
                 // Agregar filtros activos
                 const filtros = {
+                    corporativo_id: $wire.filtroCorporativoId,
+                    sucursal_id: $wire.filtroSucursalId,
                     empresa_id: $wire.filtroEmpresaId,
                     lote_id: $wire.filtroLoteId,
                     sexo_id: $wire.filtroSexoId,
