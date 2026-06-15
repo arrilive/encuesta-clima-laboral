@@ -202,13 +202,16 @@
                     @if($rol === 'admin_corporativo')
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 mb-1.5">Corporativo Asociado <span class="text-red-400">*</span></label>
-                            <select wire:model="corporativoId"
-                                    class="w-full px-4 py-2.5 border border-slate-300 bg-white rounded-xl text-sm text-slate-900 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200">
+                            <x-admin.combobox-entidad
+                                wire-model="corporativoId"
+                                placeholder="Buscar corporativo..."
+                                :has-error="$errors->has('corporativoId')"
+                                :disabled="false">
                                 <option value="">Selecciona un corporativo</option>
                                 @foreach($corporativos as $corp)
                                     <option value="{{ $corp->id }}">{{ $corp->nombre }}</option>
                                 @endforeach
-                            </select>
+                            </x-admin.combobox-entidad>
                             @error('corporativoId')
                                 <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">{{ $message }}</p>
                             @enderror
@@ -216,13 +219,16 @@
                     @elseif($rol === 'admin_empresa')
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 mb-1.5">Empresa Asociada <span class="text-red-400">*</span></label>
-                            <select wire:model="empresaId"
-                                    class="w-full px-4 py-2.5 border border-slate-300 bg-white rounded-xl text-sm text-slate-900 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200">
+                            <x-admin.combobox-entidad
+                                wire-model="empresaId"
+                                placeholder="Buscar empresa..."
+                                :has-error="$errors->has('empresaId')"
+                                :disabled="false">
                                 <option value="">Selecciona una empresa</option>
                                 @foreach($empresas as $emp)
                                     <option value="{{ $emp->id }}">{{ $emp->nombre }}</option>
                                 @endforeach
-                            </select>
+                            </x-admin.combobox-entidad>
                             @error('empresaId')
                                 <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">{{ $message }}</p>
                             @enderror
@@ -230,13 +236,16 @@
                     @elseif($rol === 'admin_sucursal')
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 mb-1.5">Sucursal Asociada <span class="text-red-400">*</span></label>
-                            <select wire:model="sucursalId"
-                                    class="w-full px-4 py-2.5 border border-slate-300 bg-white rounded-xl text-sm text-slate-900 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200">
+                            <x-admin.combobox-entidad
+                                wire-model="sucursalId"
+                                placeholder="Buscar sucursal..."
+                                :has-error="$errors->has('sucursalId')"
+                                :disabled="false">
                                 <option value="">Selecciona una sucursal</option>
                                 @foreach($sucursales as $suc)
                                     <option value="{{ $suc->id }}">{{ $suc->nombre }} ({{ $suc->empresa->nombre }})</option>
                                 @endforeach
-                            </select>
+                            </x-admin.combobox-entidad>
                             @error('sucursalId')
                                 <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">{{ $message }}</p>
                             @enderror
@@ -342,13 +351,16 @@
                     @if($rol === 'admin_corporativo')
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 mb-1.5">Corporativo Asociado <span class="text-red-400">*</span></label>
-                            <select wire:model="corporativoId"
-                                    class="w-full px-4 py-2.5 border border-slate-300 bg-white rounded-xl text-sm text-slate-900 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200">
+                            <x-admin.combobox-entidad
+                                wire-model="corporativoId"
+                                placeholder="Buscar corporativo..."
+                                :has-error="$errors->has('corporativoId')"
+                                :disabled="false">
                                 <option value="">Selecciona un corporativo</option>
                                 @foreach($corporativos as $corp)
                                     <option value="{{ $corp->id }}">{{ $corp->nombre }}</option>
                                 @endforeach
-                            </select>
+                            </x-admin.combobox-entidad>
                             @error('corporativoId')
                                 <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">{{ $message }}</p>
                             @enderror
@@ -356,13 +368,16 @@
                     @elseif($rol === 'admin_empresa')
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 mb-1.5">Empresa Asociada <span class="text-red-400">*</span></label>
-                            <select wire:model="empresaId"
-                                    class="w-full px-4 py-2.5 border border-slate-300 bg-white rounded-xl text-sm text-slate-900 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200">
+                            <x-admin.combobox-entidad
+                                wire-model="empresaId"
+                                placeholder="Buscar empresa..."
+                                :has-error="$errors->has('empresaId')"
+                                :disabled="false">
                                 <option value="">Selecciona una empresa</option>
                                 @foreach($empresas as $emp)
                                     <option value="{{ $emp->id }}">{{ $emp->nombre }}</option>
                                 @endforeach
-                            </select>
+                            </x-admin.combobox-entidad>
                             @error('empresaId')
                                 <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">{{ $message }}</p>
                             @enderror
@@ -370,13 +385,16 @@
                     @elseif($rol === 'admin_sucursal')
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 mb-1.5">Sucursal Asociada <span class="text-red-400">*</span></label>
-                            <select wire:model="sucursalId"
-                                    class="w-full px-4 py-2.5 border border-slate-300 bg-white rounded-xl text-sm text-slate-900 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200">
+                            <x-admin.combobox-entidad
+                                wire-model="sucursalId"
+                                placeholder="Buscar sucursal..."
+                                :has-error="$errors->has('sucursalId')"
+                                :disabled="false">
                                 <option value="">Selecciona una sucursal</option>
                                 @foreach($sucursales as $suc)
                                     <option value="{{ $suc->id }}">{{ $suc->nombre }} ({{ $suc->empresa->nombre }})</option>
                                 @endforeach
-                            </select>
+                            </x-admin.combobox-entidad>
                             @error('sucursalId')
                                 <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">{{ $message }}</p>
                             @enderror
@@ -428,7 +446,7 @@
                  class="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden ring-1 ring-slate-900/5">
 
                 <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
-                    <h3 class="text-base font-semibold text-slate-900 text-red-600">Eliminar administrador</h3>
+                    <h3 class="text-base font-semibold text-slate-900">Eliminar administrador</h3>
                     <button @click="abierto = false" class="text-slate-400 hover:text-slate-500 transition-colors">
                         <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />

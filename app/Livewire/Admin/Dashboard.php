@@ -177,7 +177,7 @@ class Dashboard extends Component
         ]);
     }
 
-    private function calcularKpis($base): array
+    private function calcularKpis(\Illuminate\Database\Eloquent\Builder $base): array
     {
         $totalTokens = (clone $base)->count();
         $completadas = (clone $base)->where('estado', 'completado')->count();
@@ -200,7 +200,7 @@ class Dashboard extends Component
         ];
     }
 
-    private function calcularClima(ClimaScoringService $scoring, $user): array
+    private function calcularClima(ClimaScoringService $scoring, \App\Models\User $user): array
     {
         $respuestasBase = Respuesta::query()
             ->whereHas('encuesta', fn ($q) => $q
