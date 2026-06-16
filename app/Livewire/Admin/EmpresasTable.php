@@ -288,10 +288,23 @@ class EmpresasTable extends Component
     public function render()
     {
         $empresas = Empresa::query()
+            ->select('empresas.*')
             ->when($this->buscar, fn ($q) => $q->where('nombre', 'like', "%{$this->buscar}%"))
-            ->withCount([
-                'encuestas as completadas' => fn ($q) => $q->where('estado', 'completado'),
-                'encuestas as disponibles' => fn ($q) => $q->where('estado', 'disponible'),
+            ->addSelect([
+                'completadas' => \App\Models\Encuesta::selectRaw('count(*)')
+                    ->whereIn('lote_id', function ($query) {
+                        $query->select('id')
+                            ->from('lotes')
+                            ->whereColumn('lotes.empresa_id', 'empresas.id');
+                    })
+                    ->where('estado', 'completado'),
+                'disponibles' => \App\Models\Encuesta::selectRaw('count(*)')
+                    ->whereIn('lote_id', function ($query) {
+                        $query->select('id')
+                            ->from('lotes')
+                            ->whereColumn('lotes.empresa_id', 'empresas.id');
+                    })
+                    ->where('estado', 'disponible'),
             ])
             ->with(['users', 'corporativo'])
             ->orderBy('nombre')
