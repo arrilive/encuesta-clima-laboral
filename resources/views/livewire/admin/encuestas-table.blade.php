@@ -7,11 +7,14 @@
         <div class="flex items-center justify-between mb-4">
             <span class="text-slate-900 font-semibold">Filtros</span>
             <a href="{{ route('admin.encuestas.exportar', array_filter([
-                'estado'  => $filtroEstado,
-                'buscar'  => $buscar,
-                'empresa' => $filtroEmpresa,
-                'desde'   => $filtroDesde,
-                'hasta'   => $filtroHasta,
+                'estado'      => $filtroEstado,
+                'buscar'      => $buscar,
+                'corporativo' => $filtroCorporativo,
+                'empresa'     => $filtroEmpresa,
+                'sucursal'    => $filtroSucursal,
+                'lote'        => $filtroLote,
+                'desde'       => $filtroDesde,
+                'hasta'       => $filtroHasta,
             ])) }}"
                x-data="{ exporting: false }"
                x-on:click="exporting = true; setTimeout(() => exporting = false, 2500)"
@@ -38,11 +41,7 @@
         </div>
 
         {{-- Grid de filtros --}}
-        @if(auth()->user()->role === 'super_admin')
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        @else
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        @endif
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
             {{-- Buscar por token --}}
             <div>
@@ -73,8 +72,25 @@
                 </select>
             </div>
 
-            {{-- Filtro empresa (solo super_admin) --}}
-            @if(auth()->user()->role === 'super_admin')
+            {{-- Corporativo (Solo super_admin) --}}
+            @if(auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value)
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Corporativo</label>
+                <x-admin.combobox-entidad
+                    wire-model="filtroCorporativo"
+                    placeholder="Buscar corporativo..."
+                    :has-error="$errors->has('filtroCorporativo')"
+                    :disabled="false">
+                    <option value="">Todos</option>
+                    @foreach($corporativos as $corp)
+                        <option value="{{ $corp->id }}">{{ $corp->nombre }}</option>
+                    @endforeach
+                </x-admin.combobox-entidad>
+            </div>
+            @endif
+
+            {{-- Empresa (super_admin, admin_corporativo) --}}
+            @if(in_array(auth()->user()->role, [\App\Enums\Role::SUPER_ADMIN->value, \App\Enums\Role::ADMIN_CORPORATIVO->value]))
             <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1.5">Empresa</label>
                 <x-admin.combobox-entidad
@@ -83,12 +99,58 @@
                     :has-error="$errors->has('filtroEmpresa')"
                     :disabled="false">
                     <option value="">Todas</option>
-                    @foreach(\App\Models\Empresa::orderBy('nombre')->get() as $empresa)
+                    @foreach($empresas as $empresa)
                         <option value="{{ $empresa->id }}">{{ $empresa->nombre }}</option>
                     @endforeach
                 </x-admin.combobox-entidad>
             </div>
             @endif
+
+            {{-- Sucursal (super_admin, admin_corporativo, admin_empresa) --}}
+            @if(auth()->user()->role !== \App\Enums\Role::ADMIN_SUCURSAL->value)
+            @php
+                $sucursalDeshabilitada = in_array(auth()->user()->role, [
+                    \App\Enums\Role::SUPER_ADMIN->value,
+                    \App\Enums\Role::ADMIN_CORPORATIVO->value,
+                ]) && !$filtroEmpresa;
+            @endphp
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Sucursal</label>
+                <x-admin.combobox-entidad
+                    wire-model="filtroSucursal"
+                    placeholder="Buscar sucursal..."
+                    :has-error="$errors->has('filtroSucursal')"
+                    :disabled="$sucursalDeshabilitada">
+                    <option value="">Todas</option>
+                    @foreach($sucursales as $suc)
+                        <option value="{{ $suc->id }}">{{ $suc->nombre }}</option>
+                    @endforeach
+                </x-admin.combobox-entidad>
+            </div>
+            @endif
+
+            {{-- Lote (Todos) --}}
+            @php
+                $loteDeshabilitado = in_array(auth()->user()->role, [
+                    \App\Enums\Role::SUPER_ADMIN->value,
+                    \App\Enums\Role::ADMIN_CORPORATIVO->value,
+                ]) && !$filtroEmpresa;
+            @endphp
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Lote / Período</label>
+                <x-admin.combobox-entidad
+                    wire-model="filtroLote"
+                    placeholder="Buscar período..."
+                    :has-error="$errors->has('filtroLote')"
+                    :disabled="$loteDeshabilitado">
+                    <option value="">Todos</option>
+                    @foreach($lotes as $lote)
+                        <option value="{{ $lote->id }}">
+                            {{ $lote->nombre ?? 'Lote #'.$lote->id }} ({{ $lote->sucursal ? $lote->sucursal->nombre : 'General' }})
+                        </option>
+                    @endforeach
+                </x-admin.combobox-entidad>
+            </div>
 
             {{-- Fecha desde --}}
             <div>
@@ -124,7 +186,7 @@
                 <thead>
                     <tr class="border-b border-slate-200 bg-slate-50">
                         <th class="text-left px-6 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Token</th>
-                        @if(auth()->user()->role === 'super_admin')
+                        @if(in_array(auth()->user()->role, [\App\Enums\Role::SUPER_ADMIN->value, \App\Enums\Role::ADMIN_CORPORATIVO->value]))
                             <th class="text-left px-6 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Empresa</th>
                         @endif
                         <th class="text-left px-6 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Estado</th>
@@ -138,7 +200,7 @@
                             <td class="px-6 py-3 font-mono text-xs text-slate-600">
                                 {{ substr($encuesta->token, 0, 16) }}…
                             </td>
-                            @if(auth()->user()->role === 'super_admin')
+                            @if(in_array(auth()->user()->role, [\App\Enums\Role::SUPER_ADMIN->value, \App\Enums\Role::ADMIN_CORPORATIVO->value]))
                                 <td class="px-6 py-3 text-slate-700">
                                     {{ $encuesta->lote?->empresa?->nombre ?? 'Sin Lote' }}
                                 </td>
@@ -166,7 +228,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-12 text-center text-slate-400 text-sm">
+                            <td colspan="{{ in_array(auth()->user()->role, [\App\Enums\Role::SUPER_ADMIN->value, \App\Enums\Role::ADMIN_CORPORATIVO->value]) ? 5 : 4 }}" class="px-6 py-12 text-center text-slate-400 text-sm">
                                 No se encontraron encuestas con esos filtros.
                             </td>
                         </tr>
