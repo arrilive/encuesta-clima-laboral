@@ -447,6 +447,10 @@ class Reportes extends Component
             'completadasFiltradas' => $completadasFiltradas,
             'totalTokens' => $totalTokens,
             'sinDatos' => $completadasFiltradas === 0,
+            'bajoUmbral' => $completadasFiltradas > 0
+                            && $completadasFiltradas < ClimaScoringService::UMBRAL_REPORTES,
+            'totalRespondientes' => $completadasFiltradas,
+            'umbralReportes' => ClimaScoringService::UMBRAL_REPORTES,
             'empresas' => in_array($user->role, [
                 \App\Enums\Role::SUPER_ADMIN->value,
                 \App\Enums\Role::ADMIN_CORPORATIVO->value,

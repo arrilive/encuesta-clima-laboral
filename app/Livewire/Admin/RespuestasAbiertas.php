@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\Models\Encuesta;
 use App\Models\PreguntaAbierta;
 use App\Models\RespuestaAbierta;
+use App\Services\ClimaScoringService;
 use Livewire\Attributes\Reactive;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -107,11 +108,18 @@ class RespuestasAbiertas extends Component
 
     public function render()
     {
+        $totalRespondientes = $this->getEncuestasBaseQuery()->count();
+        $bajoUmbral = $totalRespondientes > 0
+                      && $totalRespondientes < ClimaScoringService::UMBRAL_RESPUESTAS_ABIERTAS;
+
         return view('livewire.admin.respuestas-abiertas', [
             'preguntasAbiertas' => PreguntaAbierta::orderBy('orden')->get(),
-            'respuestasAbiertas' => $this->mostrarRespuestasAbiertas
+            'respuestasAbiertas' => ($this->mostrarRespuestasAbiertas && ! $bajoUmbral)
                 ? $this->getRespuestasAbiertasPaginadas()
                 : null,
+            'bajoUmbral' => $bajoUmbral,
+            'totalRespondientes' => $totalRespondientes,
+            'umbralRespuestasAbiertas' => ClimaScoringService::UMBRAL_RESPUESTAS_ABIERTAS,
         ]);
     }
 }
