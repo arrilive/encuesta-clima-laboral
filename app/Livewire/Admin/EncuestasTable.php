@@ -142,6 +142,19 @@ class EncuestasTable extends Component
         return 1;
     }
 
+    public function limpiarFiltros(): void
+    {
+        $this->buscar = '';
+        $this->filtroCorporativo = '';
+        $this->filtroEmpresa = '';
+        $this->filtroSucursal = '';
+        $this->filtroLote = '';
+        $this->filtroEstado = '';
+        $this->filtroDesde = '';
+        $this->filtroHasta = '';
+        $this->resetPage();
+    }
+
     public function render()
     {
         $user = auth()->user();
