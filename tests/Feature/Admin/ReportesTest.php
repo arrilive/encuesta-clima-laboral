@@ -471,3 +471,50 @@ it('updatedFiltroCorporativoId limpia empresa sucursal y lote', function () {
         ->assertSet('filtroSucursalId', '')
         ->assertSet('filtroLoteId', '');
 });
+
+it('cuando hay menos de 5 respuestas completadas bajoUmbral es true y sinDatos es false', function () {
+    $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
+
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+    $lote = \App\Models\Lote::factory()->for($empresa)->create();
+
+    for ($i = 0; $i < 3; $i++) {
+        $encuesta = Encuesta::factory()->completada()->create(['lote_id' => $lote->id]);
+        Respuesta::create([
+            'encuesta_id' => $encuesta->id,
+            'pregunta_id' => Pregunta::first()->id,
+            'opcion_respuesta_id' => OpcionRespuesta::first()->id,
+        ]);
+    }
+
+    Livewire::actingAs($admin)
+        ->test(Reportes::class)
+        ->assertViewHas('bajoUmbral', true)
+        ->assertViewHas('sinDatos', false)
+        ->assertSee('Resultados protegidos')
+        ->assertSee('Se necesitan al menos 5 respuestas');
+});
+
+it('cuando hay exactamente 5 respuestas completadas bajoUmbral es false', function () {
+    $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
+
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+    $lote = \App\Models\Lote::factory()->for($empresa)->create();
+
+    for ($i = 0; $i < 5; $i++) {
+        $encuesta = Encuesta::factory()->completada()->create(['lote_id' => $lote->id]);
+        Respuesta::create([
+            'encuesta_id' => $encuesta->id,
+            'pregunta_id' => Pregunta::first()->id,
+            'opcion_respuesta_id' => OpcionRespuesta::first()->id,
+        ]);
+    }
+
+    Livewire::actingAs($admin)
+        ->test(Reportes::class)
+        ->assertViewHas('bajoUmbral', false)
+        ->assertViewHas('sinDatos', false)
+        ->assertDontSee('Resultados protegidos');
+});

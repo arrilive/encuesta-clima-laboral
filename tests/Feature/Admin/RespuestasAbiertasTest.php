@@ -98,3 +98,26 @@ test('admin_empresa solo ve respuestas de su empresa', function () {
         ->call('toggleRespuestasAbiertas')
         ->assertDontSee('Respuesta secreta de otra empresa');
 });
+
+test('cuando hay menos de 10 respuestas completadas bajoUmbral es true en la vista de respuestas abiertas', function () {
+    seedPreguntasAbiertas();
+    $empresa = \App\Models\Empresa::factory()->create();
+    $user = User::factory()->adminEmpresa($empresa->id)->create();
+    $lote = \App\Models\Lote::factory()->for($empresa)->create();
+
+    for ($i = 0; $i < 3; $i++) {
+        $encuesta = Encuesta::factory()->completada()->create(['lote_id' => $lote->id]);
+        RespuestaAbierta::create([
+            'encuesta_id' => $encuesta->id,
+            'pregunta_abierta_id' => PreguntaAbierta::first()->id,
+            'texto' => 'Comentario '.$i,
+        ]);
+    }
+
+    Livewire::actingAs($user)
+        ->test(RespuestasAbiertas::class)
+        ->assertViewHas('bajoUmbral', true)
+        ->call('toggleRespuestasAbiertas')
+        ->assertSee('Comentarios protegidos')
+        ->assertSee('Se necesitan al menos 10 respuestas');
+});

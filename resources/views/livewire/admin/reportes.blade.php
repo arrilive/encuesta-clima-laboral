@@ -228,7 +228,27 @@
 
     {{-- SECCIÓN 3 — Contenido nivel 1 --}}
     @if ($nivel === 1)
-        @if ($sinDatos || empty($datosNivel1))
+        @if($bajoUmbral)
+            <div class="flex flex-col items-center justify-center py-16 px-6 text-center">
+                <div class="flex items-center justify-center w-14 h-14 bg-slate-100 rounded-2xl mb-5">
+                    <svg class="w-7 h-7 text-slate-400" xmlns="http://www.w3.org/2000/svg"
+                         fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25
+                                 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25
+                                 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                    </svg>
+                </div>
+                <p class="text-sm font-semibold text-slate-700 mb-1">Resultados protegidos</p>
+                <p class="text-sm text-slate-400 max-w-sm">
+                    Se necesitan al menos {{ $umbralReportes }} respuestas para mostrar
+                    estos resultados y proteger la confidencialidad de los participantes.
+                    Este segmento tiene <span class="font-semibold text-slate-600">
+                    {{ $totalRespondientes }} {{ $totalRespondientes === 1 ? 'respuesta' : 'respuestas' }}
+                    </span> completada{{ $totalRespondientes === 1 ? '' : 's' }}.
+                </p>
+            </div>
+        @elseif ($sinDatos || empty($datosNivel1))
             <x-admin.empty-state mensaje="No hay encuestas completadas que coincidan con los filtros seleccionados." />
         @else
             <div class="space-y-6">
@@ -386,7 +406,27 @@
 
     {{-- SECCIÓN 4 — Contenido nivel 2 --}}
     @if ($nivel === 2)
-        @if ($sinDatos)
+        @if($bajoUmbral)
+            <div class="flex flex-col items-center justify-center py-16 px-6 text-center">
+                <div class="flex items-center justify-center w-14 h-14 bg-slate-100 rounded-2xl mb-5">
+                    <svg class="w-7 h-7 text-slate-400" xmlns="http://www.w3.org/2000/svg"
+                         fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25
+                                 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25
+                                 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                    </svg>
+                </div>
+                <p class="text-sm font-semibold text-slate-700 mb-1">Resultados protegidos</p>
+                <p class="text-sm text-slate-400 max-w-sm">
+                    Se necesitan al menos {{ $umbralReportes }} respuestas para mostrar
+                    estos resultados y proteger la confidencialidad de los participantes.
+                    Este segmento tiene <span class="font-semibold text-slate-600">
+                    {{ $totalRespondientes }} {{ $totalRespondientes === 1 ? 'respuesta' : 'respuestas' }}
+                    </span> completada{{ $totalRespondientes === 1 ? '' : 's' }}.
+                </p>
+            </div>
+        @elseif ($sinDatos)
             <x-admin.empty-state mensaje="No hay secciones con datos para los filtros seleccionados." />
         @else
             {{-- Grid 55/45: barras + donut --}}
@@ -491,7 +531,27 @@
 
     {{-- SECCIÓN 5 — Contenido nivel 3 --}}
     @if ($nivel === 3)
-        @if ($sinDatos)
+        @if($bajoUmbral)
+            <div class="flex flex-col items-center justify-center py-16 px-6 text-center">
+                <div class="flex items-center justify-center w-14 h-14 bg-slate-100 rounded-2xl mb-5">
+                    <svg class="w-7 h-7 text-slate-400" xmlns="http://www.w3.org/2000/svg"
+                         fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25
+                                 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25
+                                 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                    </svg>
+                </div>
+                <p class="text-sm font-semibold text-slate-700 mb-1">Resultados protegidos</p>
+                <p class="text-sm text-slate-400 max-w-sm">
+                    Se necesitan al menos {{ $umbralReportes }} respuestas para mostrar
+                    estos resultados y proteger la confidencialidad de los participantes.
+                    Este segmento tiene <span class="font-semibold text-slate-600">
+                    {{ $totalRespondientes }} {{ $totalRespondientes === 1 ? 'respuesta' : 'respuestas' }}
+                    </span> completada{{ $totalRespondientes === 1 ? '' : 's' }}.
+                </p>
+            </div>
+        @elseif ($sinDatos)
             <x-admin.empty-state mensaje="No hay respuestas para los filtros seleccionados en esta subdimensión." />
         @elseif (empty($datosNivel3))
             <x-admin.empty-state mensaje="Esta subdimensión no tiene preguntas registradas." :conBotonFiltros="false" />
