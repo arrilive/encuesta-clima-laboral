@@ -20,6 +20,8 @@ class EncuestaBloque extends Component
 
     public string $dimensionNombre = '';
 
+    public string $dimensionDescripcion = '';
+
     public int $totalDimensiones;
 
     public function mount(string $token, int $dimension): void
@@ -33,6 +35,7 @@ class EncuestaBloque extends Component
         $dimensionModelo = Dimension::where('orden', $dimension)->firstOrFail();
         $this->dimensionId = $dimensionModelo->id;
         $this->dimensionNombre = $dimensionModelo->nombre;
+        $this->dimensionDescripcion = $dimensionModelo->descripcion ?? '';
     }
 
     public array $preguntasSinRespuesta = [];
