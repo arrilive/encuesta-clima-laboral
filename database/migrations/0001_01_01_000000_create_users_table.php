@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
+            // Heredado del scaffolding de Laravel Breeze. No se utiliza en ningún flujo de la aplicación.
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
