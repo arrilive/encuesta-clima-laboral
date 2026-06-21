@@ -9,6 +9,10 @@ use Illuminate\Support\Collection;
 
 class ClimaScoringService
 {
+    public const UMBRAL_REPORTES = 5;
+
+    public const UMBRAL_RESPUESTAS_ABIERTAS = 10;
+
     /**
      * Calcula el puntaje (0–100) para cada dimensión sobre el conjunto
      * de respuestas representado por $baseQuery.

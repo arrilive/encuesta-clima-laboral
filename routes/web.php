@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\PdfController;
 use App\Http\Controllers\EncuestaController;
 use Illuminate\Support\Facades\Route;
@@ -19,9 +18,6 @@ Route::prefix('admin')
         Route::get('/dashboard', \App\Livewire\Admin\Dashboard::class)
             ->name('dashboard');
 
-        Route::get('/encuestas/exportar', [ExportController::class, 'encuestasCSV'])
-            ->name('encuestas.exportar');
-
         Route::get('/encuestas', \App\Livewire\Admin\EncuestasTable::class)
             ->name('encuestas');
 
@@ -37,6 +33,10 @@ Route::prefix('admin')
                 ->name('tokens');
             Route::get('/empresas', \App\Livewire\Admin\EmpresasTable::class)
                 ->name('empresas');
+            Route::get('/corporativos', \App\Livewire\Admin\CorporativosTable::class)
+                ->name('corporativos');
+            Route::get('/administradores', \App\Livewire\Admin\AdministradoresTable::class)
+                ->name('administradores');
         });
     });
 

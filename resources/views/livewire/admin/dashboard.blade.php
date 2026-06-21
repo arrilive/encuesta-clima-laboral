@@ -1,115 +1,220 @@
     <div class="space-y-8">
 
-        @if(auth()->user()->role === 'admin_empresa')
         {{-- ── CLIMA (protagonista) ─────────────────────────────────────────── --}}
         <div>
-            <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Clima laboral</p>
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                {{-- Promedio General — tarjeta hero --}}
-                <div class="bg-white rounded-2xl border border-slate-200 p-8">
-                    <div class="flex justify-between h-full">
-                        {{-- Izquierda: label + numero --}}
-                        <div class="flex flex-col justify-between">
-                            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Promedio general</p>
-                            <div class="mt-4">
-                                @if($clima['promedio_general'] > 0)
-                                    <p class="text-4xl font-extrabold text-slate-900 leading-none">
-                                        {{ number_format($clima['promedio_general'], 1) }}
-                                    </p>
-                                @else
-                                    <p class="text-3xl font-bold text-slate-300 leading-none">Sin datos</p>
-                                @endif
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest">
+                    @if(auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value)
+                        Resumen general
+                    @else
+                        Clima laboral
+                    @endif
+                </p>
+                
+                {{-- Contenedor de filtros --}}
+                <div class="flex flex-wrap items-center gap-3">
+                    {{-- Corporativo (Solo super_admin) --}}
+                    @if(auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value)
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-sm font-medium text-slate-400">Corporativo:</span>
+                            <div class="w-48 sm:w-56">
+                                <x-admin.combobox-entidad
+                                    wire-model="filtroCorporativoId"
+                                    placeholder="Buscar corporativo..."
+                                    :has-error="$errors->has('filtroCorporativoId')"
+                                    :disabled="false">
+                                    <option value="">Todos</option>
+                                    @foreach($corporativos as $corp)
+                                        <option value="{{ $corp->id }}">{{ $corp->nombre }}</option>
+                                    @endforeach
+                                </x-admin.combobox-entidad>
                             </div>
                         </div>
+                    @endif
 
-                        {{-- Derecha: badge + accion --}}
-                        <div class="flex flex-col items-end justify-between text-right">
-                            @if($clima['promedio_general'] > 0)
-                                @php
-                                    $p = $clima['promedio_general'];
-                                    [$badgeColor, $badgeText] = match(true) {
-                                        $p >= 80 => ['bg-emerald-100 text-emerald-700', 'Excelente'],
-                                        $p >= 51 => ['bg-blue-100 text-blue-700',       'Buen clima'],
-                                        $p >= 25 => ['bg-amber-100 text-amber-700',     'Regular'],
-                                        default  => ['bg-red-100 text-red-700',         'Deficiente'],
-                                    };
-                                @endphp
-                                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $badgeColor }}">
-                                    {{ $badgeText }}
-                                </span>
-                            @endif
+                    {{-- Empresa (super_admin y admin_corporativo) --}}
+                    @if(in_array(auth()->user()->role, [\App\Enums\Role::SUPER_ADMIN->value, \App\Enums\Role::ADMIN_CORPORATIVO->value]))
+                        @php
+                            $empresaDeshabilitada = auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value && !$filtroCorporativoId;
+                        @endphp
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-sm font-medium text-slate-400">Empresa:</span>
+                            <div class="w-48 sm:w-56">
+                                <x-admin.combobox-entidad
+                                    wire-model="filtroEmpresaId"
+                                    placeholder="Buscar empresa..."
+                                    :has-error="$errors->has('filtroEmpresaId')"
+                                    :disabled="$empresaDeshabilitada">
+                                    <option value="">Todas</option>
+                                    @foreach($empresas as $emp)
+                                        <option value="{{ $emp->id }}">{{ $emp->nombre }}</option>
+                                    @endforeach
+                                </x-admin.combobox-entidad>
+                            </div>
+                        </div>
+                    @endif
 
-                            <a href="{{ route('admin.reportes') }}"
-                               class="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors mt-auto">
-                                Ver análisis completo
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <polyline points="9 18 15 12 9 6"/>
-                                </svg>
-                            </a>
+                    {{-- Sucursal (super_admin, admin_corporativo y admin_empresa) --}}
+                    @if(auth()->user()->role !== \App\Enums\Role::ADMIN_SUCURSAL->value)
+                        @php
+                            $sucursalDeshabilitada = in_array(auth()->user()->role, [
+                                \App\Enums\Role::SUPER_ADMIN->value,
+                                \App\Enums\Role::ADMIN_CORPORATIVO->value,
+                            ]) && !$filtroEmpresaId;
+                        @endphp
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-sm font-medium text-slate-400">Sucursal:</span>
+                            <div class="w-48 sm:w-56">
+                                <x-admin.combobox-entidad
+                                    wire-model="filtroSucursalId"
+                                    placeholder="Buscar sucursal..."
+                                    :has-error="$errors->has('filtroSucursalId')"
+                                    :disabled="$sucursalDeshabilitada">
+                                    <option value="">Todas</option>
+                                    @foreach($sucursales as $suc)
+                                        <option value="{{ $suc->id }}">{{ $suc->nombre }}</option>
+                                    @endforeach
+                                </x-admin.combobox-entidad>
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- Lote / Período --}}
+                    @if($lotes->isNotEmpty())
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-sm font-medium text-slate-400">Período:</span>
+                            <div class="w-56 sm:w-64">
+                                <x-admin.combobox-entidad
+                                    wire-model="filtroLoteId"
+                                    placeholder="Buscar período..."
+                                    :has-error="$errors->has('filtroLoteId')"
+                                    :disabled="false">
+                                    <option value="">Todos los períodos</option>
+                                    @foreach ($lotes as $lote)
+                                        @php
+                                            $nombreEmpresa = auth()->user()->role === \App\Enums\Role::ADMIN_CORPORATIVO->value 
+                                                ? '[' . $lote->empresa->nombre . '] ' 
+                                                : '';
+                                        @endphp
+                                        <option value="{{ $lote->id }}">
+                                            {{ $nombreEmpresa }}{{ $lote->nombre ?? 'Lote #'.$lote->id }} ({{ $lote->sucursal ? $lote->sucursal->nombre : 'General' }})
+                                        </option>
+                                    @endforeach
+                                </x-admin.combobox-entidad>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            @if(in_array(auth()->user()->role, [
+                \App\Enums\Role::ADMIN_EMPRESA->value,
+                \App\Enums\Role::ADMIN_CORPORATIVO->value,
+                \App\Enums\Role::ADMIN_SUCURSAL->value,
+            ]))
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {{-- Promedio General — tarjeta hero --}}
+                    <div class="bg-white rounded-2xl border border-slate-200 p-8">
+                        <div class="flex justify-between h-full">
+                            {{-- Izquierda: label + numero --}}
+                            <div class="flex flex-col justify-between">
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Promedio general</p>
+                                <div class="mt-4">
+                                    @if($clima['promedio_general'] > 0)
+                                        <p class="text-4xl font-extrabold text-slate-900 leading-none">
+                                            {{ number_format($clima['promedio_general'], 1) }}
+                                        </p>
+                                    @else
+                                        <p class="text-3xl font-bold text-slate-300 leading-none">Sin datos</p>
+                                    @endif
+                                </div>
+                            </div>
+
+                            {{-- Derecha: badge + accion --}}
+                            <div class="flex flex-col items-end justify-between text-right">
+                                @if($clima['promedio_general'] > 0)
+                                    @php
+                                        $p = $clima['promedio_general'];
+                                        $climaBadge = \App\Support\ClimaBadge::resolver($p);
+                                    @endphp
+                                    <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $climaBadge['standard'] }}">
+                                        {{ $climaBadge['label'] }}
+                                    </span>
+                                @endif
+
+                                <a href="{{ route('admin.reportes') }}"
+                                   class="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors mt-auto">
+                                    Ver análisis completo
+                                    <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <polyline points="9 18 15 12 9 6"/>
+                                    </svg>
+                                </a>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {{-- Dimensiones destacadas --}}
-                <div class="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col gap-4">
-                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Dimensiones destacadas</p>
-                    @if($clima['dimension_alta'])
-                        <div class="flex items-start justify-between">
-                            <div>
-                                <p class="text-xs text-slate-400 mb-0.5">Más alta</p>
-                                <p class="text-sm font-semibold text-slate-700">{{ $clima['dimension_alta']['nombre'] }}</p>
+                    {{-- Dimensiones destacadas --}}
+                    <div class="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col gap-4">
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Dimensiones destacadas</p>
+                        @if($clima['dimension_alta'])
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <p class="text-xs text-slate-400 mb-0.5">Más alta</p>
+                                    <p class="text-sm font-semibold text-slate-700">{{ $clima['dimension_alta']['nombre'] }}</p>
+                                </div>
+                                <span class="text-2xl font-bold text-emerald-600 tabular-nums">{{ number_format($clima['dimension_alta']['puntaje'], 1) }}</span>
                             </div>
-                            <span class="text-2xl font-bold text-emerald-600 tabular-nums">{{ number_format($clima['dimension_alta']['puntaje'], 1) }}</span>
-                        </div>
-                        <div class="border-t border-slate-100"></div>
-                    @endif
-                    @if($clima['dimension_baja'])
-                        <div class="flex items-start justify-between">
-                            <div>
-                                <p class="text-xs text-slate-400 mb-0.5">Más baja</p>
-                                <p class="text-sm font-semibold text-slate-700">{{ $clima['dimension_baja']['nombre'] }}</p>
+                            <div class="border-t border-slate-100"></div>
+                        @endif
+                        @if($clima['dimension_baja'])
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <p class="text-xs text-slate-400 mb-0.5">Más baja</p>
+                                    <p class="text-sm font-semibold text-slate-700">{{ $clima['dimension_baja']['nombre'] }}</p>
+                                </div>
+                                <span class="text-2xl font-bold text-red-500 tabular-nums">{{ number_format($clima['dimension_baja']['puntaje'], 1) }}</span>
                             </div>
-                            <span class="text-2xl font-bold text-red-500 tabular-nums">{{ number_format($clima['dimension_baja']['puntaje'], 1) }}</span>
-                        </div>
-                    @endif
-                    @if(!$clima['dimension_alta'] && !$clima['dimension_baja'])
-                        <p class="text-sm text-slate-400">Sin datos suficientes</p>
-                    @endif
-                </div>
+                        @endif
+                        @if(!$clima['dimension_alta'] && !$clima['dimension_baja'])
+                            <p class="text-sm text-slate-400">Sin datos suficientes</p>
+                        @endif
+                    </div>
 
-                {{-- Subdimensiones destacadas --}}
-                <div class="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col gap-4">
-                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Subdimensiones destacadas</p>
-                    @if($clima['subdimension_alta'])
-                        <div class="flex items-start justify-between">
-                            <div>
-                                <p class="text-xs text-slate-400 mb-0.5">Más alta</p>
-                                <p class="text-sm font-semibold text-slate-700">{{ $clima['subdimension_alta']['nombre'] }}</p>
+                    {{-- Subdimensiones destacadas --}}
+                    <div class="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col gap-4">
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Subdimensiones destacadas</p>
+                        @if($clima['subdimension_alta'])
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <p class="text-xs text-slate-400 mb-0.5">Más alta</p>
+                                    <p class="text-sm font-semibold text-slate-700">{{ $clima['subdimension_alta']['nombre'] }}</p>
+                                </div>
+                                <span class="text-2xl font-bold text-emerald-600 tabular-nums">{{ number_format($clima['subdimension_alta']['puntaje'], 1) }}</span>
                             </div>
-                            <span class="text-2xl font-bold text-emerald-600 tabular-nums">{{ number_format($clima['subdimension_alta']['puntaje'], 1) }}</span>
-                        </div>
-                        <div class="border-t border-slate-100"></div>
-                    @endif
-                    @if($clima['subdimension_baja'])
-                        <div class="flex items-start justify-between">
-                            <div>
-                                <p class="text-xs text-slate-400 mb-0.5">Más baja</p>
-                                <p class="text-sm font-semibold text-slate-700">{{ $clima['subdimension_baja']['nombre'] }}</p>
+                            <div class="border-t border-slate-100"></div>
+                        @endif
+                        @if($clima['subdimension_baja'])
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <p class="text-xs text-slate-400 mb-0.5">Más baja</p>
+                                    <p class="text-sm font-semibold text-slate-700">{{ $clima['subdimension_baja']['nombre'] }}</p>
+                                </div>
+                                <span class="text-2xl font-bold text-red-500 tabular-nums">{{ number_format($clima['subdimension_baja']['puntaje'], 1) }}</span>
                             </div>
-                            <span class="text-2xl font-bold text-red-500 tabular-nums">{{ number_format($clima['subdimension_baja']['puntaje'], 1) }}</span>
-                        </div>
-                    @endif
-                    @if(!$clima['subdimension_alta'] && !$clima['subdimension_baja'])
-                        <p class="text-sm text-slate-400">Sin datos suficientes</p>
-                    @endif
+                        @endif
+                        @if(!$clima['subdimension_alta'] && !$clima['subdimension_baja'])
+                            <p class="text-sm text-slate-400">Sin datos suficientes</p>
+                        @endif
+                    </div>
                 </div>
-
-            </div>
+            @endif
         </div>
-        @endif
 
-        @if(auth()->user()->role === 'admin_empresa')
+        @if(in_array(auth()->user()->role, [
+            \App\Enums\Role::ADMIN_EMPRESA->value,
+            \App\Enums\Role::ADMIN_CORPORATIVO->value,
+            \App\Enums\Role::ADMIN_SUCURSAL->value,
+        ]))
         {{-- ── PARTICIPACIÓN Y ALERTAS ──────────────────────────────────────── --}}
         <div>
             <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Participación</p>
@@ -255,7 +360,10 @@
         </div>
 
         {{-- ── RANKING EMPRESAS (solo super_admin) ──────────────────────────── --}}
-        @if(auth()->user()->role === 'super_admin' && $rankingEmpresas->isNotEmpty())
+        @if(in_array(auth()->user()->role, [
+            \App\Enums\Role::SUPER_ADMIN->value,
+            \App\Enums\Role::ADMIN_CORPORATIVO->value,
+        ]) && $rankingEmpresas->isNotEmpty())
             <div>
                 <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Ranking de empresas</p>
                 <div class="bg-white rounded-2xl border border-slate-200 p-6">
@@ -268,7 +376,7 @@
                                 </div>
                                 <div class="flex items-center gap-3">
                                     <div class="w-32 bg-slate-100 rounded-full h-1.5 hidden sm:block">
-                                        <div class="bg-blue-500 h-1.5 rounded-full" style="width: {{ $empresa['puntaje'] }}%"></div>
+                                        <div class="h-1.5 rounded-full" style="width: {{ $empresa['puntaje'] }}%; background-color: {{ \App\Support\ClimaBadge::resolver($empresa['puntaje'])['color_hex'] }};"></div>
                                     </div>
                                     <span class="text-sm font-bold text-slate-900 w-10 text-right tabular-nums">{{ number_format($empresa['puntaje'], 1) }}</span>
                                 </div>

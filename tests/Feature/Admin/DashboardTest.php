@@ -184,3 +184,49 @@ it('clima contiene promedio_general para admin_empresa cuando hay respuestas', f
 
     expect($clima['promedio_general'])->toBe(100.0);
 });
+
+it('filtroLoteId filtra KPIs al lote seleccionado', function () {
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    $lote1 = \App\Models\Lote::factory()->for($empresa)->create();
+    $lote2 = \App\Models\Lote::factory()->for($empresa)->create();
+
+    Encuesta::factory()->count(3)->create(['lote_id' => $lote1->id]);
+    Encuesta::factory()->count(2)->create(['lote_id' => $lote2->id]);
+
+    $this->actingAs($admin);
+
+    $component = Livewire::test(Dashboard::class);
+    expect($component->viewData('kpis')['total_tokens'])->toBe(5);
+
+    $component->set('filtroLoteId', (string) $lote1->id);
+    expect($component->viewData('kpis')['total_tokens'])->toBe(3);
+
+    $component->set('filtroLoteId', (string) $lote2->id);
+    expect($component->viewData('kpis')['total_tokens'])->toBe(2);
+});
+
+it('filtroSucursalId filtra KPIs a la sucursal seleccionada', function () {
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    $sucursal = \App\Models\Sucursal::factory()->create(['empresa_id' => $empresa->id]);
+
+    $loteGeneral = \App\Models\Lote::factory()->for($empresa)->create(['sucursal_id' => null]);
+    $loteSucursal = \App\Models\Lote::factory()->for($empresa)->create(['sucursal_id' => $sucursal->id]);
+
+    Encuesta::factory()->count(3)->create(['lote_id' => $loteGeneral->id]);
+    Encuesta::factory()->count(2)->create(['lote_id' => $loteSucursal->id]);
+
+    $this->actingAs($admin);
+
+    $component = Livewire::test(Dashboard::class);
+    expect($component->viewData('kpis')['total_tokens'])->toBe(5);
+
+    $component->set('filtroSucursalId', (string) $sucursal->id);
+    expect($component->viewData('kpis')['total_tokens'])->toBe(2);
+
+    $component->set('filtroSucursalId', '');
+    expect($component->viewData('kpis')['total_tokens'])->toBe(5);
+});

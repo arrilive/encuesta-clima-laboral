@@ -48,6 +48,6 @@ class OtpVerificacion extends Model
 
     public function agotaronIntentos(): bool
     {
-        return $this->intentos >= 3;
+        return $this->intentos >= config('encuesta.otp.max_intentos');
     }
 }

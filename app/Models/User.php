@@ -3,7 +3,6 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -42,6 +41,11 @@ class User extends Authenticatable
     /**
      * Get the attributes that should be cast.
      *
+     * Nota sobre email_verified_at: Este campo es heredado del scaffolding de Laravel Breeze.
+     * El sistema no utiliza la verificación de correo electrónico en ningún flujo de negocio.
+     * Se mantiene en la base de datos y en este modelo como deuda técnica aceptada para
+     * no alterar el comportamiento por defecto del perfil de Breeze y sus pruebas asociadas.
+     *
      * @return array<string, string>
      */
     protected function casts(): array
@@ -65,20 +69,5 @@ class User extends Authenticatable
     public function sucursal(): BelongsTo
     {
         return $this->belongsTo(Sucursal::class);
-    }
-
-    public function scopeSuperAdmins(Builder $query): Builder
-    {
-        return $query->where('role', 'super_admin');
-    }
-
-    public function esSuperAdmin(): bool
-    {
-        return $this->role === 'super_admin';
-    }
-
-    public function esAdminEmpresa(): bool
-    {
-        return $this->role === 'admin_empresa';
     }
 }

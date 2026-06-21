@@ -14,6 +14,7 @@ use App\Models\Respuesta;
 use App\Models\Sucursal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -158,11 +159,11 @@ class EncuestaController extends Controller
             'lote_id' => $lote->id,
             'empresa_id' => $empresa_id,
             'intentos' => 0,
-            'expira_en' => now()->addMinutes(10),
+            'expira_en' => now()->addMinutes(config('encuesta.otp.expiracion_minutos')),
         ]);
 
         // 6. Simular envío (nunca loggear el número real)
-        Log::info('OTP generado', ['lote_id' => $lote->id, 'otp' => $otp]);
+        Log::info('OTP generado para lote', ['lote_id' => $lote->id]);
 
         return response()->json(['status' => 'otp_enviado'], 200);
     }
@@ -197,6 +198,8 @@ class EncuestaController extends Controller
 
         // 4. Verificar intentos agotados
         if ($otpRecord->agotaronIntentos()) {
+            $otpRecord->delete();
+
             return response()->json(['error' => 'intentos_agotados'], 422);
         }
 
@@ -207,7 +210,7 @@ class EncuestaController extends Controller
 
             return response()->json([
                 'error' => 'otp_invalido',
-                'intentos_restantes' => 3 - $otpRecord->intentos,
+                'intentos_restantes' => config('encuesta.otp.max_intentos') - $otpRecord->intentos,
             ], 422);
         }
 
@@ -225,20 +228,26 @@ class EncuestaController extends Controller
         $token = 'TK-'.Str::upper(Str::random(4)).'-'.Str::upper(Str::random(4));
 
         // 6d. Buscar encuesta disponible
-        $encuesta = Encuesta::where('lote_id', $lote_id)
-            ->where('estado', 'disponible')
-            ->first();
+        $encuesta = DB::transaction(function () use ($lote_id, $token) {
+            $registro = Encuesta::where('lote_id', $lote_id)
+                ->where('estado', 'disponible')
+                ->lockForUpdate()
+                ->first();
+
+            if ($registro) {
+                $registro->update([
+                    'estado' => 'asignado',
+                    'fecha_asignacion' => now(),
+                    'token' => $token,
+                ]);
+            }
+
+            return $registro;
+        });
 
         if (! $encuesta) {
             return response()->json(['error' => 'sin_tokens'], 422);
         }
-
-        // 6e. Asignar token
-        $encuesta->update([
-            'estado' => 'asignado',
-            'fecha_asignacion' => now(),
-            'token' => $token,
-        ]);
 
         Log::info('Token asignado', ['lote_id' => $lote_id, 'token' => $token]);
 
@@ -290,14 +299,26 @@ class EncuestaController extends Controller
     private function ultimaDimensionCompletada(Encuesta $encuesta): int
     {
         $dimensiones = Dimension::with('subdimensiones')->orderBy('orden')->get();
+
+        // Query 1 — total de preguntas por dimensión
+        $preguntasPorDim = Pregunta::join('subdimensiones', 'preguntas.subdimension_id', '=', 'subdimensiones.id')
+            ->selectRaw('subdimensiones.dimension_id, COUNT(*) as total')
+            ->groupBy('subdimensiones.dimension_id')
+            ->pluck('total', 'dimension_id');
+
+        // Query 2 — respuestas del encuestado por dimensión
+        $respuestasPorDim = Respuesta::where('encuesta_id', $encuesta->id)
+            ->join('preguntas', 'respuestas.pregunta_id', '=', 'preguntas.id')
+            ->join('subdimensiones', 'preguntas.subdimension_id', '=', 'subdimensiones.id')
+            ->selectRaw('subdimensiones.dimension_id, COUNT(*) as total')
+            ->groupBy('subdimensiones.dimension_id')
+            ->pluck('total', 'dimension_id');
+
         $ultima = 0;
 
         foreach ($dimensiones as $dim) {
-            $total = Pregunta::whereHas('subdimension', fn ($q) => $q->where('dimension_id', $dim->id)
-            )->count();
-
-            $respondidas = Respuesta::whereHas('pregunta.subdimension', fn ($q) => $q->where('dimension_id', $dim->id)
-            )->where('encuesta_id', $encuesta->id)->count();
+            $total = $preguntasPorDim->get($dim->id, 0);
+            $respondidas = $respuestasPorDim->get($dim->id, 0);
 
             if ($respondidas >= $total && $total > 0) {
                 $ultima = $dim->orden;
@@ -335,12 +356,23 @@ class EncuestaController extends Controller
             return redirect()->route('encuesta.demograficos', $token);
         }
 
-        $dimensiones = Dimension::with('subdimensiones')->orderBy('orden')->get()->map(function ($dimension) use ($encuesta) {
-            $totalPreguntas = Pregunta::whereHas('subdimension', fn ($q) => $q->where('dimension_id', $dimension->id)
-            )->count();
+        // Query 1 — total de preguntas por dimensión
+        $preguntasPorDim = Pregunta::join('subdimensiones', 'preguntas.subdimension_id', '=', 'subdimensiones.id')
+            ->selectRaw('subdimensiones.dimension_id, COUNT(*) as total')
+            ->groupBy('subdimensiones.dimension_id')
+            ->pluck('total', 'dimension_id');
 
-            $respondidas = Respuesta::whereHas('pregunta.subdimension', fn ($q) => $q->where('dimension_id', $dimension->id)
-            )->where('encuesta_id', $encuesta->id)->count();
+        // Query 2 — respuestas del encuestado por dimensión
+        $respuestasPorDim = Respuesta::where('encuesta_id', $encuesta->id)
+            ->join('preguntas', 'respuestas.pregunta_id', '=', 'preguntas.id')
+            ->join('subdimensiones', 'preguntas.subdimension_id', '=', 'subdimensiones.id')
+            ->selectRaw('subdimensiones.dimension_id, COUNT(*) as total')
+            ->groupBy('subdimensiones.dimension_id')
+            ->pluck('total', 'dimension_id');
+
+        $dimensiones = Dimension::with('subdimensiones')->orderBy('orden')->get()->map(function ($dimension) use ($preguntasPorDim, $respuestasPorDim) {
+            $totalPreguntas = $preguntasPorDim->get($dimension->id, 0);
+            $respondidas = $respuestasPorDim->get($dimension->id, 0);
 
             $dimension->total = $totalPreguntas;
             $dimension->respondidas = $respondidas;

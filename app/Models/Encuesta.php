@@ -66,15 +66,20 @@ class Encuesta extends Model
         return $query->where('estado', 'disponible');
     }
 
-    public function scopeEnAdvertencia(Builder $query, int $dias = 7, int $diasRiesgo = 14): Builder
+    public function scopeEnAdvertencia(Builder $query, ?int $dias = null, ?int $diasRiesgo = null): Builder
     {
+        $dias = $dias ?? config('encuesta.tokens.dias_advertencia');
+        $diasRiesgo = $diasRiesgo ?? config('encuesta.tokens.dias_riesgo');
+
         return $query->where('estado', 'asignado')
             ->where('fecha_asignacion', '<', now()->subDays($dias))
             ->where('fecha_asignacion', '>=', now()->subDays($diasRiesgo));
     }
 
-    public function scopeEnRiesgo(Builder $query, int $dias = 14): Builder
+    public function scopeEnRiesgo(Builder $query, ?int $dias = null): Builder
     {
+        $dias = $dias ?? config('encuesta.tokens.dias_riesgo');
+
         return $query->where('estado', 'asignado')
             ->where('fecha_asignacion', '<', now()->subDays($dias));
     }
@@ -86,14 +91,6 @@ class Encuesta extends Model
     public function marcarEnProgreso(): bool
     {
         return $this->update(['estado' => 'en_progreso']);
-    }
-
-    public function asignar(): void
-    {
-        $this->update([
-            'estado' => 'asignado',
-            'fecha_asignacion' => now(),
-        ]);
     }
 
     public function marcarComoCompletada(): void

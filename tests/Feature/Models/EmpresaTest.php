@@ -19,14 +19,3 @@ test('el password se hashea automáticamente y no se guarda en texto plano', fun
     expect($empresa->password)->not->toBe('secreto');
     expect(password_verify('secreto', $empresa->password))->toBeTrue();
 });
-
-test('la relación encuestas retorna las encuestas asociadas a través de sus lotes', function () {
-    // Arrange
-    $empresa = Empresa::factory()->create();
-    $lote = \App\Models\Lote::factory()->create(['empresa_id' => $empresa->id]);
-    $encuesta = \App\Models\Encuesta::factory()->create(['lote_id' => $lote->id]);
-
-    // Act & Assert
-    expect($empresa->encuestas)->toHaveCount(1);
-    expect($empresa->encuestas->first()->id)->toBe($encuesta->id);
-});

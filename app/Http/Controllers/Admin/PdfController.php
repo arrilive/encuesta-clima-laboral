@@ -6,11 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Respuesta;
 use App\Models\Subdimension;
 use App\Services\ClimaScoringService;
+use App\Traits\HasTenantScope;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 class PdfController extends Controller
 {
+    use HasTenantScope;
+
     public function reportePDF(Request $request)
     {
         set_time_limit(120);
@@ -57,10 +60,25 @@ class PdfController extends Controller
         $query = Respuesta::query()
             ->whereHas('encuesta', fn ($q) => $q->where('estado', 'completado'));
 
-        if ($user->role === 'admin_empresa') {
-            $query->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $user->empresa_id));
-        } elseif ($request->filled('empresa_id')) {
+        $query->whereHas('encuesta.lote', fn ($q) => $this->scopeByRole($q));
+
+        if (in_array($user->role, [
+            \App\Enums\Role::SUPER_ADMIN->value,
+            \App\Enums\Role::ADMIN_CORPORATIVO->value,
+        ]) && $request->filled('empresa_id')) {
             $query->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $request->empresa_id));
+        }
+
+        if ($user->role === \App\Enums\Role::SUPER_ADMIN->value && $request->filled('corporativo_id')) {
+            $query->whereHas('encuesta.lote.empresa', fn ($q) => $q->where('corporativo_id', $request->corporativo_id));
+        }
+
+        if ($request->filled('sucursal_id')) {
+            $query->whereHas('encuesta.lote', fn ($q) => $q->where('lotes.sucursal_id', $request->sucursal_id));
+        }
+
+        if ($request->filled('lote_id')) {
+            $query->whereHas('encuesta.lote', fn ($q) => $q->where('lotes.id', $request->lote_id));
         }
 
         $filtros = [
@@ -85,7 +103,10 @@ class PdfController extends Controller
     {
         $filtros = [];
         $map = [
+            'corporativo_id' => ['label' => 'Corporativo', 'model' => \App\Models\Corporativo::class, 'attr' => 'nombre'],
+            'sucursal_id' => ['label' => 'Sucursal', 'model' => \App\Models\Sucursal::class, 'attr' => 'nombre'],
             'empresa_id' => ['label' => 'Empresa', 'model' => \App\Models\Empresa::class, 'attr' => 'nombre'],
+            'lote_id' => ['label' => 'Lote', 'model' => \App\Models\Lote::class, 'attr' => 'nombre'],
             'edad_id' => ['label' => 'Edad', 'model' => \App\Models\Edad::class, 'attr' => 'opcion'],
             'sexo_id' => ['label' => 'Sexo', 'model' => \App\Models\Sexo::class, 'attr' => 'opcion'],
             'cargo_id' => ['label' => 'Cargo', 'model' => \App\Models\Cargo::class, 'attr' => 'opcion'],
@@ -96,9 +117,17 @@ class PdfController extends Controller
 
         foreach ($map as $key => $config) {
             if ($request->filled($key)) {
-                $item = $config['model']::find($request->$key);
+                $query = $config['model']::query();
+                if ($key === 'lote_id') {
+                    $query->with('sucursal');
+                }
+                $item = $query->find($request->$key);
                 if ($item) {
-                    $filtros[$config['label']] = $item->{$config['attr']};
+                    if ($key === 'lote_id') {
+                        $filtros[$config['label']] = ($item->nombre ?? 'Lote #'.$item->id).' ('.($item->sucursal ? $item->sucursal->nombre : 'General').')';
+                    } else {
+                        $filtros[$config['label']] = $item->{$config['attr']};
+                    }
                 }
             }
         }
@@ -138,8 +167,16 @@ class PdfController extends Controller
         $preguntasAbiertas = \App\Models\PreguntaAbierta::orderBy('orden')->get();
 
         $encuestasIds = \App\Models\Encuesta::where('estado', 'completado')
-            ->when($user->role === 'admin_empresa', fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $user->empresa_id)))
-            ->when($user->role === 'super_admin' && $request->filled('empresa_id'), fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $request->empresa_id)))
+            ->whereHas('lote', fn ($q) => $this->scopeByRole($q))
+            ->when(in_array($user->role, [
+                \App\Enums\Role::SUPER_ADMIN->value,
+                \App\Enums\Role::ADMIN_CORPORATIVO->value,
+            ]) && $request->filled('empresa_id'), fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $request->empresa_id)))
+            ->when($user->role === \App\Enums\Role::SUPER_ADMIN->value && $request->filled('corporativo_id'),
+                fn ($q) => $q->whereHas('lote.empresa', fn ($q2) => $q2->where('corporativo_id', $request->corporativo_id)))
+            ->when($request->filled('sucursal_id'),
+                fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('sucursal_id', $request->sucursal_id)))
+            ->when($request->filled('lote_id'), fn ($q) => $q->where('lote_id', $request->lote_id))
             ->when($request->filled('edad_id'), fn ($q) => $q->whereHas('datoDemografico', fn ($q2) => $q2->where('edad_id', $request->edad_id)))
             ->when($request->filled('sexo_id'), fn ($q) => $q->whereHas('datoDemografico', fn ($q2) => $q2->where('sexo_id', $request->sexo_id)))
             ->when($request->filled('cargo_id'), fn ($q) => $q->whereHas('datoDemografico', fn ($q2) => $q2->where('cargo_id', $request->cargo_id)))

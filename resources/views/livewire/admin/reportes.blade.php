@@ -41,7 +41,7 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 @if (auth()->user()->role === 'super_admin') lg:grid-cols-4 @endif gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {{-- Edad --}}
             <div class="space-y-1.5">
                 <label class="text-slate-500 text-sm font-medium">Edad</label>
@@ -114,19 +114,85 @@
                 </select>
             </div>
 
-            {{-- Empresa (Solo super_admin) --}}
-            @if (auth()->user()->role === 'super_admin')
+            {{-- Corporativo (Solo super_admin) --}}
+            @if(auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value)
+            <div class="space-y-1.5">
+                <label class="text-slate-500 text-sm font-medium">Corporativo</label>
+                <x-admin.combobox-entidad
+                    wire-model="filtroCorporativoId"
+                    placeholder="Buscar corporativo..."
+                    :has-error="$errors->has('filtroCorporativoId')"
+                    :disabled="false">
+                    <option value="">Todos</option>
+                    @foreach($corporativos as $corp)
+                        <option value="{{ $corp->id }}">{{ $corp->nombre }}</option>
+                    @endforeach
+                </x-admin.combobox-entidad>
+            </div>
+            @endif
+
+            {{-- Empresa (super_admin y admin_corporativo) --}}
+            @if(in_array(auth()->user()->role, [\App\Enums\Role::SUPER_ADMIN->value, \App\Enums\Role::ADMIN_CORPORATIVO->value]))
                 <div class="space-y-1.5">
                     <label class="text-slate-500 text-sm font-medium">Empresa</label>
-                    <select wire:model.live="filtroEmpresaId"
-                        class="w-full border border-slate-300 rounded-xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+                    <x-admin.combobox-entidad
+                        wire-model="filtroEmpresaId"
+                        placeholder="Buscar empresa..."
+                        :has-error="$errors->has('filtroEmpresaId')"
+                        :disabled="false">
                         <option value="">Todas las empresas</option>
                         @foreach ($empresas as $empresa)
                             <option value="{{ $empresa->id }}">{{ $empresa->nombre }}</option>
                         @endforeach
-                    </select>
+                    </x-admin.combobox-entidad>
                 </div>
             @endif
+
+            {{-- Sucursal (super_admin, admin_corporativo y admin_empresa) --}}
+            @if(auth()->user()->role !== \App\Enums\Role::ADMIN_SUCURSAL->value)
+            @php
+                $sucursalDeshabilitada = in_array(auth()->user()->role, [
+                    \App\Enums\Role::SUPER_ADMIN->value,
+                    \App\Enums\Role::ADMIN_CORPORATIVO->value,
+                ]) && !$filtroEmpresaId;
+            @endphp
+            <div class="space-y-1.5">
+                <label class="text-slate-500 text-sm font-medium">Sucursal</label>
+                <x-admin.combobox-entidad
+                    wire-model="filtroSucursalId"
+                    placeholder="Buscar sucursal..."
+                    :has-error="$errors->has('filtroSucursalId')"
+                    :disabled="$sucursalDeshabilitada">
+                    <option value="">Todas</option>
+                    @foreach($sucursales as $suc)
+                        <option value="{{ $suc->id }}">{{ $suc->nombre }}</option>
+                    @endforeach
+                </x-admin.combobox-entidad>
+            </div>
+            @endif
+
+            {{-- Lote / Período --}}
+            <div class="space-y-1.5">
+                <label class="text-slate-500 text-sm font-medium">Lote / Período</label>
+                @php
+                    $loteDeshabilitado = in_array(auth()->user()->role, [
+                        \App\Enums\Role::SUPER_ADMIN->value,
+                        \App\Enums\Role::ADMIN_CORPORATIVO->value,
+                    ]) && !$filtroEmpresaId;
+                @endphp
+                <x-admin.combobox-entidad
+                    wire-model="filtroLoteId"
+                    placeholder="Buscar período..."
+                    :has-error="$errors->has('filtroLoteId')"
+                    :disabled="$loteDeshabilitado">
+                    <option value="">Todos los períodos</option>
+                    @foreach ($lotes as $lote)
+                        <option value="{{ $lote->id }}">
+                            {{ $lote->nombre ?? 'Lote #'.$lote->id }} ({{ $lote->sucursal ? $lote->sucursal->nombre : 'General' }})
+                        </option>
+                    @endforeach
+                </x-admin.combobox-entidad>
+            </div>
         </div>
     </div>
 
@@ -162,7 +228,27 @@
 
     {{-- SECCIÓN 3 — Contenido nivel 1 --}}
     @if ($nivel === 1)
-        @if ($sinDatos || empty($datosNivel1))
+        @if($bajoUmbral)
+            <div class="flex flex-col items-center justify-center py-16 px-6 text-center">
+                <div class="flex items-center justify-center w-14 h-14 bg-slate-100 rounded-2xl mb-5">
+                    <svg class="w-7 h-7 text-slate-400" xmlns="http://www.w3.org/2000/svg"
+                         fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25
+                                 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25
+                                 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                    </svg>
+                </div>
+                <p class="text-sm font-semibold text-slate-700 mb-1">Resultados protegidos</p>
+                <p class="text-sm text-slate-400 max-w-sm">
+                    Se necesitan al menos {{ $umbralReportes }} respuestas para mostrar
+                    estos resultados y proteger la confidencialidad de los participantes.
+                    Este segmento tiene <span class="font-semibold text-slate-600">
+                    {{ $totalRespondientes }} {{ $totalRespondientes === 1 ? 'respuesta' : 'respuestas' }}
+                    </span> completada{{ $totalRespondientes === 1 ? '' : 's' }}.
+                </p>
+            </div>
+        @elseif ($sinDatos || empty($datosNivel1))
             <x-admin.empty-state mensaje="No hay encuestas completadas que coincidan con los filtros seleccionados." />
         @else
             <div class="space-y-6">
@@ -320,7 +406,27 @@
 
     {{-- SECCIÓN 4 — Contenido nivel 2 --}}
     @if ($nivel === 2)
-        @if ($sinDatos)
+        @if($bajoUmbral)
+            <div class="flex flex-col items-center justify-center py-16 px-6 text-center">
+                <div class="flex items-center justify-center w-14 h-14 bg-slate-100 rounded-2xl mb-5">
+                    <svg class="w-7 h-7 text-slate-400" xmlns="http://www.w3.org/2000/svg"
+                         fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25
+                                 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25
+                                 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                    </svg>
+                </div>
+                <p class="text-sm font-semibold text-slate-700 mb-1">Resultados protegidos</p>
+                <p class="text-sm text-slate-400 max-w-sm">
+                    Se necesitan al menos {{ $umbralReportes }} respuestas para mostrar
+                    estos resultados y proteger la confidencialidad de los participantes.
+                    Este segmento tiene <span class="font-semibold text-slate-600">
+                    {{ $totalRespondientes }} {{ $totalRespondientes === 1 ? 'respuesta' : 'respuestas' }}
+                    </span> completada{{ $totalRespondientes === 1 ? '' : 's' }}.
+                </p>
+            </div>
+        @elseif ($sinDatos)
             <x-admin.empty-state mensaje="No hay secciones con datos para los filtros seleccionados." />
         @else
             {{-- Grid 55/45: barras + donut --}}
@@ -425,25 +531,27 @@
 
     {{-- SECCIÓN 5 — Contenido nivel 3 --}}
     @if ($nivel === 3)
-        @php
-            if (!function_exists('interpretacion')) {
-                function interpretacion(float $score): array
-                {
-                    if ($score >= 80) {
-                        return ['label' => 'Excelente', 'bg' => 'bg-emerald-100', 'text' => 'text-emerald-700'];
-                    }
-                    if ($score >= 51) {
-                        return ['label' => 'Buen clima', 'bg' => 'bg-blue-100', 'text' => 'text-blue-700'];
-                    }
-                    if ($score >= 25) {
-                        return ['label' => 'Regular', 'bg' => 'bg-amber-100', 'text' => 'text-amber-700'];
-                    }
-                    return ['label' => 'Deficiente', 'bg' => 'bg-red-100', 'text' => 'text-red-700'];
-                }
-            }
-        @endphp
-
-        @if ($sinDatos)
+        @if($bajoUmbral)
+            <div class="flex flex-col items-center justify-center py-16 px-6 text-center">
+                <div class="flex items-center justify-center w-14 h-14 bg-slate-100 rounded-2xl mb-5">
+                    <svg class="w-7 h-7 text-slate-400" xmlns="http://www.w3.org/2000/svg"
+                         fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25
+                                 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25
+                                 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                    </svg>
+                </div>
+                <p class="text-sm font-semibold text-slate-700 mb-1">Resultados protegidos</p>
+                <p class="text-sm text-slate-400 max-w-sm">
+                    Se necesitan al menos {{ $umbralReportes }} respuestas para mostrar
+                    estos resultados y proteger la confidencialidad de los participantes.
+                    Este segmento tiene <span class="font-semibold text-slate-600">
+                    {{ $totalRespondientes }} {{ $totalRespondientes === 1 ? 'respuesta' : 'respuestas' }}
+                    </span> completada{{ $totalRespondientes === 1 ? '' : 's' }}.
+                </p>
+            </div>
+        @elseif ($sinDatos)
             <x-admin.empty-state mensaje="No hay respuestas para los filtros seleccionados en esta subdimensión." />
         @elseif (empty($datosNivel3))
             <x-admin.empty-state mensaje="Esta subdimensión no tiene preguntas registradas." :conBotonFiltros="false" />
@@ -451,21 +559,14 @@
             <div class="space-y-3">
                 @foreach ($datosNivel3 as $index => $pregunta)
                     @php
-                        $interp = interpretacion($pregunta['puntaje']);
+                        $interp = \App\Support\ClimaBadge::resolver($pregunta['puntaje']);
                         $colorMap = [
                             1 => '#ef4444', // Falso — red
                             2 => '#f59e0b', // A veces — amber
                             3 => '#10b981', // Verdadero — green
                             0 => '#cbd5e1', // Prefiero no responder — gray
                         ];
-                        $scoreColor =
-                            $pregunta['puntaje'] >= 80
-                                ? '#059669'
-                                : ($pregunta['puntaje'] >= 51
-                                    ? '#2563eb'
-                                    : ($pregunta['puntaje'] >= 25
-                                        ? '#d97706'
-                                        : '#ef4444'));
+                        $scoreColor = $interp['color_hex'];
                     @endphp
 
                     <div
@@ -483,7 +584,7 @@
                                 </div>
                                 <span
                                     class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full
-                                             {{ $interp['bg'] }} {{ $interp['text'] }}">
+                                             {{ $interp['standard'] }}">
                                     {{ $interp['label'] }}
                                 </span>
                             </div>
@@ -734,7 +835,10 @@
 
                 // Agregar filtros activos
                 const filtros = {
+                    corporativo_id: $wire.filtroCorporativoId,
+                    sucursal_id: $wire.filtroSucursalId,
                     empresa_id: $wire.filtroEmpresaId,
+                    lote_id: $wire.filtroLoteId,
                     sexo_id: $wire.filtroSexoId,
                     edad_id: $wire.filtroEdadId,
                     cargo_id: $wire.filtroCargoId,

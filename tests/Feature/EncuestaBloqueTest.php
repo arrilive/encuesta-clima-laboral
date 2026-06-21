@@ -441,3 +441,18 @@ test('bloque redirige a dimensiones si el usuario se adelanta', function () {
     $this->get(route('encuesta.bloque', ['token' => $encuesta->token, 'dimension' => 3]))
         ->assertRedirect(route('encuesta.dimensiones', $encuesta->token));
 });
+
+// ---------------------------------------------------------------------------
+// Modal descripción de dimensión — #164
+// ---------------------------------------------------------------------------
+
+test('mount carga dimensionDescripcion desde la base de datos', function () {
+    seedEncuesta();
+
+    $encuesta = Encuesta::factory()->asignada()->create();
+
+    Livewire::test(EncuestaBloque::class, [
+        'token' => $encuesta->token,
+        'dimension' => 1,
+    ])->assertSet('dimensionDescripcion', fn ($valor) => strlen($valor) > 0);
+});

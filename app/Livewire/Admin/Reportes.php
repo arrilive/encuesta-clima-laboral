@@ -2,17 +2,23 @@
 
 namespace App\Livewire\Admin;
 
+use App\Models\Corporativo;
 use App\Models\Dimension;
 use App\Models\Empresa;
+use App\Models\Lote;
 use App\Models\Respuesta;
 use App\Models\Subdimension;
+use App\Models\Sucursal;
 use App\Services\ClimaScoringService;
+use App\Traits\HasTenantScope;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('components.layouts.admin', ['heading' => 'Reportes'])]
 class Reportes extends Component
 {
+    use HasTenantScope;
+
     // Navegación drill-down
     public int $nivel = 1;
 
@@ -36,21 +42,27 @@ class Reportes extends Component
     // Filtro empresa (solo super_admin)
     public string $filtroEmpresaId = '';
 
+    public string $filtroCorporativoId = '';
+
+    public string $filtroSucursalId = '';
+
+    public string $filtroLoteId = '';
+
     public ?string $hashDatosNivel1 = null;
 
     public array $pdfSvgs = [];
 
-    public $edades;
+    public \Illuminate\Support\Collection $edades;
 
-    public $sexos;
+    public \Illuminate\Support\Collection $sexos;
 
-    public $cargos;
+    public \Illuminate\Support\Collection $cargos;
 
-    public $lugares;
+    public \Illuminate\Support\Collection $lugares;
 
-    public $grados;
+    public \Illuminate\Support\Collection $grados;
 
-    public $antiguedades;
+    public \Illuminate\Support\Collection $antiguedades;
 
     public function mount(): void
     {
@@ -95,8 +107,89 @@ class Reportes extends Component
         $this->filtroLugarTrabajoId = '';
         $this->filtroGradoAcademicoId = '';
         $this->filtroAntiguedadId = '';
+        $this->filtroCorporativoId = '';
         $this->filtroEmpresaId = '';
+        $this->filtroSucursalId = '';
+        $this->filtroLoteId = '';
         $this->irNivel1();
+    }
+
+    public function updatedFiltroCorporativoId(): void
+    {
+        $this->filtroEmpresaId = '';
+        $this->filtroSucursalId = '';
+        $this->filtroLoteId = '';
+    }
+
+    public function updatedFiltroEmpresaId(): void
+    {
+        $this->filtroSucursalId = '';
+        $this->filtroLoteId = '';
+    }
+
+    public function updatedFiltroSucursalId(): void
+    {
+        $this->filtroLoteId = '';
+    }
+
+    public function getCorporativosProperty()
+    {
+        $user = auth()->user();
+        if ($user->role !== \App\Enums\Role::SUPER_ADMIN->value) {
+            return collect();
+        }
+
+        return Corporativo::where('activa', true)->orderBy('nombre')->get();
+    }
+
+    public function getSucursalesProperty()
+    {
+        $user = auth()->user();
+
+        // admin_sucursal: no necesita selector, su scope está fijo en HasTenantScope
+        if ($user->role === \App\Enums\Role::ADMIN_SUCURSAL->value) {
+            return collect();
+        }
+
+        // Sin empresa seleccionada para roles que la requieren
+        if (in_array($user->role, [
+            \App\Enums\Role::SUPER_ADMIN->value,
+            \App\Enums\Role::ADMIN_CORPORATIVO->value,
+        ]) && ! $this->filtroEmpresaId) {
+            return collect();
+        }
+
+        $empresaId = $this->filtroEmpresaId ?: $user->empresa_id;
+
+        return Sucursal::where('empresa_id', $empresaId)
+            ->where('activa', true)
+            ->orderBy('nombre')
+            ->get();
+    }
+
+    public function getLotesProperty()
+    {
+        $user = auth()->user();
+
+        if (in_array($user->role, [
+            \App\Enums\Role::SUPER_ADMIN->value,
+            \App\Enums\Role::ADMIN_CORPORATIVO->value,
+        ]) && ! $this->filtroEmpresaId) {
+            return collect();
+        }
+
+        $query = Lote::with('sucursal');
+        $query = $this->scopeByRole($query);
+
+        if ($this->filtroEmpresaId) {
+            $query->where('empresa_id', $this->filtroEmpresaId);
+        }
+
+        if ($this->filtroSucursalId) {
+            $query->where('sucursal_id', $this->filtroSucursalId);
+        }
+
+        return $query->orderByDesc('fecha_inicio')->get();
     }
 
     public function prepararExportacion(array $svgs, string $alcance, int $limite = 25): void
@@ -111,12 +204,25 @@ class Reportes extends Component
         $query = Respuesta::query()
             ->whereHas('encuesta', fn ($q) => $q->where('estado', 'completado'));
 
-        if ($user->role === 'admin_empresa') {
-            $query->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $user->empresa_id)
-            );
-        } elseif ($this->filtroEmpresaId) {
-            $query->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId)
-            );
+        $query->whereHas('encuesta.lote', fn ($q) => $this->scopeByRole($q));
+
+        if ($user->role === \App\Enums\Role::SUPER_ADMIN->value && $this->filtroCorporativoId) {
+            $query->whereHas('encuesta.lote.empresa', fn ($q) => $q->where('corporativo_id', $this->filtroCorporativoId));
+        }
+
+        if (in_array($user->role, [
+            \App\Enums\Role::SUPER_ADMIN->value,
+            \App\Enums\Role::ADMIN_CORPORATIVO->value,
+        ]) && $this->filtroEmpresaId) {
+            $query->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId));
+        }
+
+        if ($this->filtroSucursalId) {
+            $query->whereHas('encuesta.lote', fn ($q) => $q->where('lotes.sucursal_id', $this->filtroSucursalId));
+        }
+
+        if ($this->filtroLoteId) {
+            $query->whereHas('encuesta.lote', fn ($q) => $q->where('lotes.id', $this->filtroLoteId));
         }
 
         if ($this->filtroEdadId) {
@@ -152,10 +258,27 @@ class Reportes extends Component
         $user = auth()->user();
         $query = \App\Models\Encuesta::where('estado', 'completado');
 
-        if ($user->role === 'admin_empresa') {
-            $query->whereHas('lote', fn ($q) => $q->where('empresa_id', $user->empresa_id));
-        } elseif ($this->filtroEmpresaId) {
+        $query->whereHas('lote', fn ($q) => $this->scopeByRole($q));
+
+        if ($user->role === \App\Enums\Role::SUPER_ADMIN->value && $this->filtroCorporativoId) {
+            $query->whereHas('lote.empresa', fn ($q) => $q->where('corporativo_id', $this->filtroCorporativoId));
+        }
+
+        if (in_array($user->role, [
+            \App\Enums\Role::SUPER_ADMIN->value,
+            \App\Enums\Role::ADMIN_CORPORATIVO->value,
+        ]) && $this->filtroEmpresaId) {
             $query->whereHas('lote', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId));
+        }
+
+        if ($this->filtroSucursalId) {
+            $query->where(function ($q) {
+                $q->whereHas('lote', fn ($q2) => $q2->where('sucursal_id', $this->filtroSucursalId));
+            });
+        }
+
+        if ($this->filtroLoteId) {
+            $query->where('lote_id', $this->filtroLoteId);
         }
 
         if ($soloSinFiltrosDemograficos) {
@@ -235,45 +358,47 @@ class Reportes extends Component
             return [];
         }
 
-        return \App\Models\Pregunta::where('subdimension_id', $this->subdimensionActivaId)
+        $preguntas = \App\Models\Pregunta::where('subdimension_id', $this->subdimensionActivaId)
             ->orderBy('orden')
-            ->get()
-            ->map(function ($pregunta) {
-                $baseQuery = clone $this->getBaseQuery();
+            ->get();
 
-                // Distribución: todas las opciones incluyendo "No responde" (valor_numerico = 0)
-                $distribucion = (clone $baseQuery)
-                    ->where('pregunta_id', $pregunta->id)
-                    ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
-                    ->selectRaw('opciones_respuesta.id, opciones_respuesta.opcion, opciones_respuesta.valor_numerico, COUNT(*) as total')
-                    ->groupBy('opciones_respuesta.id', 'opciones_respuesta.opcion', 'opciones_respuesta.valor_numerico')
-                    ->orderBy('opciones_respuesta.orden')
-                    ->get();
+        $preguntasIds = $preguntas->pluck('id')->toArray();
 
-                $totalRespuestas = $distribucion->sum('total');
+        $respuestasRaw = $this->getBaseQuery()
+            ->whereIn('respuestas.pregunta_id', $preguntasIds)
+            ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
+            ->selectRaw('respuestas.pregunta_id, opciones_respuesta.opcion, opciones_respuesta.valor_numerico, opciones_respuesta.orden, COUNT(*) as total')
+            ->groupBy('respuestas.pregunta_id', 'opciones_respuesta.opcion', 'opciones_respuesta.valor_numerico', 'opciones_respuesta.orden')
+            ->orderBy('opciones_respuesta.orden')
+            ->get();
 
-                // Puntaje: excluye valor_numerico = 0
-                $puntaje = (clone $baseQuery)
-                    ->where('pregunta_id', $pregunta->id)
-                    ->whereHas('opcionRespuesta', fn ($q) => $q->where('valor_numerico', '!=', 0))
-                    ->join('opciones_respuesta as or2', 'respuestas.opcion_respuesta_id', '=', 'or2.id')
-                    ->avg('or2.valor_numerico');
+        $grouped = $respuestasRaw->groupBy('pregunta_id');
 
-                return [
-                    'id' => $pregunta->id,
-                    'texto' => $pregunta->texto,
-                    'puntaje' => $puntaje !== null ? round((($puntaje - 1) / 2) * 100, 1) : 0.0,
-                    'total' => $totalRespuestas,
-                    'distribucion' => $distribucion->map(fn ($op) => [
-                        'opcion' => $op->opcion,
-                        'valor_numerico' => $op->valor_numerico,
-                        'total' => $op->total,
-                        'porcentaje' => $totalRespuestas > 0
-                                            ? round($op->total / $totalRespuestas * 100)
-                                            : 0,
-                    ])->toArray(),
-                ];
-            })->toArray();
+        return $preguntas->map(function ($pregunta) use ($grouped) {
+            $respuestasPregunta = $grouped->get($pregunta->id, collect());
+            $totalRespuestas = $respuestasPregunta->sum('total');
+
+            // Calcular promedio excluyendo valor_numerico = 0
+            $respuestasValidas = $respuestasPregunta->filter(fn ($op) => $op->valor_numerico != 0);
+            $sumaValores = $respuestasValidas->sum(fn ($op) => $op->valor_numerico * $op->total);
+            $cuentaValores = $respuestasValidas->sum('total');
+            $promedio = $cuentaValores > 0 ? ($sumaValores / $cuentaValores) : null;
+
+            return [
+                'id' => $pregunta->id,
+                'texto' => $pregunta->texto,
+                'puntaje' => $promedio !== null ? round((($promedio - 1) / 2) * 100, 1) : 0.0,
+                'total' => $totalRespuestas,
+                'distribucion' => $respuestasPregunta->map(fn ($op) => [
+                    'opcion' => $op->opcion,
+                    'valor_numerico' => $op->valor_numerico,
+                    'total' => $op->total,
+                    'porcentaje' => $totalRespuestas > 0
+                                        ? round($op->total / $totalRespuestas * 100)
+                                        : 0,
+                ])->toArray(),
+            ];
+        })->toArray();
     }
 
     private function despacharEventos(array $datosNivel1, array $datosNivel2, array $distribucionAgregada): void
@@ -303,8 +428,15 @@ class Reportes extends Component
         $completadasFiltradas = $this->getEncuestasBaseQuery()->count();
 
         $totalTokens = \App\Models\Encuesta::query()
-            ->when($user->role === 'admin_empresa', fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $user->empresa_id)))
-            ->when($user->role === 'super_admin' && $this->filtroEmpresaId, fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $this->filtroEmpresaId)))
+            ->whereHas('lote', fn ($q) => $this->scopeByRole($q))
+            ->when(in_array($user->role, [
+                \App\Enums\Role::SUPER_ADMIN->value,
+                \App\Enums\Role::ADMIN_CORPORATIVO->value,
+            ]) && $this->filtroEmpresaId, fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $this->filtroEmpresaId)))
+            ->when($this->filtroLoteId, fn ($q) => $q->where('lote_id', $this->filtroLoteId))
+            ->when($this->filtroCorporativoId && $user->role === \App\Enums\Role::SUPER_ADMIN->value,
+                fn ($q) => $q->whereHas('lote.empresa', fn ($q2) => $q2->where('corporativo_id', $this->filtroCorporativoId)))
+            ->when($this->filtroSucursalId, fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('sucursal_id', $this->filtroSucursalId)))
             ->count();
 
         $scoringService = app(ClimaScoringService::class);
@@ -315,7 +447,25 @@ class Reportes extends Component
             'completadasFiltradas' => $completadasFiltradas,
             'totalTokens' => $totalTokens,
             'sinDatos' => $completadasFiltradas === 0,
-            'empresas' => $user->role === 'super_admin' ? Empresa::orderBy('nombre')->get() : collect(),
+            'bajoUmbral' => $completadasFiltradas > 0
+                            && $completadasFiltradas < ClimaScoringService::UMBRAL_REPORTES,
+            'totalRespondientes' => $completadasFiltradas,
+            'umbralReportes' => ClimaScoringService::UMBRAL_REPORTES,
+            'empresas' => in_array($user->role, [
+                \App\Enums\Role::SUPER_ADMIN->value,
+                \App\Enums\Role::ADMIN_CORPORATIVO->value,
+            ])
+                ? (match ($user->role) {
+                    \App\Enums\Role::SUPER_ADMIN->value => $this->filtroCorporativoId
+                        ? Empresa::where('corporativo_id', $this->filtroCorporativoId)->orderBy('nombre')->get()
+                        : Empresa::orderBy('nombre')->get(),
+                    \App\Enums\Role::ADMIN_CORPORATIVO->value => Empresa::where('corporativo_id', $user->corporativo_id)->orderBy('nombre')->get(),
+                    default => collect(),
+                })
+                : collect(),
+            'corporativos' => $this->corporativos,
+            'sucursales' => $this->sucursales,
+            'lotes' => $this->lotes,
             'dimensionActiva' => $this->dimensionActivaId ? Dimension::find($this->dimensionActivaId) : null,
             'subdimensionActiva' => $this->subdimensionActivaId ? Subdimension::find($this->subdimensionActivaId) : null,
             'datosNivel1' => $datosNivel1,

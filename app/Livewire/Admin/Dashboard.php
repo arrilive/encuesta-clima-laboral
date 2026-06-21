@@ -2,10 +2,14 @@
 
 namespace App\Livewire\Admin;
 
+use App\Models\Corporativo;
 use App\Models\Empresa;
 use App\Models\Encuesta;
+use App\Models\Lote;
 use App\Models\Respuesta;
+use App\Models\Sucursal;
 use App\Services\ClimaScoringService;
+use App\Traits\HasTenantScope;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -13,15 +17,97 @@ use Livewire\Component;
 
 class Dashboard extends Component
 {
-    public function liberarTokens(): void
+    use HasTenantScope;
+
+    public string $filtroCorporativoId = '';
+
+    public string $filtroEmpresaId = '';
+
+    public string $filtroSucursalId = '';
+
+    public string $filtroLoteId = '';
+
+    public function updatedFiltroCorporativoId(): void
+    {
+        $this->filtroEmpresaId = '';
+        $this->filtroSucursalId = '';
+        $this->filtroLoteId = '';
+    }
+
+    public function updatedFiltroEmpresaId(): void
+    {
+        $this->filtroSucursalId = '';
+        $this->filtroLoteId = '';
+    }
+
+    public function updatedFiltroSucursalId(): void
+    {
+        $this->filtroLoteId = '';
+    }
+
+    public function getCorporativosProperty()
+    {
+        $user = auth()->user();
+        if ($user->role !== \App\Enums\Role::SUPER_ADMIN->value) {
+            return collect();
+        }
+
+        return Corporativo::where('activa', true)->orderBy('nombre')->get();
+    }
+
+    public function getSucursalesProperty()
     {
         $user = auth()->user();
 
+        if ($user->role === \App\Enums\Role::ADMIN_SUCURSAL->value) {
+            return collect();
+        }
+
+        if (in_array($user->role, [
+            \App\Enums\Role::SUPER_ADMIN->value,
+            \App\Enums\Role::ADMIN_CORPORATIVO->value,
+        ]) && ! $this->filtroEmpresaId) {
+            return collect();
+        }
+
+        $empresaId = $this->filtroEmpresaId ?: $user->empresa_id;
+
+        return Sucursal::where('empresa_id', $empresaId)
+            ->where('activa', true)
+            ->orderBy('nombre')
+            ->get();
+    }
+
+    public function getLotesProperty()
+    {
+        $user = auth()->user();
+
+        if (in_array($user->role, [
+            \App\Enums\Role::SUPER_ADMIN->value,
+            \App\Enums\Role::ADMIN_CORPORATIVO->value,
+        ]) && ! $this->filtroEmpresaId) {
+            return collect();
+        }
+
+        $query = Lote::with('sucursal');
+        $query = $this->scopeByRole($query);
+
+        if ($this->filtroEmpresaId) {
+            $query->where('empresa_id', $this->filtroEmpresaId);
+        }
+
+        if ($this->filtroSucursalId) {
+            $query->where('sucursal_id', $this->filtroSucursalId);
+        }
+
+        return $query->orderByDesc('fecha_inicio')->get();
+    }
+
+    public function liberarTokens(): void
+    {
         $query = Encuesta::enRiesgo();
 
-        if ($user->role === 'admin_empresa') {
-            $query->whereHas('lote', fn ($q) => $q->where('empresa_id', $user->empresa_id));
-        }
+        $query->whereHas('lote', fn ($q) => $this->scopeByRole($q));
 
         $query->update([
             'estado' => 'disponible',
@@ -34,18 +120,64 @@ class Dashboard extends Component
         $user = auth()->user();
 
         $base = Encuesta::when(
-            $user->role === 'admin_empresa',
-            fn ($q) => $q->whereHas('lote', fn ($q) => $q->where('empresa_id', $user->empresa_id))
+            in_array($user->role, [
+                \App\Enums\Role::ADMIN_EMPRESA->value,
+                \App\Enums\Role::ADMIN_CORPORATIVO->value,
+                \App\Enums\Role::ADMIN_SUCURSAL->value,
+            ]),
+            fn ($q) => $q->whereHas('lote', fn ($loteQuery) => $this->scopeByRole($loteQuery))
         );
 
-        $kpis = $this->calcularKpis($base);
-        $clima = $user->role === 'admin_empresa' ? $this->calcularClima($scoring, $user->empresa_id) : [];
-        $rankingEmpresas = $user->role === 'super_admin' ? $this->calcularRanking($scoring) : collect();
+        if ($this->filtroCorporativoId && $user->role === \App\Enums\Role::SUPER_ADMIN->value) {
+            $base->whereHas('lote.empresa', fn ($q) => $q->where('corporativo_id', $this->filtroCorporativoId));
+        }
 
-        return view('livewire.admin.dashboard', compact('kpis', 'clima', 'rankingEmpresas'));
+        if ($this->filtroEmpresaId && in_array($user->role, [
+            \App\Enums\Role::SUPER_ADMIN->value,
+            \App\Enums\Role::ADMIN_CORPORATIVO->value,
+        ])) {
+            $base->whereHas('lote', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId));
+        }
+
+        if ($this->filtroSucursalId) {
+            $base->whereHas('lote', fn ($q) => $q->where('sucursal_id', $this->filtroSucursalId));
+        }
+
+        if ($this->filtroLoteId) {
+            $base->where('lote_id', $this->filtroLoteId);
+        }
+
+        $kpis = $this->calcularKpis($base);
+        $clima = in_array($user->role, [
+            \App\Enums\Role::ADMIN_EMPRESA->value,
+            \App\Enums\Role::ADMIN_CORPORATIVO->value,
+            \App\Enums\Role::ADMIN_SUCURSAL->value,
+        ]) ? $this->calcularClima($scoring, $user) : [];
+        $rankingEmpresas = in_array($user->role, [
+            \App\Enums\Role::SUPER_ADMIN->value,
+            \App\Enums\Role::ADMIN_CORPORATIVO->value,
+        ]) ? $this->calcularRanking($scoring) : collect();
+
+        $lotes = $this->lotes;
+
+        return view('livewire.admin.dashboard', [
+            'kpis' => $kpis,
+            'clima' => $clima,
+            'rankingEmpresas' => $rankingEmpresas,
+            'lotes' => $lotes,
+            'corporativos' => $this->corporativos,
+            'sucursales' => $this->sucursales,
+            'empresas' => $user->role === \App\Enums\Role::SUPER_ADMIN->value
+                ? ($this->filtroCorporativoId
+                    ? Empresa::where('corporativo_id', $this->filtroCorporativoId)->orderBy('nombre')->get()
+                    : Empresa::orderBy('nombre')->get())
+                : ($user->role === \App\Enums\Role::ADMIN_CORPORATIVO->value
+                    ? Empresa::where('corporativo_id', $user->corporativo_id)->orderBy('nombre')->get()
+                    : collect()),
+        ]);
     }
 
-    private function calcularKpis($base): array
+    private function calcularKpis(\Illuminate\Database\Eloquent\Builder $base): array
     {
         $totalTokens = (clone $base)->count();
         $completadas = (clone $base)->where('estado', 'completado')->count();
@@ -68,13 +200,29 @@ class Dashboard extends Component
         ];
     }
 
-    private function calcularClima(ClimaScoringService $scoring, int $empresaId): array
+    private function calcularClima(ClimaScoringService $scoring, \App\Models\User $user): array
     {
         $respuestasBase = Respuesta::query()
             ->whereHas('encuesta', fn ($q) => $q
                 ->where('estado', 'completado')
-                ->whereHas('lote', fn ($q) => $q->where('empresa_id', $empresaId))
+                ->whereHas('lote', fn ($loteQuery) => $this->scopeByRole($loteQuery))
             );
+
+        if ($this->filtroLoteId) {
+            $respuestasBase->whereHas('encuesta', fn ($q) => $q->where('lote_id', $this->filtroLoteId));
+        }
+
+        if ($this->filtroCorporativoId && auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value) {
+            $respuestasBase->whereHas('encuesta.lote.empresa', fn ($q) => $q->where('corporativo_id', $this->filtroCorporativoId));
+        }
+
+        if ($this->filtroEmpresaId) {
+            $respuestasBase->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId));
+        }
+
+        if ($this->filtroSucursalId) {
+            $respuestasBase->whereHas('encuesta.lote', fn ($q) => $q->where('sucursal_id', $this->filtroSucursalId));
+        }
 
         $scoresDimensiones = $scoring->scoresPorDimension($respuestasBase);
         $scoresSubdimensiones = $scoring->scoresPorSubdimension($respuestasBase);
@@ -88,9 +236,23 @@ class Dashboard extends Component
         ];
     }
 
+    /**
+     * Calcula el ranking de empresas por promedio de clima laboral.
+     *
+     * @warning Este método produce N+1 queries complejas — una por empresa registrada.
+     * Es aceptable con volúmenes pequeños de tenants (<20 empresas). Si el volumen
+     * escala, debe rediseñarse con caché (Redis) o procesamiento en segundo plano.
+     * Ver backlog: optimización de calcularRanking() post-v1.2.0.
+     */
     private function calcularRanking(ClimaScoringService $scoring): \Illuminate\Support\Collection
     {
-        return Empresa::orderBy('nombre')->get()
+        $user = auth()->user();
+
+        $empresas = Empresa::orderBy('nombre')
+            ->when($user->role === \App\Enums\Role::ADMIN_CORPORATIVO->value, fn ($q) => $q->where('corporativo_id', $user->corporativo_id))
+            ->get();
+
+        return $empresas
             ->map(function ($empresa) use ($scoring) {
                 $base = Respuesta::query()
                     ->whereHas('encuesta', fn ($q) => $q

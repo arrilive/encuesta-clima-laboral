@@ -32,6 +32,12 @@ class PreguntaCerrada extends Component
 
     public function seleccionar(int $opcionId): void
     {
+        abort_if(
+            $this->encuesta->estado === 'completado',
+            403,
+            'Esta encuesta ya ha sido completada y no puede ser modificada.'
+        );
+
         $this->opcionSeleccionada = $opcionId;
 
         Respuesta::updateOrCreate(

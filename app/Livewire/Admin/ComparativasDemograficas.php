@@ -6,6 +6,7 @@ use App\Models\Dimension;
 use App\Models\Respuesta;
 use App\Services\ClimaScoringService;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Reactive;
 use Livewire\Component;
 
@@ -119,7 +120,8 @@ class ComparativasDemograficas extends Component
         return ['categorias' => $categorias, 'series' => $seriesData];
     }
 
-    public function getComparativasProperty(): array
+    #[Computed]
+    public function comparativas(): array
     {
         return $this->getDatosComparativas();
     }

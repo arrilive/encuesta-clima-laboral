@@ -7,6 +7,7 @@ use App\Models\Encuesta;
 use App\Models\OpcionRespuesta;
 use App\Models\Pregunta;
 use Illuminate\View\View;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class EncuestaBloque extends Component
@@ -19,10 +20,9 @@ class EncuestaBloque extends Component
 
     public string $dimensionNombre = '';
 
-    public int $totalDimensiones;
+    public string $dimensionDescripcion = '';
 
-    // Escucha el evento que disparan los hijos
-    protected $listeners = ['pregunta-respondida' => 'refrescarProgreso'];
+    public int $totalDimensiones;
 
     public function mount(string $token, int $dimension): void
     {
@@ -35,11 +35,13 @@ class EncuestaBloque extends Component
         $dimensionModelo = Dimension::where('orden', $dimension)->firstOrFail();
         $this->dimensionId = $dimensionModelo->id;
         $this->dimensionNombre = $dimensionModelo->nombre;
+        $this->dimensionDescripcion = $dimensionModelo->descripcion ?? '';
     }
 
     public array $preguntasSinRespuesta = [];
 
     // El hijo avisa que respondió — Livewire re-renderiza automáticamente
+    #[On('pregunta-respondida')]
     public function refrescarProgreso($preguntaId = null): void
     {
         // Removemos la pregunta del arreglo de errores si la acaban de responder
