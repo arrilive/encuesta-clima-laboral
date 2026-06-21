@@ -491,24 +491,6 @@
 
     {{-- SECCIÓN 5 — Contenido nivel 3 --}}
     @if ($nivel === 3)
-        @php
-            if (!function_exists('interpretacion')) {
-                function interpretacion(float $score): array
-                {
-                    if ($score >= 80) {
-                        return ['label' => 'Excelente', 'bg' => 'bg-emerald-100', 'text' => 'text-emerald-700'];
-                    }
-                    if ($score >= 51) {
-                        return ['label' => 'Buen clima', 'bg' => 'bg-blue-100', 'text' => 'text-blue-700'];
-                    }
-                    if ($score >= 25) {
-                        return ['label' => 'Regular', 'bg' => 'bg-amber-100', 'text' => 'text-amber-700'];
-                    }
-                    return ['label' => 'Deficiente', 'bg' => 'bg-red-100', 'text' => 'text-red-700'];
-                }
-            }
-        @endphp
-
         @if ($sinDatos)
             <x-admin.empty-state mensaje="No hay respuestas para los filtros seleccionados en esta subdimensión." />
         @elseif (empty($datosNivel3))
@@ -517,21 +499,14 @@
             <div class="space-y-3">
                 @foreach ($datosNivel3 as $index => $pregunta)
                     @php
-                        $interp = interpretacion($pregunta['puntaje']);
+                        $interp = \App\Support\ClimaBadge::resolver($pregunta['puntaje']);
                         $colorMap = [
                             1 => '#ef4444', // Falso — red
                             2 => '#f59e0b', // A veces — amber
                             3 => '#10b981', // Verdadero — green
                             0 => '#cbd5e1', // Prefiero no responder — gray
                         ];
-                        $scoreColor =
-                            $pregunta['puntaje'] >= 80
-                                ? '#059669'
-                                : ($pregunta['puntaje'] >= 51
-                                    ? '#2563eb'
-                                    : ($pregunta['puntaje'] >= 25
-                                        ? '#d97706'
-                                        : '#ef4444'));
+                        $scoreColor = $interp['color_hex'];
                     @endphp
 
                     <div
@@ -549,7 +524,7 @@
                                 </div>
                                 <span
                                     class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full
-                                             {{ $interp['bg'] }} {{ $interp['text'] }}">
+                                             {{ $interp['standard'] }}">
                                     {{ $interp['label'] }}
                                 </span>
                             </div>

@@ -135,15 +135,10 @@
                                 @if($clima['promedio_general'] > 0)
                                     @php
                                         $p = $clima['promedio_general'];
-                                        [$badgeColor, $badgeText] = match(true) {
-                                            $p >= 80 => ['bg-emerald-100 text-emerald-700', 'Excelente'],
-                                            $p >= 51 => ['bg-blue-100 text-blue-700',       'Buen clima'],
-                                            $p >= 25 => ['bg-amber-100 text-amber-700',     'Regular'],
-                                            default  => ['bg-red-100 text-red-700',         'Deficiente'],
-                                        };
+                                        $climaBadge = \App\Support\ClimaBadge::resolver($p);
                                     @endphp
-                                    <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $badgeColor }}">
-                                        {{ $badgeText }}
+                                    <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $climaBadge['standard'] }}">
+                                        {{ $climaBadge['label'] }}
                                     </span>
                                 @endif
 
@@ -381,7 +376,7 @@
                                 </div>
                                 <div class="flex items-center gap-3">
                                     <div class="w-32 bg-slate-100 rounded-full h-1.5 hidden sm:block">
-                                        <div class="bg-blue-500 h-1.5 rounded-full" style="width: {{ $empresa['puntaje'] }}%"></div>
+                                        <div class="h-1.5 rounded-full" style="width: {{ $empresa['puntaje'] }}%; background-color: {{ \App\Support\ClimaBadge::resolver($empresa['puntaje'])['color_hex'] }};"></div>
                                     </div>
                                     <span class="text-sm font-bold text-slate-900 w-10 text-right tabular-nums">{{ number_format($empresa['puntaje'], 1) }}</span>
                                 </div>

@@ -69,12 +69,12 @@
             color: #2563eb;
         }
 
-        .badge-regular {
+        .badge-atencion {
             background-color: #fef3c7;
             color: #d97706;
         }
 
-        .badge-deficiente {
+        .badge-riesgo {
             background-color: #fee2e2;
             color: #dc2626;
         }
@@ -199,47 +199,7 @@
 
 <body>
 
-    @php
-        function getBadgeClass($score)
-        {
-            if ($score >= 80) {
-                return 'badge-excelente';
-            }
-            if ($score >= 51) {
-                return 'badge-bueno';
-            }
-            if ($score >= 25) {
-                return 'badge-regular';
-            }
-            return 'badge-deficiente';
-        }
-        function getBadgeLabel($score)
-        {
-            if ($score >= 80) {
-                return 'Excelente';
-            }
-            if ($score >= 51) {
-                return 'Buen clima';
-            }
-            if ($score >= 25) {
-                return 'Regular';
-            }
-            return 'Deficiente';
-        }
-        function getBarColor($score)
-        {
-            if ($score >= 80) {
-                return '#10b981';
-            } // Emerald
-            if ($score >= 51) {
-                return '#3b82f6';
-            } // Blue
-            if ($score >= 25) {
-                return '#f59e0b';
-            } // Amber
-            return '#ef4444'; // Red
-        }
-    @endphp
+
 
     <div class="header">
         <h1>Reporte de Clima Laboral</h1>
@@ -270,7 +230,7 @@
                     <div class="kpi-value">{{ number_format($promedioGeneral, 1) }}</div>
                     <div style="margin-top: 8px;">
                         <span
-                            class="badge {{ getBadgeClass($promedioGeneral) }}">{{ getBadgeLabel($promedioGeneral) }}</span>
+                            class="badge {{ \App\Support\ClimaBadge::resolver($promedioGeneral)['pdf_class'] }}">{{ \App\Support\ClimaBadge::resolver($promedioGeneral)['label'] }}</span>
                     </div>
                 </div>
             </td>
@@ -311,8 +271,8 @@
                             <strong style="color: #0f172a;">{{ number_format($item['puntaje'], 1) }}</strong>
                         </td>
                         <td>
-                            <span class="badge {{ getBadgeClass($item['puntaje']) }}">
-                                {{ getBadgeLabel($item['puntaje']) }}
+                            <span class="badge {{ \App\Support\ClimaBadge::resolver($item['puntaje'])['pdf_class'] }}">
+                                {{ \App\Support\ClimaBadge::resolver($item['puntaje'])['label'] }}
                             </span>
                         </td>
                     </tr>
@@ -352,7 +312,7 @@
                                     <td>
                                         <div style="width: 250px; background-color: #e2e8f0; border-radius: 4px;">
                                             <div
-                                                style="height: 12px; width: {{ max(0, min(100, (float) ($sub['puntaje'] ?? 0))) }}%; background-color: {{ getBarColor($sub['puntaje'] ?? 0) }}; border-radius: 4px;">
+                                                style="height: 12px; width: {{ max(0, min(100, (float) ($sub['puntaje'] ?? 0))) }}%; background-color: {{ \App\Support\ClimaBadge::resolver($sub['puntaje'] ?? 0)['color_hex'] }}; border-radius: 4px;">
                                             </div>
                                         </div>
                                     </td>
