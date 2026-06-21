@@ -4,7 +4,7 @@
 ![PHP 8.4](https://img.shields.io/badge/PHP-8.4-777BB4?style=for-the-badge&logo=php&logoColor=white)
 ![Livewire 3](https://img.shields.io/badge/Livewire-3-4E56A6?style=for-the-badge)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-137%20passing-brightgreen?style=for-the-badge)
+![Tests](https://img.shields.io/badge/tests-190%20passing-brightgreen?style=for-the-badge)
 
 ## ¿De qué trata este proyecto?
 
@@ -39,7 +39,7 @@ Nació para solucionar un problema muy típico de Recursos Humanos: conseguir qu
 * **Reporte Drill-down (3 niveles):** Vas de lo macro a lo micro. Un gráfico radar te da la foto de las 6 Dimensiones; si haces clic, bajas a ver el detalle en barras con semáforo por Subdimensión; y de ahí, llegas a la métrica pregunta por pregunta.
 * **Filtros cruzados:** Puedes mezclar hasta 6 filtros demográficos distintos para aislar segmentos críticos en tus análisis.
 * **Comparativas directas:** Evaluaciones cara a cara para responder cosas como: ¿Cómo nos perciben operarios vs. gerentes?
-* **Exportación amigable:** Un reporte general listo en PDF o si lo prefieres, una tabla CSV pesada para meter a Excel.
+* **Exportación amigable:** Un reporte general listo en PDF.
 * **Jerarquía organizacional multitenant:** El sistema modela estructuras reales con tres niveles: Corporativo → Empresa → Sucursal. Cada nivel es opcional — una empresa pequeña puede operar sin corporativo ni sucursales, mientras que un grupo empresarial puede tener múltiples empresas con múltiples sedes, cada una con sus propios resultados y llave de acceso.
 
 ## Arquitectura detrás de cámara
@@ -89,34 +89,63 @@ Poner a rodar este repo en local te tomará solo un par de minutos, si ya tienes
 | **`admin_empresa`** | El departamento de RRHH de una empresa específica. Visualiza reportes de su empresa y sus sucursales. Scoped globalmente — no puede ver otros espacios de trabajo. |
 | **`admin_sucursal`** | Restringido a los reportes de su sucursal específica. Ideal para empresas con múltiples sedes que quieren gestión granular. |
 
-> **Nota:** La gestión visual de corporativos y sucursales en el
-> panel del super_admin está en desarrollo. La arquitectura de
-> base de datos, modelos, relaciones y middleware de autorización
-> están completos — la interfaz de administración se incorpora
-> en la siguiente versión.
-
 ## Testing Integrados
 
-La suite de tests que he armado con PestPHP cubre 137 escenarios que respaldan cada cálculo del clima y comportamiento del panel. 
+La suite de tests que he armado con PestPHP cubre 190 escenarios que respaldan cada cálculo del clima y comportamiento del panel. 
 
 Si bajas el repositorio, haz el intento de correr la suite:
 ```bash
 php artisan test
 ```
 
-Y para comprobar que todo sigue estrictamente testeado con la lógica a prueba de fallos mínima del 80%:
-```bash
-XDEBUG_MODE=coverage php artisan test --coverage
-```
-*Nota: Este comando requiere tener instalado **Xdebug** con el modo `coverage` activo en el entorno.*
-
 ## 5 Decisiones Técnicas que valen la pena destacar
 
 1. **Privacidad by-design con OTP y hash unidireccional:** La verificación por número de WhatsApp garantiza que cada empleado participe una sola vez por lote, sin comprometer el anonimato. El número nunca se vincula a las respuestas: un hash SHA-256 salteado registra la participación, y el número desaparece de la base de datos en cuanto se valida el OTP. Un job programado limpia automáticamente los registros temporales cada hora.
-2. **Scoring que todo el mundo entiende:** Las encuestas contestan sobre Likert (Ej: del 1 al 3). Matemáticamente transformé esto en backend a escalas directas de 0 al 100 puntos y monté una clasificación de semáforo simple de leer: Regular entre 25 y 50 puntos, Buen Clima entre 51 y 79, o Excelente para notas de 80 puntos en adelante. Por debajo de 25 es Deficiente.
+2. **Scoring que todo el mundo entiende:** Las encuestas contestan sobre Likert (Ej: del 1 al 3). Matemáticamente transformé esto en backend a escalas directas de 0 al 100 puntos y monté una clasificación de semáforo simple de leer: En atención entre 45 y 59 puntos, Buen Clima entre 60 y 74, o Excelente desde 75 puntos en adelante. Por debajo de 45 es En riesgo.
 3. **Optimización con GROUP BY en bases de datos:** Empujar todo el peso de sacar el clima laboral directo a la base de datos evadiendo a Eloquent resolviendo promedios grandes mejoró la escalabilidad y salvó picos locos de RAM cuando filtramos por 3 ó 4 datos demográficos. 
 4. **Arquitectura responsiva sin pesadez SPA:** Mantuvimos el front con Livewire para acelerar los despachos asíncronos y refrescar los tableros al vuelo en el navegador simulando el flujo de una Single Page App muy bien armada, pero consumiendo poquísimo peso en Javascript total.
 5. **Mantenimiento de `email_verified_at` como deuda técnica:** La columna `email_verified_at` en la tabla de usuarios (`users`) es una herencia del scaffolding de Laravel Breeze. Dado que el sistema no utiliza la verificación de correo electrónico en ningún flujo y no es crítico removerla, se mantiene en la base de datos y modelo de forma documentada como deuda técnica aceptada, evitando romper la compatibilidad con las vistas y las pruebas de Breeze.
+
+## Privacidad y Anonimato
+
+El sistema fue diseñado desde cero para que sea técnicamente imposible rastrear qué persona respondió qué en la encuesta. A continuación explicamos cómo funciona y qué datos se manejan en cada paso.
+
+### ¿Cómo se garantiza el anonimato?
+
+El flujo de verificación está diseñado para que el número de teléfono del empleado **nunca quede vinculado a sus respuestas**:
+
+1. El empleado ingresa su número de WhatsApp para recibir un código de verificación (OTP).
+2. El sistema calcula una huella digital irreversible (hash SHA-256) del número combinado con un código secreto del servidor — esta huella solo sirve para verificar que la persona no haya participado antes en ese lote.
+3. Una vez validado el OTP, el número de teléfono se elimina permanentemente de la base de datos. Lo que queda es únicamente la huella digital anónima.
+4. El empleado recibe un token de acceso (ej. `TK-A3F9-2K81`) que es su única identidad en el sistema. Nadie — ni el administrador, ni el sistema — puede reconstruir qué número generó ese token.
+
+### ¿Qué datos se almacenan y por cuánto tiempo?
+
+| Dato | ¿Se almacena? | ¿Por cuánto tiempo? |
+|---|---|---|
+| Número de teléfono | Solo durante la verificación OTP | Máximo 10 minutos |
+| Código OTP | Solo el hash (nunca el código real) | Máximo 10 minutos |
+| Huella del número (hash) | Sí, anónima | Hasta que el lote expira |
+| Token de acceso | Sí | Mientras el lote esté activo |
+| Respuestas a preguntas | Sí, sin nombre ni identidad | Indefinidamente (datos históricos) |
+| Datos demográficos | Sí, sin nombre ni identidad | Indefinidamente (datos históricos) |
+
+### Umbrales de protección
+
+Para evitar que los filtros demográficos revelen identidades en grupos pequeños, el sistema bloquea los resultados cuando el segmento tiene menos participantes del mínimo requerido:
+
+- **Reportes numéricos:** se necesitan al menos **5 respuestas** para mostrar puntajes y gráficas.
+- **Comentarios abiertos:** se necesitan al menos **10 respuestas** para mostrar las respuestas de texto libre.
+
+Cuando no se alcanza el umbral, el sistema muestra un mensaje de privacidad en lugar de los resultados.
+
+### Riesgos residuales aceptados
+
+Ningún sistema es 100% hermético. Los siguientes riesgos han sido identificados y conscientemente aceptados dado el perfil de uso del sistema:
+
+- **Correlación temporal:** un administrador con acceso a los logs del servidor podría correlacionar el momento en que se generó un token con la hora de llegada de un OTP. Mitigación: los logs de servidor no son accesibles desde el panel administrativo.
+- **Correlación de comentarios abiertos:** el estilo de redacción en preguntas abiertas puede revelar la autoría a lectores con conocimiento del equipo. El umbral de 10 respuestas reduce este riesgo pero no lo elimina.
+- **SIM virtual:** el control de unicidad se basa en el número de teléfono. Un actor malintencionado con acceso a múltiples SIMs virtuales podría participar más de una vez. El costo y esfuerzo de este fraude es suficientemente alto para el contexto de uso del sistema.
 
 ## Conecta conmigo
 
