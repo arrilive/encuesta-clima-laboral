@@ -256,19 +256,19 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {{-- Promedio General --}}
                     <div class="bg-white rounded-2xl shadow-sm p-4">
-                        <p class="text-slate-500 text-sm mb-1">Promedio General</p>
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Promedio General</p>
                         <div class="flex items-end justify-between">
-                            <h3 class="text-2xl font-bold text-slate-900">{{ number_format($promedioGeneral, 1) }}</h3>
+                            <h3 class="text-2xl font-bold text-slate-900 tabular-nums">{{ number_format($promedioGeneral, 1) }}</h3>
                             <x-badge-clima :puntaje="$promedioGeneral" variant="compact" />
                         </div>
                     </div>
 
                     {{-- Encuestas Completadas --}}
                     <div class="bg-white rounded-2xl shadow-sm p-4">
-                        <p class="text-slate-500 text-sm mb-1">Completadas</p>
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Completadas</p>
                         <div class="flex items-center justify-between">
                             <div>
-                                <h3 class="text-2xl font-bold text-slate-900">{{ $completadasFiltradas }}</h3>
+                                <h3 class="text-2xl font-bold text-slate-900 tabular-nums">{{ $completadasFiltradas }}</h3>
                                 <p class="text-slate-400 text-[10px]">de {{ $totalTokens }} tokens</p>
                             </div>
                             <div class="p-2 bg-blue-50 rounded-xl">
@@ -283,7 +283,7 @@
 
                     {{-- Dimensión más alta --}}
                     <div class="bg-white rounded-2xl shadow-sm p-4">
-                        <p class="text-slate-500 text-sm mb-1">Más alto</p>
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Más alto</p>
                         @php
                             $maxDim =
                                 count($datosNivel1) > 0 ? collect($datosNivel1)->sortByDesc('puntaje')->first() : null;
@@ -299,7 +299,7 @@
 
                     {{-- Dimensión más baja --}}
                     <div class="bg-white rounded-2xl shadow-sm p-4">
-                        <p class="text-slate-500 text-sm mb-1">Más bajo</p>
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Más bajo</p>
                         @php
                             $minDim =
                                 count($datosNivel1) > 0 ? collect($datosNivel1)->sortBy('puntaje')->first() : null;
@@ -316,7 +316,7 @@
                 <div class="grid grid-cols-1 lg:grid-cols-[55fr_45fr] gap-6 items-start">
                     {{-- 3b. Radar chart --}}
                     <div class="bg-white rounded-2xl shadow-sm p-3">
-                        <h2 class="text-slate-900 font-semibold mb-4">Mapa de clima laboral</h2>
+                        <h2 class="text-base font-semibold text-slate-800 tracking-tight mb-4">Mapa de Clima Laboral</h2>
                         <div class="flex-1 min-h-[480px]"
                             x-data="{ chart: null }"
                             x-init="
@@ -325,7 +325,7 @@
                                 window.radarOptions.series = [{ name: 'Puntaje', data: datosActuales.map(d => d.puntaje) }];
                                 window.radarOptions.xaxis = {
                                     categories: datosActuales.map(d => d.nombre),
-                                    labels: { style: { colors: datosActuales.map(() => '#64748b'), fontSize: '12px' } }
+                                    labels: { style: { colors: datosActuales.map(() => '#1e293b'), fontSize: '13px', fontWeight: '600', fontFamily: 'DM Sans, sans-serif' } }
                                 };
                                 if (chart) { chart.destroy(); }
                                 chart = new ApexCharts($el.querySelector('#radar-chart'), window.radarOptions);
@@ -334,7 +334,7 @@
                             x-on:radar-update.window="
                                 window.radarDatos = $event.detail.datos;
                                 window.radarOptions.series = [{ name: 'Puntaje', data: $event.detail.datos.map(d => d.puntaje) }];
-                                window.radarOptions.xaxis = { categories: $event.detail.datos.map(d => d.nombre), labels: { style: { colors: $event.detail.datos.map(() => '#64748b'), fontSize: '12px' } } };
+                                window.radarOptions.xaxis = { categories: $event.detail.datos.map(d => d.nombre), labels: { style: { colors: $event.detail.datos.map(() => '#1e293b'), fontSize: '13px', fontWeight: '600', fontFamily: 'DM Sans, sans-serif' } } };
                                 if (chart) { chart.destroy(); }
                                 chart = new ApexCharts($el.querySelector('#radar-chart'), window.radarOptions);
                                 window.radarChartInstance = chart;
@@ -347,16 +347,16 @@
 
                     {{-- 3c. Ranking --}}
                     <div class="bg-white rounded-2xl shadow-sm p-4 flex flex-col">
-                        <h2 class="text-slate-900 font-semibold mb-4">Ranking de Dimensiones</h2>
+                        <h2 class="text-base font-semibold text-slate-800 tracking-tight mb-4">Ranking de Dimensiones</h2>
                         <div>
                             <table class="w-full text-sm text-left">
                                 <thead>
-                                    <tr class="text-slate-400 border-b border-slate-100">
-                                        <th class="pb-3 font-medium px-2">#</th>
-                                        <th class="pb-3 font-medium">Dimensión</th>
-                                        <th class="pb-3 font-medium text-center">Puntaje</th>
-                                        <th class="pb-3 font-medium">Interpretación</th>
-                                        <th class="pb-3 font-medium text-right"></th>
+                                    <tr class="border-b border-slate-100">
+                                        <th class="pb-3 text-xs font-semibold text-slate-400 uppercase tracking-wider px-2">#</th>
+                                        <th class="pb-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Dimensión</th>
+                                        <th class="pb-3 text-xs font-semibold text-slate-400 uppercase tracking-wider text-center">Puntaje</th>
+                                        <th class="pb-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Interpretación</th>
+                                        <th class="pb-3 text-xs font-semibold text-slate-400 uppercase tracking-wider text-right"></th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-50">
@@ -434,7 +434,7 @@
 
                 {{-- Chart de barras horizontales --}}
                 <div class="bg-white rounded-2xl shadow-sm p-4">
-                    <h2 class="text-slate-900 font-semibold mb-4">Puntaje por Subdimensión</h2>
+                    <h2 class="text-base font-semibold text-slate-800 tracking-tight mb-4">Puntaje por Subdimensión</h2>
                     <div x-data="{ chart: null }" x-init="window.barrasNivel2Datos = @js($datosNivel2);
                     if (chart) { chart.destroy(); }
                     chart = new ApexCharts(
@@ -460,7 +460,7 @@
 
                 {{-- Chart donut distribución --}}
                 <div class="bg-white rounded-2xl shadow-sm p-4">
-                    <h2 class="text-slate-900 font-semibold mb-4">Distribución de Respuestas</h2>
+                    <h2 class="text-base font-semibold text-slate-800 tracking-tight mb-4">Distribución de Respuestas</h2>
                     <div x-data="{ chart: null }" x-init="window.donutNivel2Datos = @js($distribucionAgregada);
                     const colorMap = {
                         'Verdadero': '#10b981',
@@ -773,8 +773,10 @@
                     categories: window.radarDatos.map(d => d.nombre),
                     labels: {
                         style: {
-                            colors: window.radarDatos.map(() => '#64748b'),
-                            fontSize: '12px'
+                            colors: window.radarDatos.map(() => '#1e293b'),
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            fontFamily: 'DM Sans, sans-serif',
                         }
                     }
                 },
