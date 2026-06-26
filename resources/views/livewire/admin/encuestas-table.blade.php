@@ -5,7 +5,7 @@
 
         {{-- Barra superior: acción --}}
         <div class="flex items-center justify-between mb-4">
-            <span class="text-slate-900 font-semibold">Filtros</span>
+            <span class="text-base font-semibold text-slate-800 tracking-tight">Filtros</span>
             <button wire:click="limpiarFiltros" wire:loading.attr="disabled"
                 class="text-blue-600 hover:text-blue-700 text-sm font-semibold flex items-center gap-2
                        transition-all duration-200 hover:-translate-y-px active:translate-y-0
@@ -173,13 +173,13 @@
             <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b border-slate-200 bg-slate-50">
-                        <th class="text-left px-6 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Token</th>
+                        <th class="text-left px-6 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Token</th>
                         @if(in_array(auth()->user()->role, [\App\Enums\Role::SUPER_ADMIN->value, \App\Enums\Role::ADMIN_CORPORATIVO->value]))
-                            <th class="text-left px-6 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Empresa</th>
+                            <th class="text-left px-6 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Empresa</th>
                         @endif
-                        <th class="text-left px-6 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Estado</th>
-                        <th class="text-left px-6 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Asignado</th>
-                        <th class="text-left px-6 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Completado</th>
+                        <th class="text-left px-6 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
+                        <th class="text-left px-6 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Asignado</th>
+                        <th class="text-left px-6 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Completado</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">

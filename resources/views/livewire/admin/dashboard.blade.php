@@ -3,7 +3,7 @@
         {{-- ── CLIMA (protagonista) ─────────────────────────────────────────── --}}
         <div>
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest">
+                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     @if(auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value)
                         Resumen general
                     @else
@@ -16,7 +16,7 @@
                     {{-- Corporativo (Solo super_admin) --}}
                     @if(auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value)
                         <div class="flex items-center gap-1.5">
-                            <span class="text-sm font-medium text-slate-400">Corporativo:</span>
+                            <span class="text-sm font-semibold text-slate-600">Corporativo:</span>
                             <div class="w-48 sm:w-56">
                                 <x-admin.combobox-entidad
                                     wire-model="filtroCorporativoId"
@@ -38,7 +38,7 @@
                             $empresaDeshabilitada = auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value && !$filtroCorporativoId;
                         @endphp
                         <div class="flex items-center gap-1.5">
-                            <span class="text-sm font-medium text-slate-400">Empresa:</span>
+                            <span class="text-sm font-semibold text-slate-600">Empresa:</span>
                             <div class="w-48 sm:w-56">
                                 <x-admin.combobox-entidad
                                     wire-model="filtroEmpresaId"
@@ -63,7 +63,7 @@
                             ]) && !$filtroEmpresaId;
                         @endphp
                         <div class="flex items-center gap-1.5">
-                            <span class="text-sm font-medium text-slate-400">Sucursal:</span>
+                            <span class="text-sm font-semibold text-slate-600">Sucursal:</span>
                             <div class="w-48 sm:w-56">
                                 <x-admin.combobox-entidad
                                     wire-model="filtroSucursalId"
@@ -82,7 +82,7 @@
                     {{-- Lote / Período --}}
                     @if($lotes->isNotEmpty())
                         <div class="flex items-center gap-1.5">
-                            <span class="text-sm font-medium text-slate-400">Período:</span>
+                            <span class="text-sm font-semibold text-slate-600">Período:</span>
                             <div class="w-56 sm:w-64">
                                 <x-admin.combobox-entidad
                                     wire-model="filtroLoteId"
@@ -118,14 +118,14 @@
                         <div class="flex justify-between h-full">
                             {{-- Izquierda: label + numero --}}
                             <div class="flex flex-col justify-between">
-                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Promedio general</p>
+                                <p class="text-sm font-semibold text-slate-500 uppercase tracking-wide">Promedio general</p>
                                 <div class="mt-4">
                                     @if($clima['promedio_general'] > 0)
-                                        <p class="text-4xl font-extrabold text-slate-900 leading-none">
+                                        <p class="text-3xl font-bold text-slate-900 leading-none tabular-nums">
                                             {{ number_format($clima['promedio_general'], 1) }}
                                         </p>
                                     @else
-                                        <p class="text-3xl font-bold text-slate-300 leading-none">Sin datos</p>
+                                        <p class="text-2xl font-bold text-slate-300 leading-none">Sin datos</p>
                                     @endif
                                 </div>
                             </div>
@@ -155,12 +155,12 @@
 
                     {{-- Dimensiones destacadas --}}
                     <div class="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col gap-4">
-                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Dimensiones destacadas</p>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Dimensiones destacadas</p>
                         @if($clima['dimension_alta'])
                             <div class="flex items-start justify-between">
                                 <div>
-                                    <p class="text-xs text-slate-400 mb-0.5">Más alta</p>
-                                    <p class="text-sm font-semibold text-slate-700">{{ $clima['dimension_alta']['nombre'] }}</p>
+                                    <p class="text-xs font-medium text-slate-500 mb-0.5">Más alta</p>
+                                    <p class="text-sm font-medium text-slate-700">{{ $clima['dimension_alta']['nombre'] }}</p>
                                 </div>
                                 <span class="text-2xl font-bold text-emerald-600 tabular-nums">{{ number_format($clima['dimension_alta']['puntaje'], 1) }}</span>
                             </div>
@@ -169,8 +169,8 @@
                         @if($clima['dimension_baja'])
                             <div class="flex items-start justify-between">
                                 <div>
-                                    <p class="text-xs text-slate-400 mb-0.5">Más baja</p>
-                                    <p class="text-sm font-semibold text-slate-700">{{ $clima['dimension_baja']['nombre'] }}</p>
+                                    <p class="text-xs font-medium text-slate-500 mb-0.5">Más baja</p>
+                                    <p class="text-sm font-medium text-slate-700">{{ $clima['dimension_baja']['nombre'] }}</p>
                                 </div>
                                 <span class="text-2xl font-bold text-red-500 tabular-nums">{{ number_format($clima['dimension_baja']['puntaje'], 1) }}</span>
                             </div>
@@ -182,12 +182,12 @@
 
                     {{-- Subdimensiones destacadas --}}
                     <div class="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col gap-4">
-                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Subdimensiones destacadas</p>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Subdimensiones destacadas</p>
                         @if($clima['subdimension_alta'])
                             <div class="flex items-start justify-between">
                                 <div>
-                                    <p class="text-xs text-slate-400 mb-0.5">Más alta</p>
-                                    <p class="text-sm font-semibold text-slate-700">{{ $clima['subdimension_alta']['nombre'] }}</p>
+                                    <p class="text-xs font-medium text-slate-500 mb-0.5">Más alta</p>
+                                    <p class="text-sm font-medium text-slate-700">{{ $clima['subdimension_alta']['nombre'] }}</p>
                                 </div>
                                 <span class="text-2xl font-bold text-emerald-600 tabular-nums">{{ number_format($clima['subdimension_alta']['puntaje'], 1) }}</span>
                             </div>
@@ -196,8 +196,8 @@
                         @if($clima['subdimension_baja'])
                             <div class="flex items-start justify-between">
                                 <div>
-                                    <p class="text-xs text-slate-400 mb-0.5">Más baja</p>
-                                    <p class="text-sm font-semibold text-slate-700">{{ $clima['subdimension_baja']['nombre'] }}</p>
+                                    <p class="text-xs font-medium text-slate-500 mb-0.5">Más baja</p>
+                                    <p class="text-sm font-medium text-slate-700">{{ $clima['subdimension_baja']['nombre'] }}</p>
                                 </div>
                                 <span class="text-2xl font-bold text-red-500 tabular-nums">{{ number_format($clima['subdimension_baja']['puntaje'], 1) }}</span>
                             </div>
@@ -217,15 +217,15 @@
         ]))
         {{-- ── PARTICIPACIÓN Y ALERTAS ──────────────────────────────────────── --}}
         <div>
-            <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Participación</p>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Participación</p>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
                 {{-- Tasa participación — más ancha, es el KPI operativo más importante --}}
                 <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6">
-                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Tasa de participación</p>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Tasa de participación</p>
                     <div class="flex items-end justify-between mb-3">
                         <p class="text-3xl font-bold text-emerald-600 tabular-nums">{{ $kpis['tasa_participacion'] }}%</p>
-                        <p class="text-sm text-slate-400 mb-1 tabular-nums">{{ $kpis['completadas'] }} / {{ $kpis['total_tokens'] }}</p>
+                        <p class="text-xs font-medium text-slate-500 mb-1 tabular-nums">{{ $kpis['completadas'] }} / {{ $kpis['total_tokens'] }}</p>
                     </div>
                     <div class="w-full bg-slate-100 rounded-full h-2.5">
                         <div class="bg-emerald-500 h-2.5 rounded-full transition-all duration-700"
@@ -241,10 +241,10 @@
                         <div class="flex justify-between h-full">
                             {{-- Izquierda: label + número --}}
                             <div class="flex flex-col justify-between">
-                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
                                     En riesgo <span class="normal-case font-normal">(+14 días)</span>
                                 </p>
-                                <p class="text-3xl font-bold text-red-500 tabular-nums">
+                                <p class="text-2xl font-bold text-red-500 tabular-nums">
                                     {{ $kpis['en_riesgo'] }}
                                 </p>
                             </div>
@@ -255,7 +255,7 @@
                                 <p x-show="!confirmar" class="text-xs text-red-500 font-medium">
                                     Más de 14 días sin actividad
                                 </p>
-                                <p x-show="confirmar" x-cloak class="text-xs text-red-700 font-medium">
+                                <p x-show="confirmar" x-cloak class="text-xs text-red-700 font-semibold">
                                     ¿Confirmas liberar {{ $kpis['en_riesgo'] }} token(s)?
                                 </p>
 
@@ -290,10 +290,10 @@
                     <div class="rounded-2xl border border-amber-200 bg-amber-50 p-6">
                         <div class="flex justify-between h-full">
                             <div class="flex flex-col justify-between">
-                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
                                     Sin actividad <span class="normal-case font-normal">(+7 días)</span>
                                 </p>
-                                <p class="text-3xl font-bold text-amber-500 tabular-nums">
+                                <p class="text-2xl font-bold text-amber-500 tabular-nums">
                                     {{ $kpis['en_advertencia'] }}
                                 </p>
                             </div>
@@ -308,10 +308,10 @@
                     <div class="rounded-2xl border border-slate-200 bg-white p-6">
                         <div class="flex justify-between h-full">
                             <div class="flex flex-col justify-between">
-                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
                                     Sin actividad
                                 </p>
-                                <p class="text-3xl font-bold text-slate-300 tabular-nums">0</p>
+                                <p class="text-2xl font-bold text-slate-300 tabular-nums">0</p>
                             </div>
                             <div class="flex flex-col items-end justify-between text-right">
                                 <p class="text-xs text-slate-400 font-medium">Todos los tokens activos</p>
@@ -326,32 +326,32 @@
 
         {{-- ── TOKENS (detalle operativo — peso visual menor) ───────────────── --}}
         <div>
-            <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Tokens</p>
+            <p class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">Tokens</p>
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
 
                 <div class="bg-white rounded-xl border border-slate-200 p-5">
-                    <p class="text-sm text-slate-400 mb-1">Total</p>
-                    <p class="text-3xl font-bold text-slate-900 tabular-nums">{{ $kpis['total_tokens'] }}</p>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Total</p>
+                    <p class="text-2xl font-bold text-slate-900 tabular-nums">{{ $kpis['total_tokens'] }}</p>
                 </div>
 
                 <div class="bg-white rounded-xl border border-slate-200 p-5">
-                    <p class="text-sm text-slate-400 mb-1">Completados</p>
-                    <p class="text-3xl font-bold text-emerald-600 tabular-nums">{{ $kpis['completadas'] }}</p>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Completados</p>
+                    <p class="text-2xl font-bold text-emerald-600 tabular-nums">{{ $kpis['completadas'] }}</p>
                 </div>
 
                 <div class="bg-white rounded-xl border border-slate-200 p-5">
-                    <p class="text-sm text-slate-400 mb-1">En progreso</p>
-                    <p class="text-3xl font-bold text-blue-600 tabular-nums">{{ $kpis['en_progreso'] }}</p>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">En progreso</p>
+                    <p class="text-2xl font-bold text-blue-600 tabular-nums">{{ $kpis['en_progreso'] }}</p>
                 </div>
 
                 <div class="bg-white rounded-xl border border-slate-200 p-5">
-                    <p class="text-sm text-slate-400 mb-1">Asignados</p>
-                    <p class="text-3xl font-bold text-amber-500 tabular-nums">{{ $kpis['asignados'] }}</p>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Asignados</p>
+                    <p class="text-2xl font-bold text-amber-500 tabular-nums">{{ $kpis['asignados'] }}</p>
                 </div>
 
                 <div class="bg-white rounded-xl border border-slate-200 p-5">
-                    <p class="text-sm text-slate-400 mb-1">Disponibles</p>
-                    <p class="text-3xl font-bold text-slate-500 tabular-nums">
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Disponibles</p>
+                    <p class="text-2xl font-bold text-slate-500 tabular-nums">
                         {{ $kpis['disponibles'] }}
                     </p>
                 </div>
@@ -365,7 +365,7 @@
             \App\Enums\Role::ADMIN_CORPORATIVO->value,
         ]) && $rankingEmpresas->isNotEmpty())
             <div>
-                <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Ranking de empresas</p>
+                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Ranking de empresas</p>
                 <div class="bg-white rounded-2xl border border-slate-200 p-6">
                     <div class="divide-y divide-slate-100">
                         @foreach($rankingEmpresas as $i => $empresa)

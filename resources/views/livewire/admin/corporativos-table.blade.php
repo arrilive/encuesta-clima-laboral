@@ -3,8 +3,8 @@
     {{-- Header --}}
     <div class="flex items-center justify-between">
         <div>
-            <h2 class="text-lg font-semibold text-slate-900">Gestión de corporativos</h2>
-            <p class="text-sm text-slate-400 mt-0.5">Crea, edita y administra los grupos corporativos del sistema.</p>
+            <h2 class="text-xl font-bold text-slate-900 tracking-tight">Gestión de corporativos</h2>
+            <p class="text-sm text-slate-600 mt-1">Crea, edita y administra los grupos corporativos del sistema.</p>
         </div>
         <button
             wire:click="abrirModalCrear"
@@ -40,9 +40,9 @@
         <table class="w-full text-sm">
             <thead>
                 <tr class="border-b border-slate-200 bg-slate-50">
-                    <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Nombre</th>
-                    <th class="text-center px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Estado</th>
-                    <th class="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Acciones</th>
+                    <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Nombre</th>
+                    <th class="text-center px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
+                    <th class="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">

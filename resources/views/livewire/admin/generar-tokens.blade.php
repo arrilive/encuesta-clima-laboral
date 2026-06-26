@@ -23,7 +23,7 @@
         x-effect="fechaFinLote = '{{ $loteSeleccionado?->fecha_fin ? $loteSeleccionado->fecha_fin->toDateString() : '' }}'"
         class="bg-white rounded-2xl border border-slate-200 p-6 max-w-4xl"
     >
-        <h2 class="text-sm font-semibold text-slate-900 mb-5 transition-all duration-300" x-text="modo === 'a' ? 'Generar nuevo lote de tokens' : 'Agregar tokens a un lote existente'"></h2>
+        <h2 class="text-base font-semibold text-slate-800 tracking-tight mb-5 transition-all duration-300" x-text="modo === 'a' ? 'Generar nuevo lote de tokens' : 'Agregar tokens a un lote existente'"></h2>
 
         @if($generado)
             <div class="flex items-center gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-xl mb-5">
@@ -401,7 +401,7 @@
                             </svg>
                         </div>
                         <div class="mt-3 text-center sm:mt-5">
-                            <h3 class="text-base font-semibold leading-6 text-slate-900">
+                            <h3 class="text-base font-semibold text-slate-900">
                                 Confirmar inyección de tokens
                             </h3>
                             
@@ -500,16 +500,16 @@
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b border-slate-200 bg-slate-50">
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Fecha</th>
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Vigencia</th>
+                            <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Fecha</th>
+                            <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Vigencia</th>
                             @if(auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value)
-                                <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Empresa</th>
-                                <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Sucursal</th>
+                                <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Empresa</th>
+                                <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Sucursal</th>
                             @endif
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Nombre del lote</th>
-                            <th class="text-center px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Cantidad</th>
-                            <th class="text-center px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Estado</th>
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Generado por</th>
+                            <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Nombre del lote</th>
+                            <th class="text-center px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Cantidad</th>
+                            <th class="text-center px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Estado</th>
+                            <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Generado por</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">

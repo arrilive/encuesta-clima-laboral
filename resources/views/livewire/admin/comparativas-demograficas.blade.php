@@ -1,7 +1,7 @@
 <div class="bg-white rounded-2xl shadow-sm p-4 mt-6">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
         <div>
-            <h2 class="text-slate-900 font-semibold mb-1">Comparativas demográficas</h2>
+            <h2 class="text-base font-semibold text-slate-800 tracking-tight mb-1">Comparativas demográficas</h2>
             <p class="text-slate-500 text-sm">Puntaje promedio en cada dimensión según el grupo seleccionado</p>
         </div>
         <select wire:model.live="campoComparativa"

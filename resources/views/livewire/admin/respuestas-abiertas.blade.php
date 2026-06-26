@@ -3,7 +3,7 @@
     {{-- Header con toggle --}}
     <div class="flex items-center justify-between">
         <div>
-            <h2 class="text-slate-900 font-semibold">Respuestas abiertas</h2>
+            <h2 class="text-base font-semibold text-slate-800 tracking-tight">Respuestas abiertas</h2>
             <p class="text-slate-500 text-sm mt-0.5">Comentarios textuales de los encuestados</p>
         </div>
         <button wire:click="toggleRespuestasAbiertas"
