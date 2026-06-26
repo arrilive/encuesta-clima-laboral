@@ -76,7 +76,7 @@
                                         <path d="M20 6L9 17l-5-5" />
                                     </svg>
                                     <span
-                                        class="text-white text-[0.6rem] font-semibold tracking-wide uppercase">Completado</span>
+                                        class="text-white text-xs font-semibold tracking-wide uppercase">Completado</span>
                                 </div>
                             @endif
 
@@ -102,7 +102,7 @@
                                     <div class="flex flex-wrap gap-1.5 mb-3">
                                         @foreach ($dim->subdimensiones as $sub)
                                             <span
-                                                class="inline-block bg-white/20 text-white/90 text-[0.65rem]
+                                                class="inline-block bg-white/20 text-white/90 text-xs
                                                          font-medium px-2 py-0.5 rounded-full leading-snug">
                                                 {{ $sub->nombre }}
                                             </span>

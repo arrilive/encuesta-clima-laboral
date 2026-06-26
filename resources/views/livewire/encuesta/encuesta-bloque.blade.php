@@ -4,7 +4,7 @@
         <div class="max-w-2xl mx-auto">
             <div class="flex justify-between text-xs text-slate-500 mb-1.5">
                 <div class="flex items-center gap-1.5">
-                    <span class="font-medium text-slate-700">
+                    <span class="font-semibold text-slate-800">
                         Dimensión {{ $dimensionActual }} de {{ $totalDimensiones }}: {{ $dimensionNombre }}
                     </span>
                     <button
@@ -33,7 +33,7 @@
         @foreach ($preguntasPorSubdimension as $subdimensionId => $preguntas)
             {{-- Separador de subdimensión --}}
             <div class="flex items-center gap-3 pt-2">
-                <span class="text-[0.7rem] font-semibold uppercase tracking-widest text-slate-400 whitespace-nowrap">
+                <span class="text-xs font-semibold uppercase tracking-widest text-slate-400 whitespace-nowrap">
                     {{ $preguntas->first()->subdimension->nombre }}
                 </span>
                 <div class="flex-1 h-px bg-slate-200"></div>
