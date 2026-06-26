@@ -46,7 +46,7 @@
                 class="relative w-full max-w-sm bg-white rounded-2xl shadow-xl overflow-hidden ring-1 ring-slate-900/5">
                 {{-- Header --}}
                 <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-slate-900" x-text="tituloEstado()"></h2>
+                    <h2 class="text-base font-semibold text-slate-900" x-text="tituloEstado()"></h2>
                     <button @click="cerrar()" class="text-slate-400 hover:text-slate-500 transition-colors">
                         <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd"
