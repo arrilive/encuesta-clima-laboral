@@ -16,7 +16,7 @@ class EncuestaFactory extends Factory
     public function definition(): array
     {
         return [
-            'token' => (string) Str::uuid(),
+            'token' => 'TK-'.Str::upper(Str::random(4)).'-'.Str::upper(Str::random(4)),
             'lote_id' => \App\Models\Lote::factory(),
             'estado' => 'disponible',
             'fecha_asignacion' => null,
