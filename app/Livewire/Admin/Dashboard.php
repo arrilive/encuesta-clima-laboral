@@ -238,33 +238,25 @@ class Dashboard extends Component
 
     /**
      * Calcula el ranking de empresas por promedio de clima laboral.
-     *
-     * @warning Este método produce N+1 queries complejas — una por empresa registrada.
-     * Es aceptable con volúmenes pequeños de tenants (<20 empresas). Si el volumen
-     * escala, debe rediseñarse con caché (Redis) o procesamiento en segundo plano.
-     * Ver backlog: optimización de calcularRanking() post-v1.2.0.
      */
     private function calcularRanking(ClimaScoringService $scoring): \Illuminate\Support\Collection
     {
         $user = auth()->user();
 
         $empresas = Empresa::orderBy('nombre')
-            ->when($user->role === \App\Enums\Role::ADMIN_CORPORATIVO->value, fn ($q) => $q->where('corporativo_id', $user->corporativo_id))
+            ->when(
+                $user->role === \App\Enums\Role::ADMIN_CORPORATIVO->value,
+                fn ($q) => $q->where('corporativo_id', $user->corporativo_id)
+            )
             ->get();
 
-        return $empresas
-            ->map(function ($empresa) use ($scoring) {
-                $base = Respuesta::query()
-                    ->whereHas('encuesta', fn ($q) => $q
-                        ->where('estado', 'completado')
-                        ->whereHas('lote', fn ($q) => $q->where('empresa_id', $empresa->id))
-                    );
+        $promedios = $scoring->promediosGeneralesPorEmpresas($empresas->pluck('id')->toArray());
 
-                return [
-                    'nombre' => $empresa->nombre,
-                    'puntaje' => $scoring->promedioGeneral($base),
-                ];
-            })
+        return $empresas
+            ->map(fn ($empresa) => [
+                'nombre' => $empresa->nombre,
+                'puntaje' => $promedios->get($empresa->id, 0.0),
+            ])
             ->sortByDesc('puntaje')
             ->values();
     }
