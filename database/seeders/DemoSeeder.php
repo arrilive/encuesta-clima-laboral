@@ -176,7 +176,7 @@ class DemoSeeder extends Seeder
                 $fechaCompletada = (clone $fechaAsignacion)->addMinutes(fake()->numberBetween(15, 7200));
 
                 $encuesta = Encuesta::create([
-                    'token' => Str::uuid()->toString(),
+                    'token' => 'TK-'.Str::upper(Str::random(4)).'-'.Str::upper(Str::random(4)),
                     'lote_id' => $lote->id,
                     'estado' => 'completado',
                     'fecha_asignacion' => $fechaAsignacion,
@@ -237,7 +237,7 @@ class DemoSeeder extends Seeder
                 $fechaAsignacion = (clone $createdAt)->addMinutes(fake()->numberBetween(2, 360));
 
                 Encuesta::create([
-                    'token' => Str::uuid()->toString(),
+                    'token' => 'TK-'.Str::upper(Str::random(4)).'-'.Str::upper(Str::random(4)),
                     'lote_id' => $lote->id,
                     'estado' => 'asignado',
                     'fecha_asignacion' => $fechaAsignacion,
