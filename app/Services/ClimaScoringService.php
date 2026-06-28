@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Dimension;
+use App\Models\Respuesta;
 use App\Models\Subdimension;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -153,5 +154,64 @@ class ClimaScoringService
                 ];
             });
         });
+    }
+
+    /**
+     * Calcula el promedio general de clima (0–100) para múltiples empresas
+     * en una sola consulta SQL, evitando el patrón N+1 de calcularRanking().
+     *
+     * Usa joins explícitos en toda la cadena — sin whereHas anidados —
+     * para mantener consistencia con scoresPorDimension() y evitar subqueries.
+     *
+     * @param  array<int>  $empresaIds
+     * @return Collection<int, float> indexada por empresa_id
+     */
+    public function promediosGeneralesPorEmpresas(array $empresaIds): Collection
+    {
+        if (empty($empresaIds)) {
+            return collect();
+        }
+
+        $promediosSub = Respuesta::query()
+            ->join('encuestas', 'respuestas.encuesta_id', '=', 'encuestas.id')
+            ->join('lotes', 'encuestas.lote_id', '=', 'lotes.id')
+            ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
+            ->join('preguntas', 'respuestas.pregunta_id', '=', 'preguntas.id')
+            ->where('encuestas.estado', 'completado')
+            ->whereIn('lotes.empresa_id', $empresaIds)
+            ->where('opciones_respuesta.valor_numerico', '!=', 0)
+            ->selectRaw('lotes.empresa_id, preguntas.subdimension_id, AVG(opciones_respuesta.valor_numerico) as promedio')
+            ->groupBy('lotes.empresa_id', 'preguntas.subdimension_id')
+            ->get()
+            ->groupBy('empresa_id');
+
+        $dimensiones = Dimension::with('subdimensiones')->orderBy('orden')->get();
+
+        $resultados = collect();
+
+        foreach ($empresaIds as $empresaId) {
+            $subsPorEmpresa = $promediosSub->get($empresaId, collect())->keyBy('subdimension_id');
+
+            $scoresDimensiones = $dimensiones->map(function (Dimension $d) use ($subsPorEmpresa) {
+                $puntajesSub = $d->subdimensiones->map(function ($sub) use ($subsPorEmpresa) {
+                    if (isset($subsPorEmpresa[$sub->id])) {
+                        $avg = $subsPorEmpresa[$sub->id]->promedio;
+
+                        return (($avg - 1) / 2) * 100;
+                    }
+
+                    return null;
+                })->filter(fn ($p) => $p !== null);
+
+                return $puntajesSub->count() > 0 ? $puntajesSub->average() : null;
+            })->filter(fn ($p) => $p !== null);
+
+            $resultados->put(
+                $empresaId,
+                $scoresDimensiones->count() > 0 ? round($scoresDimensiones->average(), 1) : 0.0
+            );
+        }
+
+        return $resultados;
     }
 }
