@@ -175,13 +175,17 @@ class ClimaScoringService
         $promediosSub = Respuesta::query()
             ->join('encuestas', 'respuestas.encuesta_id', '=', 'encuestas.id')
             ->join('lotes', 'encuestas.lote_id', '=', 'lotes.id')
+            ->leftJoin('sucursales', 'lotes.sucursal_id', '=', 'sucursales.id')
             ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
             ->join('preguntas', 'respuestas.pregunta_id', '=', 'preguntas.id')
             ->where('encuestas.estado', 'completado')
-            ->whereIn('lotes.empresa_id', $empresaIds)
+            ->where(function ($q) use ($empresaIds) {
+                $q->whereIn('lotes.empresa_id', $empresaIds)
+                  ->orWhereIn('sucursales.empresa_id', $empresaIds);
+            })
             ->where('opciones_respuesta.valor_numerico', '!=', 0)
-            ->selectRaw('lotes.empresa_id, preguntas.subdimension_id, AVG(opciones_respuesta.valor_numerico) as promedio')
-            ->groupBy('lotes.empresa_id', 'preguntas.subdimension_id')
+            ->selectRaw('COALESCE(lotes.empresa_id, sucursales.empresa_id) as empresa_id, preguntas.subdimension_id, AVG(opciones_respuesta.valor_numerico) as promedio')
+            ->groupBy(\Illuminate\Support\Facades\DB::raw('COALESCE(lotes.empresa_id, sucursales.empresa_id)'), 'preguntas.subdimension_id')
             ->get()
             ->groupBy('empresa_id');
 
