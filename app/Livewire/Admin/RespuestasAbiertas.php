@@ -13,7 +13,7 @@ use Livewire\WithPagination;
 
 class RespuestasAbiertas extends Component
 {
-    use WithPagination, HasTenantScope;
+    use HasTenantScope, WithPagination;
 
     #[Reactive]
     public string $filtroEdadId = '';
@@ -59,7 +59,7 @@ class RespuestasAbiertas extends Component
             $sucursalIds = $this->sucursalIdsDeEmpresa((int) $this->filtroEmpresaId);
             $query->whereHas('lote', function ($q) use ($sucursalIds) {
                 $q->where('empresa_id', $this->filtroEmpresaId)
-                  ->orWhereIn('sucursal_id', $sucursalIds);
+                    ->orWhereIn('sucursal_id', $sucursalIds);
             });
         }
 

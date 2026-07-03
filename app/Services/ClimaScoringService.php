@@ -181,7 +181,7 @@ class ClimaScoringService
             ->where('encuestas.estado', 'completado')
             ->where(function ($q) use ($empresaIds) {
                 $q->whereIn('lotes.empresa_id', $empresaIds)
-                  ->orWhereIn('sucursales.empresa_id', $empresaIds);
+                    ->orWhereIn('sucursales.empresa_id', $empresaIds);
             })
             ->where('opciones_respuesta.valor_numerico', '!=', 0)
             ->selectRaw('COALESCE(lotes.empresa_id, sucursales.empresa_id) as empresa_id, preguntas.subdimension_id, AVG(opciones_respuesta.valor_numerico) as promedio')

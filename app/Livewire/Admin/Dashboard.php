@@ -220,7 +220,7 @@ class Dashboard extends Component
             $sucursalIds = $this->sucursalIdsDeEmpresa((int) $this->filtroEmpresaId);
             $respuestasBase->whereHas('encuesta.lote', function ($q) use ($sucursalIds) {
                 $q->where('empresa_id', $this->filtroEmpresaId)
-                  ->orWhereIn('sucursal_id', $sucursalIds);
+                    ->orWhereIn('sucursal_id', $sucursalIds);
             });
         }
 

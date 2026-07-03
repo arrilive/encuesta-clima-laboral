@@ -217,7 +217,7 @@ class Reportes extends Component
             $sucursalIds = $this->sucursalIdsDeEmpresa((int) $this->filtroEmpresaId);
             $query->whereHas('encuesta.lote', function ($q) use ($sucursalIds) {
                 $q->where('empresa_id', $this->filtroEmpresaId)
-                  ->orWhereIn('sucursal_id', $sucursalIds);
+                    ->orWhereIn('sucursal_id', $sucursalIds);
             });
         }
 
@@ -275,7 +275,7 @@ class Reportes extends Component
             $sucursalIds = $this->sucursalIdsDeEmpresa((int) $this->filtroEmpresaId);
             $query->whereHas('lote', function ($q) use ($sucursalIds) {
                 $q->where('empresa_id', $this->filtroEmpresaId)
-                  ->orWhereIn('sucursal_id', $sucursalIds);
+                    ->orWhereIn('sucursal_id', $sucursalIds);
             });
         }
 

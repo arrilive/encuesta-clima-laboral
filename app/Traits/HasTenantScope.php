@@ -25,7 +25,7 @@ trait HasTenantScope
             Role::ADMIN_CORPORATIVO => $query->whereHas('empresa', fn ($q) => $q->where('corporativo_id', $user->corporativo_id)),
             Role::ADMIN_EMPRESA => $query->where(function ($q) use ($user) {
                 $q->where('empresa_id', $user->empresa_id)
-                  ->orWhereIn('sucursal_id', $this->sucursalIdsDeEmpresa($user->empresa_id));
+                    ->orWhereIn('sucursal_id', $this->sucursalIdsDeEmpresa($user->empresa_id));
             }),
             Role::ADMIN_SUCURSAL => $query->where('sucursal_id', $user->sucursal_id),
             default => $query,
