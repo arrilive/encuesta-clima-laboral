@@ -214,7 +214,11 @@ class Reportes extends Component
             \App\Enums\Role::SUPER_ADMIN->value,
             \App\Enums\Role::ADMIN_CORPORATIVO->value,
         ]) && $this->filtroEmpresaId) {
-            $query->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId));
+            $sucursalIds = $this->sucursalIdsDeEmpresa((int) $this->filtroEmpresaId);
+            $query->whereHas('encuesta.lote', function ($q) use ($sucursalIds) {
+                $q->where('empresa_id', $this->filtroEmpresaId)
+                    ->orWhereIn('sucursal_id', $sucursalIds);
+            });
         }
 
         if ($this->filtroSucursalId) {
@@ -268,7 +272,11 @@ class Reportes extends Component
             \App\Enums\Role::SUPER_ADMIN->value,
             \App\Enums\Role::ADMIN_CORPORATIVO->value,
         ]) && $this->filtroEmpresaId) {
-            $query->whereHas('lote', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId));
+            $sucursalIds = $this->sucursalIdsDeEmpresa((int) $this->filtroEmpresaId);
+            $query->whereHas('lote', function ($q) use ($sucursalIds) {
+                $q->where('empresa_id', $this->filtroEmpresaId)
+                    ->orWhereIn('sucursal_id', $sucursalIds);
+            });
         }
 
         if ($this->filtroSucursalId) {

@@ -217,7 +217,11 @@ class Dashboard extends Component
         }
 
         if ($this->filtroEmpresaId) {
-            $respuestasBase->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId));
+            $sucursalIds = $this->sucursalIdsDeEmpresa((int) $this->filtroEmpresaId);
+            $respuestasBase->whereHas('encuesta.lote', function ($q) use ($sucursalIds) {
+                $q->where('empresa_id', $this->filtroEmpresaId)
+                    ->orWhereIn('sucursal_id', $sucursalIds);
+            });
         }
 
         if ($this->filtroSucursalId) {

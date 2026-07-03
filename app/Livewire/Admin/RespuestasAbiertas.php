@@ -6,13 +6,14 @@ use App\Models\Encuesta;
 use App\Models\PreguntaAbierta;
 use App\Models\RespuestaAbierta;
 use App\Services\ClimaScoringService;
+use App\Traits\HasTenantScope;
 use Livewire\Attributes\Reactive;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 class RespuestasAbiertas extends Component
 {
-    use WithPagination;
+    use HasTenantScope, WithPagination;
 
     #[Reactive]
     public string $filtroEdadId = '';
@@ -52,10 +53,14 @@ class RespuestasAbiertas extends Component
         $user = auth()->user();
         $query = Encuesta::query()->where('estado', 'completado');
 
-        if ($user->role === 'admin_empresa') {
-            $query->whereHas('lote', fn ($q) => $q->where('empresa_id', $user->empresa_id));
-        } elseif (! empty($this->filtroEmpresaId)) {
-            $query->whereHas('lote', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId));
+        $query->whereHas('lote', fn ($q) => $this->scopeByRole($q));
+
+        if (! empty($this->filtroEmpresaId)) {
+            $sucursalIds = $this->sucursalIdsDeEmpresa((int) $this->filtroEmpresaId);
+            $query->whereHas('lote', function ($q) use ($sucursalIds) {
+                $q->where('empresa_id', $this->filtroEmpresaId)
+                    ->orWhereIn('sucursal_id', $sucursalIds);
+            });
         }
 
         if ($this->filtroEdadId) {
