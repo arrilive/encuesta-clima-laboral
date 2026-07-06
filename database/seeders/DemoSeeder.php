@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Corporativo;
 use App\Models\DatoDemografico;
 use App\Models\Empresa;
 use App\Models\Encuesta;
@@ -9,52 +10,60 @@ use App\Models\Lote;
 use App\Models\OpcionRespuesta;
 use App\Models\Pregunta;
 use App\Models\PreguntaAbierta;
-use App\Models\Subdimension;
+use App\Models\Sucursal;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class DemoSeeder extends Seeder
 {
+    private const EXCELENTE_ALTO = ['verdadero' => 80, 'a_veces' => 14, 'falso' => 4, 'no_responde' => 2];   // score ≈ 88.8
+
+    private const EXCELENTE_MEDIO = ['verdadero' => 72, 'a_veces' => 20, 'falso' => 5, 'no_responde' => 3];  // score ≈ 84.5
+
+    private const BUEN_CLIMA = ['verdadero' => 55, 'a_veces' => 30, 'falso' => 10, 'no_responde' => 5];       // score ≈ 73.7
+
+    private const ATENCION = ['verdadero' => 35, 'a_veces' => 35, 'falso' => 22, 'no_responde' => 8];          // score ≈ 57.1
+
+    private const RIESGO = ['verdadero' => 24, 'a_veces' => 28, 'falso' => 38, 'no_responde' => 10];           // score ≈ 42.2
+
     public function run(): void
     {
+        // Sembrar faker para aleatoriedad determinista y estable para los tests
+        fake()->seed(1234);
+
         DB::transaction(function () {
             // ----------------------------------------------------------------
-            // 1. Setup — cargar catálogos en memoria (una query cada uno)
+            // 1. Limpieza Previa Idempotente
             // ----------------------------------------------------------------
-            $empresa = Empresa::where('nombre', 'Empresa Demo')->firstOrFail();
+            DB::table('respuestas')->delete();
+            DB::table('respuestas_abiertas')->delete();
+            DB::table('datos_demograficos')->delete();
+            DB::table('encuestas')->delete();
 
-            $adminUser = User::where('empresa_id', $empresa->id)
-                ->where('role', 'admin_empresa')
-                ->firstOrFail();
+            if (Schema::hasTable('otp_verificaciones')) {
+                DB::table('otp_verificaciones')->delete();
+            }
+            if (Schema::hasTable('encuesta_hashes_usados')) {
+                DB::table('encuesta_hashes_usados')->delete();
+            }
 
-            $lote = Lote::firstOrCreate(
-                ['empresa_id' => $empresa->id, 'nombre' => 'Lote Demo'],
-                [
-                    'sucursal_id' => null,
-                    'user_id' => $adminUser->id,
-                    'tokens_total' => 100,
-                    'fecha_inicio' => now()->subDays(60)->toDateString(),
-                    'fecha_fin' => now()->addDays(30)->toDateString(),
-                    'activo' => true,
-                ]
-            );
+            DB::table('lotes')->delete();
+            DB::table('sucursales')->delete();
+            DB::table('empresas')->delete();
+            DB::table('corporativos')->delete();
+            DB::table('users')->where('role', '!=', \App\Enums\Role::SUPER_ADMIN->value)->delete();
 
-            /** @var \Illuminate\Database\Eloquent\Collection<int, Pregunta> */
+            // ----------------------------------------------------------------
+            // 2. Setup de catálogos y pools demográficos (Cargar en memoria)
+            // ----------------------------------------------------------------
             $preguntas = Pregunta::all();
-
-            // Subdimensiones con su dimensión cargada, indexadas por id
-            /** @var \Illuminate\Support\Collection<int, Subdimension> */
-            $subdimensiones = Subdimension::with('dimension')->get()->keyBy('id');
-
-            // Las 4 opciones de respuesta globales (no están ligadas a una pregunta específica)
+            $preguntasAbiertasIds = PreguntaAbierta::pluck('id');
             $opcionesRespuesta = OpcionRespuesta::all();
 
-            // IDs de preguntas abiertas
-            $preguntasAbiertasIds = PreguntaAbierta::pluck('id');
-
-            // Catálogos demográficos
             $sexosIds = DB::table('sexos')->pluck('id')->toArray();
             $cargosIds = DB::table('cargos')->pluck('id')->toArray();
             $edadesIds = DB::table('edades')->orderBy('orden')->pluck('id')->toArray();
@@ -62,13 +71,7 @@ class DemoSeeder extends Seeder
             $antiguedadesIds = DB::table('antiguedades')->orderBy('orden')->pluck('id')->toArray();
             $lugaresIds = DB::table('lugares_trabajo')->pluck('id')->toArray();
 
-            $now = now();
-
-            // ----------------------------------------------------------------
-            // 2. Mapeo de opciones → categoría de peso
-            //    Texto en BD: 'Verdadero', 'A veces falso/a veces verdadero',
-            //                 'Falso', 'Prefiero no responder'
-            // ----------------------------------------------------------------
+            // Mapeo de opciones a categorías de peso
             $categoriaDeOpcion = [];
             foreach ($opcionesRespuesta as $opcion) {
                 $texto = $opcion->opcion;
@@ -83,58 +86,15 @@ class DemoSeeder extends Seeder
                 }
             }
 
-            // ----------------------------------------------------------------
-            // 3. Pesos de respuesta por dimensión (nombres reales en BD)
-            // ----------------------------------------------------------------
-            $pesosPorDimension = [
-                'Credibilidad' => ['verdadero' => 65, 'a_veces' => 25, 'falso' => 7,  'no_responde' => 3],
-                'Respeto' => ['verdadero' => 55, 'a_veces' => 30, 'falso' => 10, 'no_responde' => 5],
-                'Imparcialidad' => ['verdadero' => 48, 'a_veces' => 32, 'falso' => 15, 'no_responde' => 5],
-                'Orgullo' => ['verdadero' => 60, 'a_veces' => 28, 'falso' => 8,  'no_responde' => 4],
-                'Compañerismo' => ['verdadero' => 60, 'a_veces' => 28, 'falso' => 8,  'no_responde' => 4],
-                'Seguridad y Capacitación' => ['verdadero' => 30, 'a_veces' => 35, 'falso' => 28, 'no_responde' => 7],
-            ];
-            $pesosDefault = ['verdadero' => 50, 'a_veces' => 30, 'falso' => 15, 'no_responde' => 5];
-
-            // Pre-construir pools de IDs ponderados por dimensión
-            // pool[dimensionNombre][categoría] → array de opcion_id's repetidos
-            $poolsPorDimension = [];
-            foreach ($pesosPorDimension as $dimNombre => $pesos) {
-                $pool = [];
-                foreach ($categoriaDeOpcion as $opcionId => $categoria) {
-                    $repeticiones = $pesos[$categoria] ?? 0;
-                    for ($i = 0; $i < $repeticiones; $i++) {
-                        $pool[] = $opcionId;
-                    }
-                }
-                $poolsPorDimension[$dimNombre] = $pool;
-            }
-            // Pool por defecto
-            $poolDefault = [];
-            foreach ($categoriaDeOpcion as $opcionId => $categoria) {
-                $repeticiones = $pesosDefault[$categoria] ?? 0;
-                for ($i = 0; $i < $repeticiones; $i++) {
-                    $poolDefault[] = $opcionId;
-                }
-            }
-
-            // ----------------------------------------------------------------
-            // 4. Distribuciones demográficas ponderadas
-            // ----------------------------------------------------------------
-
-            // Sexo: distribuir equitativamente entre los sexos disponibles
-            // (SexosSeeder sólo crea Mujer y Hombre)
+            // Pools demográficos ponderados
             $sexosPool = [];
-            $sexoCount = count($sexosIds);
             foreach ($sexosIds as $idx => $id) {
-                // ~60% al primero (Mujer orden=1), ~40% al segundo (Hombre orden=2)
                 $pct = ($idx === 0) ? 60 : 40;
                 for ($i = 0; $i < $pct; $i++) {
                     $sexosPool[] = $id;
                 }
             }
 
-            // Antigüedad: 5 rangos — 2yrsmenos(20%), 3-5(30%), 6-10(25%), 11-15(15%), 16+(10%)
             $antiguedadPool = [];
             $antiguedadPcts = [20, 30, 25, 15, 10];
             foreach ($antiguedadesIds as $idx => $id) {
@@ -144,7 +104,6 @@ class DemoSeeder extends Seeder
                 }
             }
 
-            // Edad: 5 rangos — extremos 15%, centrales 25% (18-20: 10%, 21-25: 20%, 26-34: 30%, 35-44: 25%, 45+: 15%)
             $edadPool = [];
             $edadPcts = [10, 20, 30, 25, 15];
             foreach ($edadesIds as $idx => $id) {
@@ -154,7 +113,6 @@ class DemoSeeder extends Seeder
                 }
             }
 
-            // Grado académico: 5 opciones — Prep.trunca(5%), Prep/Técnico(25%), Lic.trunca(15%), Lic/Ing(40%), Posgrado(15%)
             $gradoPool = [];
             $gradoPcts = [5, 25, 15, 40, 15];
             foreach ($gradosIds as $idx => $id) {
@@ -165,102 +123,347 @@ class DemoSeeder extends Seeder
             }
 
             // ----------------------------------------------------------------
-            // 5. Loop: 93 encuestas COMPLETADAS
+            // 3. Crear Jerarquía de Negocio
             // ----------------------------------------------------------------
+            $corporativo = Corporativo::create([
+                'nombre' => 'Monterrey Industrial',
+                'activa' => true,
+            ]);
+
+            // Empresas
+            $grupoAltamira = Empresa::create([
+                'corporativo_id' => $corporativo->id,
+                'nombre' => 'Grupo Altamira',
+                'password' => 'demo1234',
+                'activa' => true,
+            ]);
+
+            $manufacturasNoreste = Empresa::create([
+                'corporativo_id' => $corporativo->id,
+                'nombre' => 'Manufacturas Noreste',
+                'password' => 'demo1234',
+                'activa' => true,
+            ]);
+
+            $distribuidoraRegio = Empresa::create([
+                'corporativo_id' => $corporativo->id,
+                'nombre' => 'Distribuidora Regio',
+                'password' => 'demo1234',
+                'activa' => true,
+            ]);
+
+            // Sucursales
+            $plantaApodaca = Sucursal::create([
+                'empresa_id' => $manufacturasNoreste->id,
+                'nombre' => 'Planta Apodaca',
+                'password' => 'demo1234',
+                'activa' => true,
+            ]);
+
+            $sucursalNorte = Sucursal::create([
+                'empresa_id' => $distribuidoraRegio->id,
+                'nombre' => 'Sucursal Norte',
+                'password' => 'demo1234',
+                'activa' => true,
+            ]);
+
+            $sucursalCentro = Sucursal::create([
+                'empresa_id' => $distribuidoraRegio->id,
+                'nombre' => 'Sucursal Centro',
+                'password' => 'demo1234',
+                'activa' => true,
+            ]);
+
+            $sucursalSur = Sucursal::create([
+                'empresa_id' => $distribuidoraRegio->id,
+                'nombre' => 'Sucursal Sur',
+                'password' => 'demo1234',
+                'activa' => true,
+            ]);
+
+            // ----------------------------------------------------------------
+            // 4. Crear Usuarios Administradores
+            // ----------------------------------------------------------------
+            User::create([
+                'name' => 'Admin Corporativo Monterrey Industrial',
+                'email' => 'admin@monterreyindustrial.demo',
+                'password' => Hash::make('demo1234'),
+                'role' => \App\Enums\Role::ADMIN_CORPORATIVO->value,
+                'corporativo_id' => $corporativo->id,
+            ]);
+
+            User::create([
+                'name' => 'Admin Grupo Altamira',
+                'email' => 'admin@grupoaltamira.demo',
+                'password' => Hash::make('demo1234'),
+                'role' => \App\Enums\Role::ADMIN_EMPRESA->value,
+                'empresa_id' => $grupoAltamira->id,
+            ]);
+
+            User::create([
+                'name' => 'Admin Manufacturas Noreste',
+                'email' => 'admin@manufacturasnoreste.demo',
+                'password' => Hash::make('demo1234'),
+                'role' => \App\Enums\Role::ADMIN_EMPRESA->value,
+                'empresa_id' => $manufacturasNoreste->id,
+            ]);
+
+            User::create([
+                'name' => 'Admin Distribuidora Regio',
+                'email' => 'admin@distribuidoraregio.demo',
+                'password' => Hash::make('demo1234'),
+                'role' => \App\Enums\Role::ADMIN_EMPRESA->value,
+                'empresa_id' => $distribuidoraRegio->id,
+            ]);
+
+            User::create([
+                'name' => 'Admin Planta Apodaca',
+                'email' => 'admin@plantaapodaca.demo',
+                'password' => Hash::make('demo1234'),
+                'role' => \App\Enums\Role::ADMIN_SUCURSAL->value,
+                'empresa_id' => $manufacturasNoreste->id,
+                'sucursal_id' => $plantaApodaca->id,
+            ]);
+
+            User::create([
+                'name' => 'Admin Sucursal Norte',
+                'email' => 'admin@sucursalnorte.demo',
+                'password' => Hash::make('demo1234'),
+                'role' => \App\Enums\Role::ADMIN_SUCURSAL->value,
+                'empresa_id' => $distribuidoraRegio->id,
+                'sucursal_id' => $sucursalNorte->id,
+            ]);
+
+            User::create([
+                'name' => 'Admin Sucursal Centro',
+                'email' => 'admin@sucursalcentro.demo',
+                'password' => Hash::make('demo1234'),
+                'role' => \App\Enums\Role::ADMIN_SUCURSAL->value,
+                'empresa_id' => $distribuidoraRegio->id,
+                'sucursal_id' => $sucursalCentro->id,
+            ]);
+
+            User::create([
+                'name' => 'Admin Sucursal Sur',
+                'email' => 'admin@sucursalsur.demo',
+                'password' => Hash::make('demo1234'),
+                'role' => \App\Enums\Role::ADMIN_SUCURSAL->value,
+                'empresa_id' => $distribuidoraRegio->id,
+                'sucursal_id' => $sucursalSur->id,
+            ]);
+
+            // ----------------------------------------------------------------
+            // 5. Configuración de Lotes y Población de Datos
+            // ----------------------------------------------------------------
+            $lotesConfig = [
+                [
+                    'nombre' => 'Lote General',
+                    'empresa_id' => $grupoAltamira->id,
+                    'sucursal_id' => null,
+                    'user_id' => $adminGrupoAltamira->id ?? User::where('email', 'admin@grupoaltamira.demo')->first()->id,
+                    'completadas' => 60,
+                    'perfil' => self::BUEN_CLIMA,
+                    'nombre_entidad' => 'Grupo Altamira',
+                    'score_esperado' => '~74%',
+                ],
+                [
+                    'nombre' => 'Lote General',
+                    'empresa_id' => $manufacturasNoreste->id,
+                    'sucursal_id' => null,
+                    'user_id' => $adminManufacturasNoreste->id ?? User::where('email', 'admin@manufacturasnoreste.demo')->first()->id,
+                    'completadas' => 30,
+                    'perfil' => self::ATENCION,
+                    'nombre_entidad' => 'Manufacturas Noreste (General)',
+                    'score_esperado' => '~57%',
+                ],
+                [
+                    'nombre' => 'Lote Planta Apodaca',
+                    'empresa_id' => $manufacturasNoreste->id,
+                    'sucursal_id' => $plantaApodaca->id,
+                    'user_id' => $adminPlantaApodaca->id ?? User::where('email', 'admin@plantaapodaca.demo')->first()->id,
+                    'completadas' => 45,
+                    'perfil' => self::EXCELENTE_MEDIO,
+                    'nombre_entidad' => 'Planta Apodaca',
+                    'score_esperado' => '~85%',
+                ],
+                [
+                    'nombre' => 'Lote Sucursal Norte',
+                    'empresa_id' => $distribuidoraRegio->id,
+                    'sucursal_id' => $sucursalNorte->id,
+                    'user_id' => $adminSucursalNorte->id ?? User::where('email', 'admin@sucursalnorte.demo')->first()->id,
+                    'completadas' => 20,
+                    'perfil' => self::EXCELENTE_ALTO,
+                    'nombre_entidad' => 'Sucursal Norte',
+                    'score_esperado' => '~89%',
+                ],
+                [
+                    'nombre' => 'Lote Sucursal Centro',
+                    'empresa_id' => $distribuidoraRegio->id,
+                    'sucursal_id' => $sucursalCentro->id,
+                    'user_id' => $adminSucursalCentro->id ?? User::where('email', 'admin@sucursalcentro.demo')->first()->id,
+                    'completadas' => 45,
+                    'perfil' => self::BUEN_CLIMA,
+                    'nombre_entidad' => 'Sucursal Centro',
+                    'score_esperado' => '~74%',
+                ],
+                [
+                    'nombre' => 'Lote Sucursal Sur',
+                    'empresa_id' => $distribuidoraRegio->id,
+                    'sucursal_id' => $sucursalSur->id,
+                    'user_id' => $adminSucursalSur->id ?? User::where('email', 'admin@sucursalsur.demo')->first()->id,
+                    'completadas' => 90,
+                    'perfil' => self::RIESGO,
+                    'nombre_entidad' => 'Sucursal Sur',
+                    'score_esperado' => '~42%',
+                ],
+            ];
+
             $respuestasBatch = [];
             $respuestasAbiertasBatch = [];
+            $totalRiesgoCreados = 0;
+            $resumenReporte = [];
 
-            for ($i = 0; $i < 93; $i++) {
-                $createdAt = now()->subDays(fake()->numberBetween(8, 60));
-                $fechaAsignacion = (clone $createdAt)->addMinutes(fake()->numberBetween(2, 360));
-                $fechaCompletada = (clone $fechaAsignacion)->addMinutes(fake()->numberBetween(15, 7200));
+            foreach ($lotesConfig as $cfg) {
+                // Tokens en riesgo aleatorios (2 o 3)
+                $enRiesgo = fake()->numberBetween(2, 3);
+                $totalRiesgoCreados += $enRiesgo;
+                $tokensTotal = $cfg['completadas'] + $enRiesgo;
 
-                $encuesta = Encuesta::create([
-                    'token' => 'TK-'.Str::upper(Str::random(4)).'-'.Str::upper(Str::random(4)),
-                    'lote_id' => $lote->id,
-                    'estado' => 'completado',
-                    'fecha_asignacion' => $fechaAsignacion,
-                    'fecha_completada' => $fechaCompletada,
-                    'created_at' => $createdAt,
-                    'updated_at' => $now,
+                $lote = Lote::create([
+                    'empresa_id' => $cfg['empresa_id'],
+                    'sucursal_id' => $cfg['sucursal_id'],
+                    'user_id' => $cfg['user_id'],
+                    'tokens_total' => $tokensTotal,
+                    'nombre' => $cfg['nombre'],
+                    'fecha_inicio' => now()->subDays(60)->toDateString(),
+                    'fecha_fin' => now()->addDays(30)->toDateString(),
+                    'activo' => true,
                 ]);
 
-                // Dato demográfico
-                DatoDemografico::create([
-                    'encuesta_id' => $encuesta->id,
-                    'sexo_id' => fake()->randomElement($sexosPool),
-                    'antiguedad_id' => fake()->randomElement($antiguedadPool),
-                    'edad_id' => fake()->randomElement($edadPool),
-                    'cargo_id' => fake()->randomElement($cargosIds),
-                    'grado_academico_id' => fake()->randomElement($gradoPool),
-                    'lugar_trabajo_id' => fake()->randomElement($lugaresIds),
-                ]);
+                // Generar pool de opciones ponderadas para esta entidad
+                $poolOpciones = $this->generarPoolOpciones($cfg['perfil'], $categoriaDeOpcion);
 
-                // Respuestas cerradas — acumular en batch
-                foreach ($preguntas as $pregunta) {
-                    $dimNombre = $subdimensiones[$pregunta->subdimension_id]->dimension->nombre ?? null;
-                    $pool = isset($dimNombre, $poolsPorDimension[$dimNombre])
-                        ? $poolsPorDimension[$dimNombre]
-                        : $poolDefault;
+                // Crear encuestas completadas
+                for ($i = 0; $i < $cfg['completadas']; $i++) {
+                    $createdAt = now()->subDays(fake()->numberBetween(8, 59));
+                    $fechaAsignacion = (clone $createdAt)->addMinutes(fake()->numberBetween(2, 360));
+                    $fechaCompletada = (clone $fechaAsignacion)->addMinutes(fake()->numberBetween(15, 7200));
 
-                    $respuestasBatch[] = [
+                    $encuesta = Encuesta::create([
+                        'token' => 'TK-'.Str::upper(Str::random(4)).'-'.Str::upper(Str::random(4)),
+                        'lote_id' => $lote->id,
+                        'estado' => 'completado',
+                        'fecha_asignacion' => $fechaAsignacion,
+                        'fecha_completada' => $fechaCompletada,
+                        'created_at' => $createdAt,
+                        'updated_at' => now(),
+                    ]);
+
+                    // Dato Demográfico
+                    DatoDemografico::create([
                         'encuesta_id' => $encuesta->id,
-                        'pregunta_id' => $pregunta->id,
-                        'opcion_respuesta_id' => fake()->randomElement($pool),
-                        'created_at' => $now,
-                        'updated_at' => $now,
-                    ];
+                        'sexo_id' => fake()->randomElement($sexosPool),
+                        'antiguedad_id' => fake()->randomElement($antiguedadPool),
+                        'edad_id' => fake()->randomElement($edadPool),
+                        'cargo_id' => fake()->randomElement($cargosIds),
+                        'grado_academico_id' => fake()->randomElement($gradoPool),
+                        'lugar_trabajo_id' => fake()->randomElement($lugaresIds),
+                    ]);
+
+                    // Respuestas cerradas
+                    foreach ($preguntas as $pregunta) {
+                        $respuestasBatch[] = [
+                            'encuesta_id' => $encuesta->id,
+                            'pregunta_id' => $pregunta->id,
+                            'opcion_respuesta_id' => fake()->randomElement($poolOpciones),
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ];
+                    }
+
+                    // Respuestas abiertas
+                    foreach ($preguntasAbiertasIds as $preguntaAbiertaId) {
+                        $texto = fake()->boolean(70)
+                            ? fake()->sentence(fake()->numberBetween(8, 25))
+                            : null;
+
+                        $respuestasAbiertasBatch[] = [
+                            'encuesta_id' => $encuesta->id,
+                            'pregunta_abierta_id' => $preguntaAbiertaId,
+                            'texto' => $texto,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ];
+                    }
                 }
 
-                // Respuestas abiertas — 70% con texto, 30% null
-                foreach ($preguntasAbiertasIds as $preguntaAbiertaId) {
-                    $texto = fake()->boolean(70)
-                        ? fake()->sentence(fake()->numberBetween(8, 25))
-                        : null;
+                // Crear tokens en riesgo (>14 días asignados)
+                for ($i = 0; $i < $enRiesgo; $i++) {
+                    $createdAt = now()->subDays(fake()->numberBetween(15, 30));
+                    $fechaAsignacion = (clone $createdAt)->addMinutes(fake()->numberBetween(2, 360));
 
-                    $respuestasAbiertasBatch[] = [
-                        'encuesta_id' => $encuesta->id,
-                        'pregunta_abierta_id' => $preguntaAbiertaId,
-                        'texto' => $texto,
-                        'created_at' => $now,
-                        'updated_at' => $now,
-                    ];
+                    Encuesta::create([
+                        'token' => 'TK-'.Str::upper(Str::random(4)).'-'.Str::upper(Str::random(4)),
+                        'lote_id' => $lote->id,
+                        'estado' => 'asignado',
+                        'fecha_asignacion' => $fechaAsignacion,
+                        'fecha_completada' => null,
+                        'created_at' => $createdAt,
+                        'updated_at' => now(),
+                    ]);
                 }
+
+                $resumenReporte[] = [
+                    'entidad' => $cfg['nombre_entidad'],
+                    'completadas' => $cfg['completadas'],
+                    'en_riesgo' => $enRiesgo,
+                    'score_esperado' => $cfg['score_esperado'],
+                ];
             }
 
-            // ----------------------------------------------------------------
-            // 6. Loop: 7 tokens EN RIESGO (estado asignado, > 14 días)
-            // ----------------------------------------------------------------
-            for ($i = 0; $i < 7; $i++) {
-                // fecha_asignacion debe ser > 14 días atrás para activar scopeEnRiesgo
-                $createdAt = now()->subDays(fake()->numberBetween(15, 30));
-                $fechaAsignacion = (clone $createdAt)->addMinutes(fake()->numberBetween(2, 360));
+            // Inserciones masivas en batches seguros
+            collect($respuestasBatch)->chunk(2000)->each(fn ($chunk) => DB::table('respuestas')->insert($chunk->toArray()));
+            collect($respuestasAbiertasBatch)->chunk(500)->each(fn ($chunk) => DB::table('respuestas_abiertas')->insert($chunk->toArray()));
 
-                Encuesta::create([
-                    'token' => 'TK-'.Str::upper(Str::random(4)).'-'.Str::upper(Str::random(4)),
-                    'lote_id' => $lote->id,
-                    'estado' => 'asignado',
-                    'fecha_asignacion' => $fechaAsignacion,
-                    'fecha_completada' => null,
-                    'created_at' => $createdAt,
-                    'updated_at' => $now,
-                ]);
-                // Sin DatoDemografico, sin respuestas, sin respuestas abiertas
+            // ----------------------------------------------------------------
+            // 6. Impresión del Reporte al Consola
+            // ----------------------------------------------------------------
+            $this->command->info('================================================================');
+            $this->command->info('✓ DemoSeeder ejecutado con éxito (Monterrey Industrial)');
+            $this->command->info('================================================================');
+            foreach ($resumenReporte as $r) {
+                $this->command->info(sprintf(
+                    '%-30s | Completadas: %3d | En Riesgo: %d | Score esperado: %s',
+                    $r['entidad'],
+                    $r['completadas'],
+                    $r['en_riesgo'],
+                    $r['score_esperado']
+                ));
             }
+            $this->command->info('----------------------------------------------------------------');
 
-            // ----------------------------------------------------------------
-            // 7. Insert masivo FUERA del loop
-            // ----------------------------------------------------------------
-            DB::table('respuestas')->insert($respuestasBatch);
-            DB::table('respuestas_abiertas')->insert($respuestasAbiertasBatch);
+            // Verificación real de la consolidación de promedios (Issue A)
+            $scoring = app(\App\Services\ClimaScoringService::class);
+            $promedios = $scoring->promediosGeneralesPorEmpresas([$distribuidoraRegio->id]);
+            $scoreReal = $promedios->get($distribuidoraRegio->id);
 
-            // ----------------------------------------------------------------
-            // 8. Resumen
-            // ----------------------------------------------------------------
-            $this->command->info('✓ 93 encuestas completadas creadas');
-            $this->command->info('✓ 7 tokens en riesgo creados');
-            $this->command->info('✓ '.count($respuestasBatch).' respuestas insertadas');
-            $this->command->info('✓ '.count($respuestasAbiertasBatch).' respuestas abiertas insertadas');
+            $this->command->info('Distribuidora Regio — consolidado REAL calculado: '.($scoreReal !== null ? $scoreReal.'%' : 'NULL'));
+            $this->command->info(sprintf('Total encuestas completadas creadas: %d', 290));
+            $this->command->info(sprintf('Total tokens en riesgo creados: %d', $totalRiesgoCreados));
+            $this->command->info('================================================================');
         });
+    }
+
+    private function generarPoolOpciones(array $perfil, array $categoriaDeOpcion): array
+    {
+        $pool = [];
+        foreach ($categoriaDeOpcion as $opcionId => $categoria) {
+            $repeticiones = $perfil[$categoria] ?? 0;
+            for ($i = 0; $i < $repeticiones; $i++) {
+                $pool[] = $opcionId;
+            }
+        }
+
+        return $pool;
     }
 }

@@ -9,11 +9,11 @@ beforeEach(function () {
     $this->seed(DatabaseSeeder::class);
 });
 
-it('crea 93 encuestas completadas y 7 en riesgo', function () {
+it('crea 290 encuestas completadas y 17 en riesgo', function () {
     $this->seed(\Database\Seeders\DemoSeeder::class);
 
-    expect(\App\Models\Encuesta::where('estado', 'completado')->count())->toBe(93);
-    expect(\App\Models\Encuesta::where('estado', 'asignado')->count())->toBe(7);
+    expect(\App\Models\Encuesta::where('estado', 'completado')->count())->toBe(290);
+    expect(\App\Models\Encuesta::where('estado', 'asignado')->count())->toBe(17);
 });
 
 it('cada encuesta completada tiene dato demografico y respuestas completas', function () {
@@ -21,7 +21,7 @@ it('cada encuesta completada tiene dato demografico y respuestas completas', fun
 
     $completadas = \App\Models\Encuesta::where('estado', 'completado')->get();
 
-    expect($completadas)->toHaveCount(93);
+    expect($completadas)->toHaveCount(290);
 
     foreach ($completadas as $encuesta) {
         expect($encuesta->datoDemografico)->not->toBeNull();
@@ -29,10 +29,10 @@ it('cada encuesta completada tiene dato demografico y respuestas completas', fun
     }
 });
 
-it('los 7 tokens en riesgo activan scope en riesgo', function () {
+it('los 17 tokens en riesgo activan scope en riesgo', function () {
     $this->seed(\Database\Seeders\DemoSeeder::class);
 
-    expect(\App\Models\Encuesta::enRiesgo()->count())->toBe(7);
+    expect(\App\Models\Encuesta::enRiesgo()->count())->toBe(17);
 });
 
 it('el demo seeder no se llama desde database seeder', function () {
