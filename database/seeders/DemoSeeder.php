@@ -32,7 +32,7 @@ class DemoSeeder extends Seeder
 
     public function run(): void
     {
-        // Sembrar faker para aleatoriedad determinista y estable para los tests
+        // Sembrar faker para aleatoriedad determinista y estable para las respuestas de los tests
         fake()->seed(1234);
 
         DB::transaction(function () {
@@ -260,8 +260,9 @@ class DemoSeeder extends Seeder
                     'nombre' => 'Lote General',
                     'empresa_id' => $grupoAltamira->id,
                     'sucursal_id' => null,
-                    'user_id' => $adminGrupoAltamira->id ?? User::where('email', 'admin@grupoaltamira.demo')->first()->id,
+                    'user_id' => User::where('email', 'admin@grupoaltamira.demo')->first()->id,
                     'completadas' => 60,
+                    'en_riesgo' => 3,
                     'perfil' => self::BUEN_CLIMA,
                     'nombre_entidad' => 'Grupo Altamira',
                     'score_esperado' => '~74%',
@@ -270,8 +271,9 @@ class DemoSeeder extends Seeder
                     'nombre' => 'Lote General',
                     'empresa_id' => $manufacturasNoreste->id,
                     'sucursal_id' => null,
-                    'user_id' => $adminManufacturasNoreste->id ?? User::where('email', 'admin@manufacturasnoreste.demo')->first()->id,
+                    'user_id' => User::where('email', 'admin@manufacturasnoreste.demo')->first()->id,
                     'completadas' => 30,
+                    'en_riesgo' => 3,
                     'perfil' => self::ATENCION,
                     'nombre_entidad' => 'Manufacturas Noreste (General)',
                     'score_esperado' => '~57%',
@@ -280,8 +282,9 @@ class DemoSeeder extends Seeder
                     'nombre' => 'Lote Planta Apodaca',
                     'empresa_id' => $manufacturasNoreste->id,
                     'sucursal_id' => $plantaApodaca->id,
-                    'user_id' => $adminPlantaApodaca->id ?? User::where('email', 'admin@plantaapodaca.demo')->first()->id,
+                    'user_id' => User::where('email', 'admin@plantaapodaca.demo')->first()->id,
                     'completadas' => 45,
+                    'en_riesgo' => 3,
                     'perfil' => self::EXCELENTE_MEDIO,
                     'nombre_entidad' => 'Planta Apodaca',
                     'score_esperado' => '~85%',
@@ -290,8 +293,9 @@ class DemoSeeder extends Seeder
                     'nombre' => 'Lote Sucursal Norte',
                     'empresa_id' => $distribuidoraRegio->id,
                     'sucursal_id' => $sucursalNorte->id,
-                    'user_id' => $adminSucursalNorte->id ?? User::where('email', 'admin@sucursalnorte.demo')->first()->id,
+                    'user_id' => User::where('email', 'admin@sucursalnorte.demo')->first()->id,
                     'completadas' => 20,
+                    'en_riesgo' => 2,
                     'perfil' => self::EXCELENTE_ALTO,
                     'nombre_entidad' => 'Sucursal Norte',
                     'score_esperado' => '~89%',
@@ -300,8 +304,9 @@ class DemoSeeder extends Seeder
                     'nombre' => 'Lote Sucursal Centro',
                     'empresa_id' => $distribuidoraRegio->id,
                     'sucursal_id' => $sucursalCentro->id,
-                    'user_id' => $adminSucursalCentro->id ?? User::where('email', 'admin@sucursalcentro.demo')->first()->id,
+                    'user_id' => User::where('email', 'admin@sucursalcentro.demo')->first()->id,
                     'completadas' => 45,
+                    'en_riesgo' => 3,
                     'perfil' => self::BUEN_CLIMA,
                     'nombre_entidad' => 'Sucursal Centro',
                     'score_esperado' => '~74%',
@@ -310,8 +315,9 @@ class DemoSeeder extends Seeder
                     'nombre' => 'Lote Sucursal Sur',
                     'empresa_id' => $distribuidoraRegio->id,
                     'sucursal_id' => $sucursalSur->id,
-                    'user_id' => $adminSucursalSur->id ?? User::where('email', 'admin@sucursalsur.demo')->first()->id,
+                    'user_id' => User::where('email', 'admin@sucursalsur.demo')->first()->id,
                     'completadas' => 90,
+                    'en_riesgo' => 3,
                     'perfil' => self::RIESGO,
                     'nombre_entidad' => 'Sucursal Sur',
                     'score_esperado' => '~42%',
@@ -324,8 +330,8 @@ class DemoSeeder extends Seeder
             $resumenReporte = [];
 
             foreach ($lotesConfig as $cfg) {
-                // Tokens en riesgo aleatorios (2 o 3)
-                $enRiesgo = fake()->numberBetween(2, 3);
+                // Tokens en riesgo fijos y definidos para consistencia multiplataforma
+                $enRiesgo = $cfg['en_riesgo'];
                 $totalRiesgoCreados += $enRiesgo;
                 $tokensTotal = $cfg['completadas'] + $enRiesgo;
 
