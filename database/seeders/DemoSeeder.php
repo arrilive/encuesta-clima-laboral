@@ -448,12 +448,14 @@ class DemoSeeder extends Seeder
             }
             $this->command->info('----------------------------------------------------------------');
 
-            // Verificación real de la consolidación de promedios (Issue A)
+            // Verificación del score consolidado general de Distribuidora Regio.
+            // Nota: Los 3 lotes de sucursal de esta empresa tienen directamente su empresa_id poblado,
+            // requerido por la restricción NOT NULL de la tabla 'lotes' de la base de datos.
             $scoring = app(\App\Services\ClimaScoringService::class);
             $promedios = $scoring->promediosGeneralesPorEmpresas([$distribuidoraRegio->id]);
             $scoreReal = $promedios->get($distribuidoraRegio->id);
 
-            $this->command->info('Distribuidora Regio — consolidado REAL calculado: '.($scoreReal !== null ? $scoreReal.'%' : 'NULL'));
+            $this->command->info('Distribuidora Regio — score consolidado REAL calculado: '.($scoreReal !== null ? $scoreReal.'%' : 'NULL'));
             $this->command->info(sprintf('Total encuestas completadas creadas: %d', 290));
             $this->command->info(sprintf('Total tokens en riesgo creados: %d', $totalRiesgoCreados));
             $this->command->info('================================================================');
