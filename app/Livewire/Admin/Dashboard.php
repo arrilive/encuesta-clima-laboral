@@ -105,6 +105,10 @@ class Dashboard extends Component
 
     public function liberarTokens(): void
     {
+        if (auth()->user()->role === \App\Enums\Role::ADMIN_CORPORATIVO->value) {
+            return;
+        }
+
         $query = Encuesta::enRiesgo();
 
         $query->whereHas('lote', fn ($q) => $this->scopeByRole($q));

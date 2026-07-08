@@ -260,28 +260,34 @@
                                 </p>
 
                                 {{-- Acción — cambia según estado --}}
-                                <div x-show="!confirmar">
-                                    <button x-on:click="confirmar = true"
-                                            class="inline-flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all duration-200">
-                                        Liberar tokens
-                                    </button>
-                                </div>
-                                <div x-show="confirmar" x-cloak class="flex gap-2">
-                                    <button wire:click="liberarTokens"
-                                            wire:loading.attr="disabled"
-                                            class="inline-flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all duration-200 disabled:opacity-75">
-                                        <svg wire:loading wire:target="liberarTokens" class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                            <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
-                                            <path d="M12 2a10 10 0 0 1 10 10"/>
-                                        </svg>
-                                        <span wire:loading.remove wire:target="liberarTokens">Sí, liberar</span>
-                                        <span wire:loading wire:target="liberarTokens">Liberando…</span>
-                                    </button>
-                                    <button x-on:click="confirmar = false"
-                                            class="text-xs font-medium text-slate-500 hover:text-slate-700 px-3 py-2 rounded-xl transition-colors">
-                                        Cancelar
-                                    </button>
-                                </div>
+                                @if(auth()->user()->role !== \App\Enums\Role::ADMIN_CORPORATIVO->value)
+                                    <div x-show="!confirmar">
+                                        <button x-on:click="confirmar = true"
+                                                class="inline-flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all duration-200">
+                                            Liberar tokens
+                                        </button>
+                                    </div>
+                                    <div x-show="confirmar" x-cloak class="flex gap-2">
+                                        <button wire:click="liberarTokens"
+                                                wire:loading.attr="disabled"
+                                                class="inline-flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all duration-200 disabled:opacity-75">
+                                            <svg wire:loading wire:target="liberarTokens" class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+                                                <path d="M12 2a10 10 0 0 1 10 10"/>
+                                            </svg>
+                                            <span wire:loading.remove wire:target="liberarTokens">Sí, liberar</span>
+                                            <span wire:loading wire:target="liberarTokens">Liberando…</span>
+                                        </button>
+                                        <button x-on:click="confirmar = false"
+                                                class="text-xs font-medium text-slate-500 hover:text-slate-700 px-3 py-2 rounded-xl transition-colors">
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                @else
+                                    <span class="text-[10px] text-red-400 font-medium mt-auto">
+                                        Solo lectura corporativa
+                                    </span>
+                                @endif
                             </div>
                         </div>
                     </div>

@@ -230,3 +230,83 @@ it('filtroSucursalId filtra KPIs a la sucursal seleccionada', function () {
     $component->set('filtroSucursalId', '');
     expect($component->viewData('kpis')['total_tokens'])->toBe(5);
 });
+
+it('admin_corporativo no puede liberar tokens en riesgo', function () {
+    $corporativo = \App\Models\Corporativo::factory()->create();
+    $empresa = Empresa::factory()->create(['corporativo_id' => $corporativo->id]);
+    $lote = \App\Models\Lote::factory()->for($empresa)->create();
+    $encuesta = Encuesta::factory()->create([
+        'lote_id' => $lote->id,
+        'estado' => 'asignado',
+        'fecha_asignacion' => now()->subDays(20),
+    ]);
+
+    $admin = User::factory()->adminCorporativo($corporativo->id)->create();
+
+    $this->actingAs($admin);
+
+    Livewire::test(Dashboard::class)->call('liberarTokens');
+
+    expect($encuesta->fresh()->estado)->toBe('asignado');
+});
+
+it('admin_empresa puede liberar tokens en riesgo de su empresa', function () {
+    $empresa = Empresa::factory()->create();
+    $lote = \App\Models\Lote::factory()->for($empresa)->create();
+    $encuesta = Encuesta::factory()->create([
+        'lote_id' => $lote->id,
+        'estado' => 'asignado',
+        'fecha_asignacion' => now()->subDays(20),
+    ]);
+
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    $this->actingAs($admin);
+
+    Livewire::test(Dashboard::class)->call('liberarTokens');
+
+    expect($encuesta->fresh())
+        ->estado->toBe('disponible')
+        ->fecha_asignacion->toBeNull();
+});
+
+it('admin_sucursal puede liberar tokens en riesgo de su sucursal', function () {
+    $empresa = Empresa::factory()->create();
+    $sucursal = \App\Models\Sucursal::factory()->create(['empresa_id' => $empresa->id]);
+    $lote = \App\Models\Lote::factory()->create(['empresa_id' => $empresa->id, 'sucursal_id' => $sucursal->id]);
+    $encuesta = Encuesta::factory()->create([
+        'lote_id' => $lote->id,
+        'estado' => 'asignado',
+        'fecha_asignacion' => now()->subDays(20),
+    ]);
+
+    $admin = User::factory()->adminSucursal($sucursal->id)->create();
+
+    $this->actingAs($admin);
+
+    Livewire::test(Dashboard::class)->call('liberarTokens');
+
+    expect($encuesta->fresh())
+        ->estado->toBe('disponible')
+        ->fecha_asignacion->toBeNull();
+});
+
+it('super_admin puede liberar cualquier token en riesgo', function () {
+    $empresa = Empresa::factory()->create();
+    $lote = \App\Models\Lote::factory()->for($empresa)->create();
+    $encuesta = Encuesta::factory()->create([
+        'lote_id' => $lote->id,
+        'estado' => 'asignado',
+        'fecha_asignacion' => now()->subDays(20),
+    ]);
+
+    $admin = User::factory()->superAdmin()->create();
+
+    $this->actingAs($admin);
+
+    Livewire::test(Dashboard::class)->call('liberarTokens');
+
+    expect($encuesta->fresh())
+        ->estado->toBe('disponible')
+        ->fecha_asignacion->toBeNull();
+});
