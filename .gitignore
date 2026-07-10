@@ -27,3 +27,4 @@ storage/app/imprimir*
 storage/debugbar/
 *.sql
 /docs/skills
+/LECCIONES_APRENDIDAS.md
