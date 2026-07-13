@@ -305,8 +305,12 @@ class GenerarTokens extends Component
             ->where('empresa_id', $this->empresaIdModoB)
             ->where('activo', 1)
             ->where('fecha_fin', '>=', today())
-            ->orderBy('nombre')
-            ->get();
+            ->get()
+            ->sortBy([
+                fn ($a, $b) => ($a->sucursal_id ? 1 : 0) <=> ($b->sucursal_id ? 1 : 0),
+                fn ($a, $b) => ($a->sucursal?->nombre ?? '') <=> ($b->sucursal?->nombre ?? ''),
+                fn ($a, $b) => $a->nombre <=> $b->nombre,
+            ]);
     }
 
     public function getLoteSeleccionadoProperty(): ?Lote

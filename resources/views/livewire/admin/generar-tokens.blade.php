@@ -267,9 +267,7 @@
                         <option value="">Selecciona un lote vigente</option>
                         @foreach($lotesVigentes as $l)
                             <option value="{{ $l->id }}">
-                                {{ $l->nombre ?? 'Lote #'.$l->id }}
-                                ({{ $l->sucursal ? $l->sucursal->nombre : 'General' }})
-                                — vence {{ $l->fecha_fin->format('d/m/Y') }}
+                                [{{ $l->sucursal ? mb_strtoupper($l->sucursal->nombre) : 'GENERAL' }}] {{ $l->nombre ?? 'Lote #'.$l->id }} — vence {{ $l->fecha_fin->format('d/m/Y') }}
                             </option>
                         @endforeach
                     </x-admin.combobox-entidad>
