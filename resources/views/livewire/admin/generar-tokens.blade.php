@@ -507,7 +507,6 @@
                             <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Nombre del lote</th>
                             <th class="text-center px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Cantidad</th>
                             <th class="text-center px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Estado</th>
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Generado por</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -554,13 +553,10 @@
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">Activo</span>
                                 @endif
                             </td>
-                            <td class="px-6 py-3 text-slate-500 text-xs whitespace-nowrap">
-                                {{ $lote->user?->name ?? '—' }}
-                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-6 py-12 text-center text-slate-400 text-sm">
+                            <td colspan="7" class="px-6 py-12 text-center text-slate-400 text-sm">
                                 Aún no se han generado tokens.
                             </td>
                         </tr>
