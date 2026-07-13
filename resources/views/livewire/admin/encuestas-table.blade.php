@@ -31,19 +31,6 @@
         {{-- Grid de filtros --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
-            {{-- Buscar por token --}}
-            <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Buscar token</label>
-                <input
-                    wire:model.live.debounce.400ms="buscar"
-                    type="text"
-                    placeholder="Escribe parte del token..."
-                    class="w-full px-4 py-2.5 border border-slate-300 rounded-xl text-sm text-slate-900
-                           placeholder-slate-400 bg-white focus:outline-none focus:border-blue-500
-                           focus:ring-4 focus:ring-blue-500/10 transition-all duration-200"
-                />
-            </div>
-
             {{-- Filtro estado --}}
             <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1.5">Estado</label>

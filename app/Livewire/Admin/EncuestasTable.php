@@ -13,8 +13,6 @@ class EncuestasTable extends Component
 {
     use HasTenantScope, WithPagination;
 
-    public string $buscar = '';
-
     public string $filtroCorporativo = '';
 
     public string $filtroEmpresa = '';
@@ -144,7 +142,6 @@ class EncuestasTable extends Component
 
     public function limpiarFiltros(): void
     {
-        $this->buscar = '';
         $this->filtroCorporativo = '';
         $this->filtroEmpresa = '';
         $this->filtroSucursal = '';
@@ -162,7 +159,6 @@ class EncuestasTable extends Component
         $encuestas = Encuesta::query()
             ->with('lote.empresa')
             ->whereHas('lote', fn ($q) => $this->scopeByRole($q))
-            ->when($this->buscar, fn ($q) => $q->where('token', 'like', '%'.$this->buscar.'%'))
             ->when($user->role === \App\Enums\Role::SUPER_ADMIN->value && $this->filtroCorporativo, fn ($q) => $q->whereHas('lote.empresa', fn ($q2) => $q2->where('corporativo_id', $this->filtroCorporativo)))
             ->when(in_array($user->role, [
                 \App\Enums\Role::SUPER_ADMIN->value,
