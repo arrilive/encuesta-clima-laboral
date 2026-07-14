@@ -167,7 +167,7 @@
                  x-transition:leave="transition ease-in duration-200"
                  x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                  x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden ring-1 ring-slate-900/5">
+                 class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-visible ring-1 ring-slate-900/5">
 
                 {{-- Header --}}
                 <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
@@ -282,7 +282,7 @@
                 </div>
 
                 {{-- Footer --}}
-                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 rounded-b-2xl">
                     <button @click="abierto = false" type="button"
                             class="px-4 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
                         Cancelar
@@ -323,7 +323,7 @@
                  x-transition:leave="transition ease-in duration-200"
                  x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                  x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 class="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden ring-1 ring-slate-900/5">
+                 class="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-visible ring-1 ring-slate-900/5">
 
                 <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
                     <h3 class="text-base font-semibold text-slate-900">Editar empresa</h3>
@@ -370,7 +370,7 @@
                     </div>
                 </div>
 
-                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 rounded-b-2xl">
                     <button @click="abierto = false" type="button"
                             class="px-4 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
                         Cancelar
