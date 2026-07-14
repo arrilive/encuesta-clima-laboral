@@ -157,7 +157,7 @@ class EncuestasTable extends Component
         $user = auth()->user();
 
         $encuestas = Encuesta::query()
-            ->with('lote.empresa')
+            ->with(['lote.empresa', 'lote.sucursal'])
             ->whereHas('lote', fn ($q) => $this->scopeByRole($q))
             ->when($user->role === \App\Enums\Role::SUPER_ADMIN->value && $this->filtroCorporativo, fn ($q) => $q->whereHas('lote.empresa', fn ($q2) => $q2->where('corporativo_id', $this->filtroCorporativo)))
             ->when(in_array($user->role, [
