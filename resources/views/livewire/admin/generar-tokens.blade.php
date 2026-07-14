@@ -235,7 +235,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {{-- Empresa Selector --}}
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Empresa <span class="text-red-400">*</span></label>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Filtrar por empresa <span class="text-red-400">*</span></label>
                     <x-admin.combobox-entidad
                         wire-model="empresaIdModoB"
                         placeholder="Buscar empresa..."
