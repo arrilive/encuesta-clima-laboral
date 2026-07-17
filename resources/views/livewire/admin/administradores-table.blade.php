@@ -53,7 +53,12 @@
                         <td class="px-6 py-3.5 text-slate-900 font-medium">{{ $user->name }}</td>
                         <td class="px-6 py-3.5 text-slate-500">{{ $user->email }}</td>
                         <td class="px-6 py-3.5">
-                            <span class="inline-block text-xs font-medium bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+                            <span class="inline-block text-xs font-medium px-2 py-0.5 rounded-full {{ match($user->role) {
+                                'admin_corporativo' => 'bg-indigo-50 text-indigo-700',
+                                'admin_empresa'     => 'bg-blue-50 text-blue-700',
+                                'admin_sucursal'    => 'bg-violet-50 text-violet-700',
+                                default             => 'bg-blue-50 text-blue-700',
+                            } }}">
                                 {{ match($user->role) {
                                     'admin_corporativo' => 'Admin Corporativo',
                                     'admin_empresa'     => 'Admin Empresa',
