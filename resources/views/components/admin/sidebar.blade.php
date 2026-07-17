@@ -4,7 +4,13 @@
     <div class="px-6 py-5 border-b border-slate-200">
         <p class="font-semibold text-slate-900 text-sm truncate">{{ auth()->user()->name }}</p>
         <p class="text-xs text-slate-400 mt-0.5 truncate">{{ auth()->user()->email }}</p>
-        <span class="inline-block mt-2 text-xs font-medium bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+        <span class="inline-block mt-2 text-xs font-medium px-2 py-0.5 rounded-full {{ match(auth()->user()->role) {
+            'super_admin'       => 'bg-slate-800 text-white',
+            'admin_corporativo' => 'bg-indigo-50 text-indigo-700',
+            'admin_empresa'     => 'bg-blue-50 text-blue-700',
+            'admin_sucursal'    => 'bg-violet-50 text-violet-700',
+            default             => 'bg-blue-50 text-blue-700',
+        } }}">
             {{ match(auth()->user()->role) {
                 'super_admin'       => 'Super Admin',
                 'admin_corporativo' => 'Admin Corporativo',
