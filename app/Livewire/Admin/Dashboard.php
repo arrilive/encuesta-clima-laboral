@@ -204,6 +204,78 @@ class Dashboard extends Component
         ];
     }
 
+    private function obtenerLoteEstadoActualYEscenario(): array
+    {
+        $user = auth()->user();
+        $hoy = \Carbon\Carbon::today()->toDateString();
+
+        // 1. Base query scoped by role
+        $query = Lote::query();
+        $query = $this->scopeByRole($query);
+
+        // 2. Apply dashboard filters
+        if ($this->filtroCorporativoId && $user->role === \App\Enums\Role::SUPER_ADMIN->value) {
+            $query->whereHas('empresa', fn ($q) => $q->where('corporativo_id', $this->filtroCorporativoId));
+        }
+
+        if ($this->filtroEmpresaId) {
+            $sucursalIds = $this->sucursalIdsDeEmpresa((int) $this->filtroEmpresaId);
+            $query->where(function ($q) use ($sucursalIds) {
+                $q->where('empresa_id', $this->filtroEmpresaId)
+                    ->orWhereIn('sucursal_id', $sucursalIds);
+            });
+        }
+
+        if ($this->filtroSucursalId) {
+            $query->where('sucursal_id', $this->filtroSucursalId);
+        }
+
+        // If a specific period is selected, we filter by that lote_id
+        if ($this->filtroLoteId) {
+            $query->where('id', $this->filtroLoteId);
+        }
+
+        // Fetch all lotes in this scope to evaluate scenarios
+        $lotes = $query->get();
+
+        // Limitación conocida y aceptada: al consolidar empresa + sucursales, cada una puede tener su "lote de estado actual"
+        // con fecha_fin distinta entre sí (ej. Sucursal Norte cerrada en marzo, Sucursal Sur cerrada en junio).
+        // El sistema tomará el lote más reciente dentro del conjunto combinado sin distinguir cuál sucursal aporta qué fecha.
+        // Esto se resuelve formalmente en Issue M (comparativas históricas) con el concepto de "tanda/familia de lotes",
+        // que aún no existe en el modelo de datos.
+
+        // Closed lotes: fecha_fin is in the past
+        $lotesCerrados = $lotes->filter(fn ($l) => $l->fecha_fin && $l->fecha_fin->toDateString() < $hoy)
+            ->sortByDesc('fecha_fin');
+
+        // Active lotes: activo = true AND (fecha_fin is null OR fecha_fin >= hoy)
+        $lotesActivos = $lotes->filter(fn ($l) => $l->activo && (! $l->fecha_fin || $l->fecha_fin->toDateString() >= $hoy))
+            ->sortByDesc('fecha_inicio');
+
+        $loteEstadoActual = null;
+        $escenario = 1;
+
+        if ($lotesCerrados->isNotEmpty() && $lotesActivos->isNotEmpty()) {
+            $escenario = 4;
+            $loteEstadoActual = $lotesCerrados->first();
+        } elseif ($lotesCerrados->isNotEmpty() && $lotesActivos->isEmpty()) {
+            $escenario = 3;
+            $loteEstadoActual = $lotesCerrados->first();
+        } elseif ($lotesCerrados->isEmpty() && $lotesActivos->isNotEmpty()) {
+            $escenario = 2;
+            $loteEstadoActual = $lotesActivos->first();
+        } else {
+            $escenario = 1;
+            $loteEstadoActual = null;
+        }
+
+        return [
+            'lote' => $loteEstadoActual,
+            'escenario' => $escenario,
+            'lote_activo' => $lotesActivos->first(),
+        ];
+    }
+
     private function calcularClima(ClimaScoringService $scoring, \App\Models\User $user): array
     {
         $respuestasBase = Respuesta::query()
@@ -212,8 +284,23 @@ class Dashboard extends Component
                 ->whereHas('lote', fn ($loteQuery) => $this->scopeByRole($loteQuery))
             );
 
-        if ($this->filtroLoteId) {
-            $respuestasBase->whereHas('encuesta', fn ($q) => $q->where('lote_id', $this->filtroLoteId));
+        // Determine the lote to use based on rules or manual filter
+        $loteId = null;
+        $escenario = 1;
+        $loteEstadoActual = null;
+        $loteActivo = null;
+
+        $infoLote = $this->obtenerLoteEstadoActualYEscenario();
+        $loteEstadoActual = $infoLote['lote'];
+        $escenario = $infoLote['escenario'];
+        $loteActivo = $infoLote['lote_activo'];
+
+        if ($loteEstadoActual) {
+            $loteId = $loteEstadoActual->id;
+            $respuestasBase->whereHas('encuesta', fn ($q) => $q->where('lote_id', $loteId));
+        } else {
+            // Force empty results if no current lote is found
+            $respuestasBase->whereRaw('1=0');
         }
 
         if ($this->filtroCorporativoId && auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value) {
@@ -235,12 +322,30 @@ class Dashboard extends Component
         $scoresDimensiones = $scoring->scoresPorDimension($respuestasBase);
         $scoresSubdimensiones = $scoring->scoresPorSubdimension($respuestasBase);
 
+        $completadasLote = 0;
+        if ($loteEstadoActual) {
+            $encuestasQuery = Encuesta::where('estado', 'completado')
+                ->where('lote_id', $loteEstadoActual->id);
+            if ($this->filtroSucursalId) {
+                $encuestasQuery->whereHas('lote', fn ($q) => $q->where('sucursal_id', $this->filtroSucursalId));
+            }
+            $completadasLote = $encuestasQuery->count();
+        }
+
+        $sinDatos = ! $loteEstadoActual || $completadasLote === 0;
+
         return [
-            'promedio_general' => $scoring->promedioGeneral($respuestasBase),
-            'dimension_alta' => $scoresDimensiones->sortByDesc('puntaje')->first(),
-            'dimension_baja' => $scoresDimensiones->sortBy('puntaje')->first(),
-            'subdimension_alta' => $scoresSubdimensiones->sortByDesc('puntaje')->first(),
-            'subdimension_baja' => $scoresSubdimensiones->sortBy('puntaje')->first(),
+            'promedio_general' => ($loteId && ! $sinDatos) ? $scoring->promedioGeneral($respuestasBase) : null,
+            'dimension_alta' => $sinDatos ? null : $scoresDimensiones->sortByDesc('puntaje')->first(),
+            'dimension_baja' => $sinDatos ? null : $scoresDimensiones->sortBy('puntaje')->first(),
+            'subdimension_alta' => $sinDatos ? null : $scoresSubdimensiones->sortByDesc('puntaje')->first(),
+            'subdimension_baja' => $sinDatos ? null : $scoresSubdimensiones->sortBy('puntaje')->first(),
+            'sinDatos' => $sinDatos,
+            'completadasLote' => $completadasLote,
+            'escenario' => $escenario,
+            'lote_nombre' => $loteEstadoActual ? $loteEstadoActual->nombre : '',
+            'lote_fecha_fin' => ($loteEstadoActual && $loteEstadoActual->fecha_fin) ? $loteEstadoActual->fecha_fin->format('d/m/Y') : '',
+            'lote_activo_nombre' => $loteActivo ? $loteActivo->nombre : '',
         ];
     }
 
@@ -263,8 +368,9 @@ class Dashboard extends Component
         return $empresas
             ->map(fn ($empresa) => [
                 'nombre' => $empresa->nombre,
-                'puntaje' => $promedios->get($empresa->id, 0.0),
+                'puntaje' => $promedios->get($empresa->id, null),
             ])
+            ->filter(fn ($empresa) => $empresa['puntaje'] !== null)
             ->sortByDesc('puntaje')
             ->values();
     }
