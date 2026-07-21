@@ -159,3 +159,108 @@ it('promedioGeneral calcula un promedio no ponderado de dimensiones', function (
     // Como es NO ponderado (Promedio Dimensiones): (100 + 0) / 2 = 50.0
     expect($service->promedioGeneral($base))->toBe(50.0);
 });
+
+it('promediosGeneralesPorEmpresas retorna null para empresas sin lotes', function () {
+    $empresa = Empresa::factory()->create();
+    $service = app(ClimaScoringService::class);
+    $result = $service->promediosGeneralesPorEmpresas([$empresa->id]);
+    expect($result->get($empresa->id))->toBeNull();
+});
+
+it('promediosGeneralesPorEmpresas usa el lote cerrado más reciente cuando hay cerrado y activo', function () {
+    $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
+    $empresa = Empresa::factory()->create();
+
+    // Lote cerrado más antiguo (fecha_fin en el pasado)
+    $loteCerradoAntiguo = \App\Models\Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'fecha_inicio' => now()->subDays(60),
+        'fecha_fin' => now()->subDays(30),
+        'activo' => false,
+    ]);
+
+    // Lote cerrado más reciente (fecha_fin en el pasado)
+    $loteCerradoReciente = \App\Models\Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'fecha_inicio' => now()->subDays(40),
+        'fecha_fin' => now()->subDays(10),
+        'activo' => false,
+    ]);
+
+    // Lote activo actual (fecha_fin nula o en el futuro)
+    $loteActivo = \App\Models\Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'fecha_inicio' => now()->subDays(5),
+        'fecha_fin' => null,
+        'activo' => true,
+    ]);
+
+    // Completamos encuestas en todos
+    // Pero en el lote reciente ponemos valor_numerico = 3 (100 pts)
+    // En el lote antiguo ponemos valor_numerico = 1 (0 pts)
+    // En el lote activo ponemos valor_numerico = 2 (50 pts)
+    $opcionMin = OpcionRespuesta::where('valor_numerico', 1)->first();
+    $opcionMid = OpcionRespuesta::where('valor_numerico', 2)->first();
+    $opcionMax = OpcionRespuesta::where('valor_numerico', 3)->first();
+
+    // Necesitamos al menos 5 encuestas completas por lote para pasar el umbral
+    for ($i = 0; $i < 5; $i++) {
+        $enc1 = Encuesta::factory()->completada()->create(['lote_id' => $loteCerradoAntiguo->id]);
+        $enc2 = Encuesta::factory()->completada()->create(['lote_id' => $loteCerradoReciente->id]);
+        $enc3 = Encuesta::factory()->completada()->create(['lote_id' => $loteActivo->id]);
+
+        foreach (Pregunta::all() as $pregunta) {
+            Respuesta::create([
+                'encuesta_id' => $enc1->id,
+                'pregunta_id' => $pregunta->id,
+                'opcion_respuesta_id' => $opcionMin->id,
+            ]);
+            Respuesta::create([
+                'encuesta_id' => $enc2->id,
+                'pregunta_id' => $pregunta->id,
+                'opcion_respuesta_id' => $opcionMax->id,
+            ]);
+            Respuesta::create([
+                'encuesta_id' => $enc3->id,
+                'pregunta_id' => $pregunta->id,
+                'opcion_respuesta_id' => $opcionMid->id,
+            ]);
+        }
+    }
+
+    $service = app(ClimaScoringService::class);
+    $result = $service->promediosGeneralesPorEmpresas([$empresa->id]);
+
+    // Debería tomar el lote cerrado reciente (100.0 pts)
+    expect($result->get($empresa->id))->toBe(100.0);
+});
+
+it('promediosGeneralesPorEmpresas retorna null si no alcanza el umbral de anonimato', function () {
+    $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
+    $empresa = Empresa::factory()->create();
+
+    $lote = \App\Models\Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'fecha_inicio' => now()->subDays(40),
+        'fecha_fin' => now()->subDays(10),
+        'activo' => false,
+    ]);
+
+    // Solo 4 encuestas completadas (menos del umbral de 5)
+    $opcionMax = OpcionRespuesta::where('valor_numerico', 3)->first();
+    for ($i = 0; $i < 4; $i++) {
+        $enc = Encuesta::factory()->completada()->create(['lote_id' => $lote->id]);
+        foreach (Pregunta::all() as $pregunta) {
+            Respuesta::create([
+                'encuesta_id' => $enc->id,
+                'pregunta_id' => $pregunta->id,
+                'opcion_respuesta_id' => $opcionMax->id,
+            ]);
+        }
+    }
+
+    $service = app(ClimaScoringService::class);
+    $result = $service->promediosGeneralesPorEmpresas([$empresa->id]);
+
+    expect($result->get($empresa->id))->toBeNull();
+});
