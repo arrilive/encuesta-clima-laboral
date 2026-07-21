@@ -287,9 +287,6 @@ it('filtroLoteId filtra respuestas al lote seleccionado', function () {
     }
 
     $component = Livewire::actingAs($admin)->test(Reportes::class);
-    $datosNivel1 = $component->instance()->getDatosNivel1();
-    $puntajeMezclado = collect($datosNivel1)->firstWhere('id', $dimension->id)['puntaje'];
-    expect($puntajeMezclado)->toBe(50.0);
 
     $component->set('filtroLoteId', (string) $lote1->id);
     $datosNivel1 = $component->instance()->getDatosNivel1();
@@ -384,9 +381,6 @@ it('filtroSucursalId filtra respuestas a la sucursal seleccionada', function () 
     }
 
     $component = Livewire::actingAs($admin)->test(Reportes::class);
-    $datosNivel1 = $component->instance()->getDatosNivel1();
-    $puntajeMezclado = collect($datosNivel1)->firstWhere('id', $dimension->id)['puntaje'];
-    expect($puntajeMezclado)->toBe(50.0);
 
     $component->set('filtroSucursalId', (string) $sucursal->id);
     $datosNivel1 = $component->instance()->getDatosNivel1();
@@ -430,9 +424,6 @@ it('filtroCorporativoId filtra respuestas al corporativo seleccionado', function
     }
 
     $component = Livewire::actingAs($superAdmin)->test(Reportes::class);
-    $datosNivel1 = $component->instance()->getDatosNivel1();
-    $puntajeMezclado = collect($datosNivel1)->firstWhere('id', $dimension->id)['puntaje'];
-    expect($puntajeMezclado)->toBe(50.0);
 
     $component->set('filtroCorporativoId', (string) $corp1->id);
     $datosNivel1 = $component->instance()->getDatosNivel1();
@@ -517,4 +508,204 @@ it('cuando hay exactamente 5 respuestas completadas bajoUmbral es false', functi
         ->assertViewHas('bajoUmbral', false)
         ->assertViewHas('sinDatos', false)
         ->assertDontSee('Resultados protegidos');
+});
+
+it('reportes muestra sinDatos en escenario 1 cuando no hay ningún lote', function () {
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    Livewire::actingAs($admin)
+        ->test(Reportes::class)
+        ->assertViewHas('sinDatos', true);
+});
+
+it('reportes usa el lote activo en escenario 2 cuando no hay cerrado previo', function () {
+    $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    $loteActivo = \App\Models\Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'fecha_inicio' => now()->subDays(5),
+        'fecha_fin' => null,
+        'activo' => true,
+    ]);
+
+    $opcion = OpcionRespuesta::where('valor_numerico', 3)->first();
+    for ($i = 0; $i < 5; $i++) {
+        $enc = Encuesta::factory()->completada()->create(['lote_id' => $loteActivo->id]);
+        Respuesta::create([
+            'encuesta_id' => $enc->id,
+            'pregunta_id' => Pregunta::first()->id,
+            'opcion_respuesta_id' => $opcion->id,
+        ]);
+    }
+
+    Livewire::actingAs($admin)
+        ->test(Reportes::class)
+        ->assertViewHas('sinDatos', false)
+        ->assertViewHas('promedioGeneral', 100.0);
+});
+
+it('reportes usa el lote cerrado más reciente en escenario 3 cuando no hay lote activo', function () {
+    $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    $loteCerrado = \App\Models\Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'fecha_inicio' => now()->subDays(20),
+        'fecha_fin' => now()->subDays(5),
+        'activo' => false,
+    ]);
+
+    $opcion = OpcionRespuesta::where('valor_numerico', 3)->first();
+    for ($i = 0; $i < 5; $i++) {
+        $enc = Encuesta::factory()->completada()->create(['lote_id' => $loteCerrado->id]);
+        Respuesta::create([
+            'encuesta_id' => $enc->id,
+            'pregunta_id' => Pregunta::first()->id,
+            'opcion_respuesta_id' => $opcion->id,
+        ]);
+    }
+
+    Livewire::actingAs($admin)
+        ->test(Reportes::class)
+        ->assertViewHas('sinDatos', false)
+        ->assertViewHas('promedioGeneral', 100.0);
+});
+
+it('reportes usa el lote cerrado en escenario 4 cuando hay cerrado y activo en curso', function () {
+    $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    $loteCerrado = \App\Models\Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'fecha_inicio' => now()->subDays(20),
+        'fecha_fin' => now()->subDays(5),
+        'activo' => false,
+    ]);
+
+    $loteActivo = \App\Models\Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'fecha_inicio' => now()->subDays(3),
+        'fecha_fin' => null,
+        'activo' => true,
+    ]);
+
+    $opcionMax = OpcionRespuesta::where('valor_numerico', 3)->first();
+    $opcionMin = OpcionRespuesta::where('valor_numerico', 1)->first();
+
+    for ($i = 0; $i < 5; $i++) {
+        $enc = Encuesta::factory()->completada()->create(['lote_id' => $loteCerrado->id]);
+        Respuesta::create([
+            'encuesta_id' => $enc->id,
+            'pregunta_id' => Pregunta::first()->id,
+            'opcion_respuesta_id' => $opcionMax->id,
+        ]);
+    }
+
+    for ($i = 0; $i < 5; $i++) {
+        $enc = Encuesta::factory()->completada()->create(['lote_id' => $loteActivo->id]);
+        Respuesta::create([
+            'encuesta_id' => $enc->id,
+            'pregunta_id' => Pregunta::first()->id,
+            'opcion_respuesta_id' => $opcionMin->id,
+        ]);
+    }
+
+    Livewire::actingAs($admin)
+        ->test(Reportes::class)
+        ->assertViewHas('promedioGeneral', 100.0);
+});
+
+it('reportes respeta el filtroLoteId manual sin importar si el lote esta cerrado o no', function () {
+    $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    $loteCerrado = \App\Models\Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'fecha_inicio' => now()->subDays(20),
+        'fecha_fin' => now()->subDays(5),
+        'activo' => false,
+    ]);
+
+    $loteActivo = \App\Models\Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'fecha_inicio' => now()->subDays(3),
+        'fecha_fin' => null,
+        'activo' => true,
+    ]);
+
+    $opcionMax = OpcionRespuesta::where('valor_numerico', 3)->first();
+    $opcionMin = OpcionRespuesta::where('valor_numerico', 1)->first();
+
+    for ($i = 0; $i < 5; $i++) {
+        $enc1 = Encuesta::factory()->completada()->create(['lote_id' => $loteCerrado->id]);
+        Respuesta::create([
+            'encuesta_id' => $enc1->id,
+            'pregunta_id' => Pregunta::first()->id,
+            'opcion_respuesta_id' => $opcionMax->id,
+        ]);
+
+        $enc2 = Encuesta::factory()->completada()->create(['lote_id' => $loteActivo->id]);
+        Respuesta::create([
+            'encuesta_id' => $enc2->id,
+            'pregunta_id' => Pregunta::first()->id,
+            'opcion_respuesta_id' => $opcionMin->id,
+        ]);
+    }
+
+    Livewire::actingAs($admin)
+        ->test(Reportes::class)
+        ->set('filtroLoteId', (string) $loteActivo->id)
+        ->assertViewHas('promedioGeneral', 0.0);
+});
+
+it('los filtros demograficos se aplican sobre el lote resuelto sin arrastrar datos historicos', function () {
+    $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class, \Database\Seeders\SexosSeeder::class]);
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+    $sexos = \App\Models\Sexo::all();
+    $sexoMasculino = $sexos->first();
+
+    // Lote antiguo (cerrado)
+    $loteAntiguo = \App\Models\Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'fecha_inicio' => now()->subDays(60),
+        'fecha_fin' => now()->subDays(30),
+        'activo' => false,
+    ]);
+
+    // Lote resuelto (cerrado mas reciente)
+    $loteReciente = \App\Models\Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'fecha_inicio' => now()->subDays(20),
+        'fecha_fin' => now()->subDays(5),
+        'activo' => false,
+    ]);
+
+    $opcionMax = OpcionRespuesta::where('valor_numerico', 3)->first();
+    $opcionMin = OpcionRespuesta::where('valor_numerico', 1)->first();
+
+    // En el lote antiguo hay respuestas de sexoMasculino con 0 pts (opcionMin)
+    for ($i = 0; $i < 5; $i++) {
+        $enc = Encuesta::factory()->completada()->create(['lote_id' => $loteAntiguo->id]);
+        \App\Models\DatoDemografico::create(['encuesta_id' => $enc->id, 'sexo_id' => $sexoMasculino->id]);
+        Respuesta::create(['encuesta_id' => $enc->id, 'pregunta_id' => Pregunta::first()->id, 'opcion_respuesta_id' => $opcionMin->id]);
+    }
+
+    // En el lote reciente hay respuestas de sexoMasculino con 100 pts (opcionMax)
+    for ($i = 0; $i < 5; $i++) {
+        $enc = Encuesta::factory()->completada()->create(['lote_id' => $loteReciente->id]);
+        \App\Models\DatoDemografico::create(['encuesta_id' => $enc->id, 'sexo_id' => $sexoMasculino->id]);
+        Respuesta::create(['encuesta_id' => $enc->id, 'pregunta_id' => Pregunta::first()->id, 'opcion_respuesta_id' => $opcionMax->id]);
+    }
+
+    Livewire::actingAs($admin)
+        ->test(Reportes::class)
+        ->set('filtroSexoId', (string) $sexoMasculino->id)
+        ->assertViewHas('promedioGeneral', 100.0);
 });
