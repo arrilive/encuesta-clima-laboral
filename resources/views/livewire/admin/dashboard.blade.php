@@ -123,14 +123,14 @@
                                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                                     <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
                                 </span>
-                                Ronda <strong>{{ $clima['lote_nombre'] }}</strong> en curso — resultados parciales.
+                                Ronda <strong>{{ $clima['lote_nombre'] }}</strong> en curso. Resultados parciales.
                             </div>
                         @elseif($clima['escenario'] === 3)
                             <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-50 text-slate-700 border border-slate-200/80">
                                 <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                                Estado actual: ronda <strong>{{ $clima['lote_nombre'] }}</strong> · cerrada el {{ $clima['lote_fecha_fin'] }}.
+                                Estado actual: ronda <strong>{{ $clima['lote_nombre'] }}</strong>. cerrada el {{ $clima['lote_fecha_fin'] }}.
                             </div>
                         @elseif($clima['escenario'] === 4)
                             <div class="flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-xl text-xs bg-amber-50 text-amber-800 border border-amber-200/80">
@@ -138,10 +138,10 @@
                                     <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                     </svg>
-                                    <span>Estado actual: ronda <strong>{{ $clima['lote_nombre'] }}</strong> · cerrada el {{ $clima['lote_fecha_fin'] }}.</span>
+                                    <span>Estado actual: ronda <strong>{{ $clima['lote_nombre'] }}</strong>. cerrada el {{ $clima['lote_fecha_fin'] }}.</span>
                                 </div>
                                 <span class="hidden sm:inline text-amber-300">•</span>
-                                <span>Hay una nueva ronda en curso (<strong>{{ $clima['lote_activo_nombre'] }}</strong>) — este panorama se actualizará cuando cierre.</span>
+                                <span>Hay una nueva ronda en curso (<strong>{{ $clima['lote_activo_nombre'] }}</strong>), este panorama se actualizará cuando cierre.</span>
                             </div>
                         @endif
                     </div>

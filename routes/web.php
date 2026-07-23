@@ -27,6 +27,9 @@ Route::prefix('admin')
         Route::get('/reportes/pdf', [PdfController::class, 'reportePDF'])
             ->name('reportes.pdf');
 
+        Route::get('/tendencias', \App\Livewire\Admin\ComparativasHistoricas::class)
+            ->name('tendencias');
+
         // Solo super_admin
         Route::middleware('role:super_admin')->group(function () {
             Route::get('/tokens', \App\Livewire\Admin\GenerarTokens::class)

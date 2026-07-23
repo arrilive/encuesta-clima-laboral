@@ -276,4 +276,86 @@ class ClimaScoringService
 
         return $resultados;
     }
+
+    /**
+     * Calcula los puntajes por dimensión, subdimensión y promedio general
+     * agrupados por lote_id sobre el conjunto de respuestas representado por $baseQuery.
+     *
+     * @return Collection<int, array{
+     *     lote_id: int,
+     *     promedio_general: float,
+     *     dimensiones: Collection<int, array{id: int, nombre: string, puntaje: float|null}>,
+     *     subdimensiones: Collection<int, array{id: int, dimension_id: int, nombre: string, puntaje: float}>
+     * }> Indexada por lote_id
+     */
+    public function scoresPorDimensionPorLotes(Builder $baseQuery): Collection
+    {
+        $dimensiones = Dimension::with('subdimensiones')->orderBy('orden')->get();
+
+        $promedios = (clone $baseQuery)
+            ->whereHas('opcionRespuesta', fn (Builder $q) => $q->where('valor_numerico', '!=', 0))
+            ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
+            ->join('encuestas as enc_join', 'respuestas.encuesta_id', '=', 'enc_join.id')
+            ->join('preguntas', 'respuestas.pregunta_id', '=', 'preguntas.id')
+            ->selectRaw('preguntas.subdimension_id, enc_join.lote_id, AVG(opciones_respuesta.valor_numerico) as promedio')
+            ->groupBy('preguntas.subdimension_id', 'enc_join.lote_id')
+            ->get();
+
+        $resultadosPorLote = $promedios->groupBy('lote_id');
+
+        return $resultadosPorLote->map(function ($filasLote, $loteId) use ($dimensiones) {
+            $filasLoteSub = $filasLote->keyBy('subdimension_id');
+
+            $allSubdimensionScores = collect();
+
+            $dimensionesScores = $dimensiones->map(function (Dimension $d) use ($filasLoteSub, $allSubdimensionScores) {
+                $puntajesSub = $d->subdimensiones->map(function ($sub) use ($filasLoteSub, $d, $allSubdimensionScores) {
+                    if (isset($filasLoteSub[$sub->id])) {
+                        $avg = $filasLoteSub[$sub->id]->promedio;
+                        $puntajeSub = round((($avg - 1) / 2) * 100, 1);
+
+                        $allSubdimensionScores->push([
+                            'id' => $sub->id,
+                            'dimension_id' => $d->id,
+                            'nombre' => $sub->nombre,
+                            'puntaje' => $puntajeSub,
+                        ]);
+
+                        return $puntajeSub;
+                    } else {
+                        $allSubdimensionScores->push([
+                            'id' => $sub->id,
+                            'dimension_id' => $d->id,
+                            'nombre' => $sub->nombre,
+                            'puntaje' => null,
+                        ]);
+                    }
+
+                    return null;
+                })->filter(fn ($p) => $p !== null);
+
+                $puntajeDimension = $puntajesSub->count() > 0
+                    ? round($puntajesSub->average(), 1)
+                    : null;
+
+                return [
+                    'id' => $d->id,
+                    'nombre' => $d->nombre,
+                    'puntaje' => $puntajeDimension,
+                ];
+            });
+
+            $dimensionesValidas = $dimensionesScores->whereNotNull('puntaje');
+            $promedioGeneral = $dimensionesValidas->isNotEmpty()
+                ? round($dimensionesValidas->avg('puntaje'), 1)
+                : null;
+
+            return [
+                'lote_id' => (int) $loteId,
+                'promedio_general' => $promedioGeneral,
+                'dimensiones' => $dimensionesScores,
+                'subdimensiones' => $allSubdimensionScores,
+            ];
+        });
+    }
 }
