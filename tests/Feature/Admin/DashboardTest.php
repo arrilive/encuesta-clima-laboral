@@ -366,7 +366,7 @@ it('clima muestra escenario 2 (lote activo) cuando hay un lote activo sin cerrad
 
     $component->assertSee('Ronda')
         ->assertSee('Ronda Activa 2026')
-        ->assertSee('en curso — resultados parciales.');
+        ->assertSee('en curso. Resultados parciales.');
 });
 
 it('clima muestra escenario 3 (lote cerrado) cuando hay un lote cerrado sin lote activo', function () {
