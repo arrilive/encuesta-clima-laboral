@@ -399,7 +399,8 @@
 
                 {{-- 3e. Respuestas abiertas --}}
                 <livewire:admin.respuestas-abiertas :filtro-edad-id="$filtroEdadId" :filtro-sexo-id="$filtroSexoId" :filtro-cargo-id="$filtroCargoId"
-                    :filtro-lugar-trabajo-id="$filtroLugarTrabajoId" :filtro-grado-academico-id="$filtroGradoAcademicoId" :filtro-antiguedad-id="$filtroAntiguedadId" :filtro-empresa-id="$filtroEmpresaId" />
+                    :filtro-lugar-trabajo-id="$filtroLugarTrabajoId" :filtro-grado-academico-id="$filtroGradoAcademicoId" :filtro-antiguedad-id="$filtroAntiguedadId" :filtro-empresa-id="$filtroEmpresaId"
+                    :filtro-corporativo-id="$filtroCorporativoId" :filtro-sucursal-id="$filtroSucursalId" :filtro-lote-id="$filtroLoteId" />
             </div>
         @endif
     @endif

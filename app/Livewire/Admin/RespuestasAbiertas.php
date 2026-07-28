@@ -36,6 +36,15 @@ class RespuestasAbiertas extends Component
     #[Reactive]
     public string $filtroEmpresaId = '';
 
+    #[Reactive]
+    public string $filtroCorporativoId = '';
+
+    #[Reactive]
+    public string $filtroSucursalId = '';
+
+    #[Reactive]
+    public string $filtroLoteId = '';
+
     public ?int $preguntaAbiertaActiva = null;
 
     public bool $mostrarRespuestasAbiertas = false;
@@ -55,12 +64,31 @@ class RespuestasAbiertas extends Component
 
         $query->whereHas('lote', fn ($q) => $this->scopeByRole($q));
 
+        if ($user->role === \App\Enums\Role::SUPER_ADMIN->value && $this->filtroCorporativoId) {
+            $query->whereHas('lote.empresa', fn ($q) => $q->where('corporativo_id', $this->filtroCorporativoId));
+        }
+
         if (! empty($this->filtroEmpresaId)) {
             $sucursalIds = $this->sucursalIdsDeEmpresa((int) $this->filtroEmpresaId);
             $query->whereHas('lote', function ($q) use ($sucursalIds) {
                 $q->where('empresa_id', $this->filtroEmpresaId)
                     ->orWhereIn('sucursal_id', $sucursalIds);
             });
+        }
+
+        if ($this->filtroSucursalId) {
+            $query->whereHas('lote', fn ($q) => $q->where('lotes.sucursal_id', $this->filtroSucursalId));
+        }
+
+        if ($this->filtroLoteId) {
+            $query->whereHas('lote', fn ($q) => $q->where('lotes.id', $this->filtroLoteId));
+        } else {
+            $infoLote = $this->resolverLoteEstadoActual();
+            if ($infoLote['lote']) {
+                $query->whereHas('lote', fn ($q) => $q->where('lotes.id', $infoLote['lote']->id));
+            } else {
+                $query->whereRaw('1=0');
+            }
         }
 
         if ($this->filtroEdadId) {
