@@ -348,6 +348,62 @@ it('la exportacion a PDF aplica el filtro por lote y formatea correctamente su e
     $response->assertOk();
 });
 
+it('la exportacion a PDF sin lote_id explicito se limita al lote de estado actual', function () {
+    $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
+
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    $loteAntiguo = \App\Models\Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'fecha_inicio' => now()->subDays(60),
+        'fecha_fin' => now()->subDays(30),
+        'activo' => false,
+    ]);
+
+    $loteReciente = \App\Models\Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'fecha_inicio' => now()->subDays(20),
+        'fecha_fin' => now()->subDays(5),
+        'activo' => false,
+    ]);
+
+    $opcionMax = OpcionRespuesta::where('valor_numerico', 3)->first();
+    $opcionMin = OpcionRespuesta::where('valor_numerico', 1)->first();
+    $pregunta = Pregunta::first();
+
+    for ($i = 0; $i < 5; $i++) {
+        $enc1 = Encuesta::factory()->completada()->create(['lote_id' => $loteAntiguo->id]);
+        Respuesta::create(['encuesta_id' => $enc1->id, 'pregunta_id' => $pregunta->id, 'opcion_respuesta_id' => $opcionMin->id]);
+
+        $enc2 = Encuesta::factory()->completada()->create(['lote_id' => $loteReciente->id]);
+        Respuesta::create(['encuesta_id' => $enc2->id, 'pregunta_id' => $pregunta->id, 'opcion_respuesta_id' => $opcionMax->id]);
+    }
+
+    $this->actingAs($admin);
+
+    $response = $this->get(route('admin.reportes.pdf', [
+        'alcance' => 'dimensiones',
+    ]));
+
+    $response->assertOk();
+
+    // Verificación por reflexión de la query resultante (debe incluir 5 respuestas del lote reciente, no 10 ni 0)
+    $controller = new \App\Http\Controllers\Admin\PdfController;
+    $request = \Illuminate\Http\Request::create(route('admin.reportes.pdf', ['alcance' => 'dimensiones']));
+    $request->setUserResolver(fn () => $admin);
+
+    $reflection = new \ReflectionMethod(\App\Http\Controllers\Admin\PdfController::class, 'getBaseQuery');
+    $reflection->setAccessible(true);
+
+    $query = $reflection->invoke($controller, $request, $admin);
+
+    expect($query->count())->toBe(5);
+
+    $promedio = app(\App\Services\ClimaScoringService::class)->promedioGeneral($query);
+    expect($promedio)->toBe(100.0);
+});
+
 it('filtroSucursalId filtra respuestas a la sucursal seleccionada', function () {
     $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
 

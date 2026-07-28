@@ -37,7 +37,6 @@ trait HasTenantScope
     protected function resolverLoteEstadoActual(): array
     {
         $user = auth()->user();
-        $hoy = Carbon::today()->toDateString();
 
         // 1. Base query scoped by role
         $query = Lote::query();
@@ -67,6 +66,47 @@ trait HasTenantScope
 
         // Fetch all lotes in this scope to evaluate scenarios
         $lotes = $query->get();
+
+        return $this->resolverEstadoDesdeLotes($lotes);
+    }
+
+    protected function resolverLoteEstadoActualDesdeFiltros(array $filtros): array
+    {
+        $user = auth()->user();
+
+        // 1. Base query scoped by role
+        $query = Lote::query();
+        $query = $this->scopeByRole($query);
+
+        // 2. Apply filters from array
+        if (! empty($filtros['corporativo_id']) && $user && $user->role === Role::SUPER_ADMIN->value) {
+            $query->whereHas('empresa', fn ($q) => $q->where('corporativo_id', $filtros['corporativo_id']));
+        }
+
+        if (! empty($filtros['empresa_id'])) {
+            $sucursalIds = $this->sucursalIdsDeEmpresa((int) $filtros['empresa_id']);
+            $query->where(function ($q) use ($filtros, $sucursalIds) {
+                $q->where('empresa_id', $filtros['empresa_id'])
+                    ->orWhereIn('sucursal_id', $sucursalIds);
+            });
+        }
+
+        if (! empty($filtros['sucursal_id'])) {
+            $query->where('sucursal_id', $filtros['sucursal_id']);
+        }
+
+        if (! empty($filtros['lote_id'])) {
+            $query->where('id', $filtros['lote_id']);
+        }
+
+        $lotes = $query->get();
+
+        return $this->resolverEstadoDesdeLotes($lotes);
+    }
+
+    protected function resolverEstadoDesdeLotes(\Illuminate\Support\Collection $lotes): array
+    {
+        $hoy = Carbon::today()->toDateString();
 
         // Limitación conocida y aceptada: al consolidar empresa + sucursales, cada una puede tener su "lote de estado actual"
         // con fecha_fin distinta entre sí (ej. Sucursal Norte cerrada en marzo, Sucursal Sur cerrada en junio).
