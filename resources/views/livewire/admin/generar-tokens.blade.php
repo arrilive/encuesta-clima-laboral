@@ -556,7 +556,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-12 text-center text-slate-400 text-sm">
+                            <td colspan="{{ auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value ? 7 : 5 }}" class="px-6 py-12 text-center text-slate-400 text-sm">
                                 Aún no se han generado tokens.
                             </td>
                         </tr>
