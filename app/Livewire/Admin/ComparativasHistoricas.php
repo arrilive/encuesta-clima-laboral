@@ -34,6 +34,9 @@ class ComparativasHistoricas extends Component
 
     public string $filtroSucursalId = '';
 
+    // Modo activo: 'comparar' | 'historial'
+    public string $modo = 'comparar';
+
     public function mount(): void
     {
         // Default state is empty so user sees '-- Seleccionar Periodo Base --' and '-- Seleccionar Periodo Comparado --'
@@ -119,7 +122,12 @@ class ComparativasHistoricas extends Component
             ->get();
     }
 
-    public function getLotesProperty()
+    /**
+     * Construye la query base de Lote ya scope-ada por rol y filtros de
+     * corporativo/empresa/sucursal, sin aplicar ordenamiento ni get().
+     * Compartida por getLotesProperty() y getLotesHistorialProperty().
+     */
+    private function lotesScopeadosQuery(): \Illuminate\Database\Eloquent\Builder
     {
         $user = auth()->user();
 
@@ -142,7 +150,33 @@ class ComparativasHistoricas extends Component
             $query->where('sucursal_id', $this->filtroSucursalId);
         }
 
-        return $query->orderByDesc('fecha_inicio')->get();
+        return $query;
+    }
+
+    public function getLotesProperty()
+    {
+        return $this->lotesScopeadosQuery()
+            ->orderByDesc('fecha_inicio')
+            ->get();
+    }
+
+    /**
+     * Lotes cerrados o inactivos para el modo "Historial completo".
+     * Solo lotes cuya fecha_fin ya pasó, o que tienen activo=false.
+     *
+     * Limitación conocida y aceptada: el modo "Historial completo" NO aplica
+     * umbral de anonimato por lote individual. Decisión consciente, consistente
+     * con el modo "Comparar periodos" que tampoco lo aplica. Pendiente de
+     * revisión conjunta a futuro.
+     */
+    public function getLotesHistorialProperty()
+    {
+        return $this->lotesScopeadosQuery()
+            ->where(function ($q) {
+                $q->where('activo', false)->orWhere('fecha_fin', '<', today());
+            })
+            ->orderBy('fecha_inicio')
+            ->get();
     }
 
     public function irNivel1(): void
@@ -345,6 +379,48 @@ class ComparativasHistoricas extends Component
             }
         }
 
+        // ── Modo Historial ──────────────────────────────────────────────────────
+        $lotesHistorial = $this->lotesHistorial;
+        $timeline = collect();
+        $chartTendenciaHistorial = [
+            'categorias' => [],
+            'series' => [],
+        ];
+
+        if ($this->modo === 'historial' && $lotesHistorial->isNotEmpty()) {
+            $loteIdsHistorial = $lotesHistorial->pluck('id')->toArray();
+
+            $baseQueryHistorial = Respuesta::query()
+                ->whereHas('encuesta', fn ($q) => $q
+                    ->where('estado', 'completado')
+                    ->whereIn('lote_id', $loteIdsHistorial)
+                );
+
+            $scoresMapHistorial = $scoringService->scoresPorDimensionPorLotes($baseQueryHistorial);
+
+            $timeline = $lotesHistorial->map(function ($lote) use ($scoresMapHistorial) {
+                $data = $scoresMapHistorial->get($lote->id);
+
+                return [
+                    'lote' => $lote,
+                    'label' => $this->formatLoteNombreSimple($lote),
+                    'label_full' => $this->formatLoteLabel($lote),
+                    'promedio_general' => $data ? $data['promedio_general'] : null,
+                ];
+            });
+
+            $chartTendenciaHistorial = [
+                'categorias' => $timeline->pluck('label')->toArray(),
+                'series' => [
+                    [
+                        'name' => 'Promedio General',
+                        'data' => $timeline->pluck('promedio_general')->map(fn ($v) => $v !== null ? (float) $v : null)->toArray(),
+                    ],
+                ],
+            ];
+        }
+        // ── Fin Modo Historial ──────────────────────────────────────────────────
+
         return view('livewire.admin.comparativas-historicas', [
             'loteA' => $loteA,
             'loteB' => $loteB,
@@ -360,6 +436,9 @@ class ComparativasHistoricas extends Component
             'empresas' => $this->empresas,
             'corporativos' => $this->corporativos,
             'sucursales' => $this->sucursales,
+            'lotesHistorial' => $lotesHistorial,
+            'timeline' => $timeline,
+            'chartTendenciaHistorial' => $chartTendenciaHistorial,
         ]);
     }
 
