@@ -173,3 +173,136 @@ it('muestra sin datos N/A cuando se compara un lote con respuestas contra un lot
         expect($sub['badge']['formatted'])->toBe('N/A');
     }
 });
+
+// ── Modo Historial ────────────────────────────────────────────────────────────
+
+it('modo historial: los lotes activos (activo=true y sin fecha_fin pasada) no aparecen en lotesHistorial', function () {
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    // Lote cerrado (activo=false) — debe aparecer
+    $loteCerrado = Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'activo' => false,
+        'fecha_inicio' => now()->subDays(60),
+        'fecha_fin' => now()->subDays(30),
+    ]);
+
+    // Lote activo — NO debe aparecer
+    $loteActivo = Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'activo' => true,
+        'fecha_inicio' => now()->subDays(10),
+        'fecha_fin' => now()->addDays(20),
+    ]);
+
+    $component = Livewire::actingAs($admin)
+        ->test(ComparativasHistoricas::class)
+        ->set('modo', 'historial');
+
+    $lotesHistorial = $component->viewData('lotesHistorial');
+
+    expect($lotesHistorial->pluck('id')->toArray())->toContain($loteCerrado->id);
+    expect($lotesHistorial->pluck('id')->toArray())->not->toContain($loteActivo->id);
+});
+
+it('modo historial: los lotes cerrados se ordenan cronológicamente por fecha_inicio ASC', function () {
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    $loteReciente = Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'activo' => false,
+        'fecha_inicio' => now()->subDays(10),
+        'fecha_fin' => now()->subDays(3),
+    ]);
+
+    $loteAntiguo = Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'activo' => false,
+        'fecha_inicio' => now()->subDays(90),
+        'fecha_fin' => now()->subDays(60),
+    ]);
+
+    $component = Livewire::actingAs($admin)
+        ->test(ComparativasHistoricas::class)
+        ->set('modo', 'historial');
+
+    $ids = $component->viewData('lotesHistorial')->pluck('id')->toArray();
+
+    // El lote más antiguo debe estar primero (ASC)
+    expect($ids[0])->toBe($loteAntiguo->id);
+    expect($ids[1])->toBe($loteReciente->id);
+});
+
+it('modo historial: admin_empresa no ve en timeline los lotes de otra empresa', function () {
+    $empresaPropia = Empresa::factory()->create();
+    $empresaAjena = Empresa::factory()->create();
+
+    $admin = User::factory()->adminEmpresa($empresaPropia->id)->create();
+
+    Lote::factory()->create([
+        'empresa_id' => $empresaAjena->id,
+        'activo' => false,
+        'fecha_inicio' => now()->subDays(60),
+        'fecha_fin' => now()->subDays(30),
+    ]);
+
+    $lotePropio = Lote::factory()->create([
+        'empresa_id' => $empresaPropia->id,
+        'activo' => false,
+        'fecha_inicio' => now()->subDays(60),
+        'fecha_fin' => now()->subDays(30),
+    ]);
+
+    $component = Livewire::actingAs($admin)
+        ->test(ComparativasHistoricas::class)
+        ->set('modo', 'historial');
+
+    $ids = $component->viewData('lotesHistorial')->pluck('id')->toArray();
+
+    expect($ids)->toContain($lotePropio->id);
+    expect(count($ids))->toBe(1);
+});
+
+it('modo historial: un lote cerrado sin respuestas tiene promedio_general null en timeline', function () {
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    // Lote cerrado sin ninguna encuesta completada
+    Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'activo' => false,
+        'fecha_inicio' => now()->subDays(60),
+        'fecha_fin' => now()->subDays(30),
+    ]);
+
+    $component = Livewire::actingAs($admin)
+        ->test(ComparativasHistoricas::class)
+        ->set('modo', 'historial');
+
+    $timeline = $component->viewData('timeline');
+
+    expect($timeline)->toHaveCount(1);
+    expect($timeline->first()['promedio_general'])->toBeNull();
+});
+
+it('modo historial: un lote activo=true pero con fecha_fin pasada sí aparece (expiró naturalmente)', function () {
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    $loteExpirado = Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'activo' => true,
+        'fecha_inicio' => now()->subDays(60),
+        'fecha_fin' => now()->subDays(5),
+    ]);
+
+    $component = Livewire::actingAs($admin)
+        ->test(ComparativasHistoricas::class)
+        ->set('modo', 'historial');
+
+    $ids = $component->viewData('lotesHistorial')->pluck('id')->toArray();
+
+    expect($ids)->toContain($loteExpirado->id);
+});
