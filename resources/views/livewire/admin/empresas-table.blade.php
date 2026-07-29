@@ -55,7 +55,7 @@
                     <tr class="hover:bg-slate-50 transition-colors duration-100">
                         <td class="px-6 py-3.5 text-slate-900 font-medium">{{ $empresa->nombre }}</td>
                         <td class="px-6 py-3.5 text-slate-500">{{ $empresa->corporativo?->nombre ?? '—' }}</td>
-                        <td class="px-6 py-3.5 text-slate-500">{{ $admin?->name ?? '—' }}</td>
+                        <td class="px-6 py-3.5 text-slate-500">{{ $admin?->name ?? 'Sin asignar' }}</td>
                         <td class="px-6 py-3.5 text-center">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
                                 {{ $empresa->completadas }}
@@ -215,35 +215,21 @@
                         @enderror
                     </div>
 
-                    {{-- Nombre admin --}}
+                    {{-- Administrador (opcional) --}}
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nombre del administrador <span class="text-red-400">*</span></label>
-                        <input wire:model="adminNombre" type="text" placeholder="ej. Juan Pérez"
-                               class="w-full px-4 py-2.5 border rounded-xl text-sm text-slate-900
-                                      placeholder-slate-400 focus:outline-none focus:border-blue-500
-                                      focus:ring-4 focus:ring-blue-500/10 transition-all duration-200
-                                      {{ $errors->has('adminNombre') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}" />
-                        @error('adminNombre')
-                            <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">
-                                <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                                {{ $message }}
-                            </p>
-                        @enderror
-                    </div>
-
-                    {{-- Email admin --}}
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Correo electrónico <span class="text-red-400">*</span></label>
-                        <input wire:model="adminEmail" type="email" placeholder="admin@empresa.com"
-                               class="w-full px-4 py-2.5 border rounded-xl text-sm text-slate-900
-                                      placeholder-slate-400 focus:outline-none focus:border-blue-500
-                                      focus:ring-4 focus:ring-blue-500/10 transition-all duration-200
-                                      {{ $errors->has('adminEmail') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}" />
-                        @error('adminEmail')
-                            <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">
-                                <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                                {{ $message }}
-                            </p>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Administrador (Opcional)</label>
+                        <x-admin.combobox-entidad
+                            wire-model="adminId"
+                            placeholder="Sin asignar"
+                            :has-error="$errors->has('adminId')"
+                            :disabled="false">
+                            <option value="">Sin asignar</option>
+                            @foreach($adminsEmpresaDisponibles as $adm)
+                                <option value="{{ $adm->id }}">{{ $adm->name }} ({{ $adm->email }})</option>
+                            @endforeach
+                        </x-admin.combobox-entidad>
+                        @error('adminId')
+                            <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">{{ $message }}</p>
                         @enderror
                     </div>
 
@@ -365,6 +351,24 @@
                             @endforeach
                         </x-admin.combobox-entidad>
                         @error('corporativoId')
+                            <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    {{-- Administrador --}}
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Administrador (Opcional)</label>
+                        <x-admin.combobox-entidad
+                            wire-model="adminId"
+                            placeholder="Sin asignar"
+                            :has-error="$errors->has('adminId')"
+                            :disabled="false">
+                            <option value="">Sin asignar</option>
+                            @foreach($adminsEmpresaDisponibles as $adm)
+                                <option value="{{ $adm->id }}">{{ $adm->name }} ({{ $adm->email }})</option>
+                            @endforeach
+                        </x-admin.combobox-entidad>
+                        @error('adminId')
                             <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">{{ $message }}</p>
                         @enderror
                     </div>
@@ -600,14 +604,17 @@
                             <thead>
                                 <tr class="border-b border-slate-200 bg-slate-50">
                                     <th class="text-left px-5 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Nombre</th>
+                                    <th class="text-left px-5 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Administrador</th>
                                     <th class="text-center px-5 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
                                     <th class="text-right px-5 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 @forelse($sucursales as $suc)
+                                    @php $sucAdmin = $suc->users->where('role', 'admin_sucursal')->first(); @endphp
                                     <tr class="hover:bg-slate-50 transition-colors duration-100">
                                         <td class="px-5 py-3 text-slate-900 font-medium">{{ $suc->nombre }}</td>
+                                        <td class="px-5 py-3 text-slate-500">{{ $sucAdmin?->name ?? 'Sin asignar' }}</td>
                                         <td class="px-5 py-3 text-center">
                                             @if($suc->activa)
                                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">Activa</span>
@@ -663,7 +670,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="3" class="px-5 py-8 text-center text-slate-400 text-xs">
+                                        <td colspan="4" class="px-5 py-8 text-center text-slate-400 text-xs">
                                             No hay sucursales registradas para esta empresa.
                                         </td>
                                     </tr>
@@ -738,6 +745,24 @@
                             <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">{{ $message }}</p>
                         @enderror
                     </div>
+
+                    {{-- Administrador de Sucursal --}}
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Administrador (Opcional)</label>
+                        <x-admin.combobox-entidad
+                            wire-model="sucursalAdminId"
+                            placeholder="Sin asignar"
+                            :has-error="$errors->has('sucursalAdminId')"
+                            :disabled="false">
+                            <option value="">Sin asignar</option>
+                            @foreach($adminsSucursalDisponibles as $sadm)
+                                <option value="{{ $sadm->id }}">{{ $sadm->name }} ({{ $sadm->email }})</option>
+                            @endforeach
+                        </x-admin.combobox-entidad>
+                        @error('sucursalAdminId')
+                            <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
 
                 <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
@@ -795,6 +820,24 @@
                                       focus:ring-4 focus:ring-blue-500/10 transition-all duration-200
                                       {{ $errors->has('sucursalNombre') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}" />
                         @error('sucursalNombre')
+                            <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    {{-- Administrador de Sucursal --}}
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Administrador (Opcional)</label>
+                        <x-admin.combobox-entidad
+                            wire-model="sucursalAdminId"
+                            placeholder="Sin asignar"
+                            :has-error="$errors->has('sucursalAdminId')"
+                            :disabled="false">
+                            <option value="">Sin asignar</option>
+                            @foreach($adminsSucursalDisponibles as $sadm)
+                                <option value="{{ $sadm->id }}">{{ $sadm->name }} ({{ $sadm->email }})</option>
+                            @endforeach
+                        </x-admin.combobox-entidad>
+                        @error('sucursalAdminId')
                             <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">{{ $message }}</p>
                         @enderror
                     </div>

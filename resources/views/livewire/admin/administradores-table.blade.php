@@ -69,13 +69,25 @@
                         </td>
                         <td class="px-6 py-3.5 text-slate-500">
                             @if($user->role === 'admin_corporativo')
-                                <span class="text-slate-600 font-medium">{{ $user->corporativo?->nombre ?? '—' }}</span> <span class="text-xs text-slate-400">(Corporativo)</span>
+                                @if($user->corporativo)
+                                    <span class="text-slate-600 font-medium">{{ $user->corporativo->nombre }}</span> <span class="text-xs text-slate-400">(Corporativo)</span>
+                                @else
+                                    Sin asignar
+                                @endif
                             @elseif($user->role === 'admin_empresa')
-                                <span class="text-slate-600 font-medium">{{ $user->empresa?->nombre ?? '—' }}</span> <span class="text-xs text-slate-400">(Empresa)</span>
+                                @if($user->empresa)
+                                    <span class="text-slate-600 font-medium">{{ $user->empresa->nombre }}</span> <span class="text-xs text-slate-400">(Empresa)</span>
+                                @else
+                                    Sin asignar
+                                @endif
                             @elseif($user->role === 'admin_sucursal')
-                                <span class="text-slate-600 font-medium">{{ $user->sucursal?->nombre ?? '—' }}</span> <span class="text-xs text-slate-400">({{ $user->sucursal?->empresa?->nombre ?? '—' }})</span>
+                                @if($user->sucursal)
+                                    <span class="text-slate-600 font-medium">{{ $user->sucursal->nombre }}</span> <span class="text-xs text-slate-400">({{ $user->sucursal->empresa?->nombre ?? '—' }})</span>
+                                @else
+                                    Sin asignar
+                                @endif
                             @else
-                                —
+                                Sin asignar
                             @endif
                         </td>
                         <td class="px-6 py-3.5">

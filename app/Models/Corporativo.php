@@ -23,4 +23,9 @@ class Corporativo extends Model
     {
         return $this->hasMany(Empresa::class);
     }
+
+    public function users(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(User::class);
+    }
 }
