@@ -1,7 +1,9 @@
 <?php
 
+use App\Enums\Role;
 use App\Livewire\Admin\CorporativosTable;
 use App\Models\Corporativo;
+use App\Models\Empresa;
 use App\Models\User;
 use Livewire\Livewire;
 
@@ -14,11 +16,32 @@ it('super_admin puede acceder a /admin/corporativos', function () {
 });
 
 it('admin_empresa no puede acceder a /admin/corporativos', function () {
-    $admin = User::factory()->create(['role' => \App\Enums\Role::ADMIN_EMPRESA->value]);
+    $admin = User::factory()->create(['role' => Role::ADMIN_EMPRESA->value]);
 
     $this->actingAs($admin)
         ->get(route('admin.corporativos'))
         ->assertForbidden();
+});
+
+it('muestra el conteo de empresas y el admin corporativo asignado', function () {
+    $admin = User::factory()->superAdmin()->create();
+    $this->actingAs($admin);
+
+    $corp = Corporativo::create(['nombre' => 'Corp Con Datos', 'activa' => true]);
+    Empresa::factory()->count(3)->create(['corporativo_id' => $corp->id]);
+
+    $adminCorp = User::create([
+        'name' => 'Admin Corp Visible',
+        'email' => 'admin_corp_vis@test.com',
+        'password' => 'secret',
+        'role' => Role::ADMIN_CORPORATIVO->value,
+        'corporativo_id' => $corp->id,
+    ]);
+
+    Livewire::test(CorporativosTable::class)
+        ->assertSee('Corp Con Datos')
+        ->assertSee('3')
+        ->assertSee('Admin Corp Visible');
 });
 
 it('puede crear un corporativo', function () {

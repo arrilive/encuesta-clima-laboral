@@ -2,12 +2,12 @@
 
 namespace App\Livewire\Admin;
 
+use App\Enums\Role;
 use App\Models\Corporativo;
 use App\Models\Empresa;
 use App\Models\Sucursal;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -43,9 +43,7 @@ class EmpresasTable extends Component
 
     public string $nombre = '';
 
-    public string $adminNombre = '';
-
-    public string $adminEmail = '';
+    public ?int $adminId = null;
 
     public string $llaveMaestra = '';
 
@@ -57,6 +55,8 @@ class EmpresasTable extends Component
     public ?int $sucursalId = null;
 
     public string $sucursalNombre = '';
+
+    public ?int $sucursalAdminId = null;
 
     public string $sucursalLlave = '';
 
@@ -72,7 +72,8 @@ class EmpresasTable extends Component
 
     public function abrirModalCrear(): void
     {
-        $this->reset(['nombre', 'adminNombre', 'adminEmail', 'llaveMaestra', 'passwordGenerada', 'corporativoId']);
+        $this->empresaId = null;
+        $this->reset(['nombre', 'adminId', 'llaveMaestra', 'passwordGenerada', 'corporativoId']);
         $this->resetErrorBag();
         $this->modalCrear = true;
     }
@@ -81,43 +82,36 @@ class EmpresasTable extends Component
     {
         $this->validate([
             'nombre' => 'required|string|max:255|unique:empresas,nombre',
-            'adminNombre' => 'required|string|max:255',
-            'adminEmail' => 'required|email|unique:users,email',
             'llaveMaestra' => 'required|string|min:8',
             'corporativoId' => 'nullable|exists:corporativos,id',
+            'adminId' => [
+                'nullable',
+                Rule::exists('users', 'id')->where(
+                    fn ($q) => $q->where('role', Role::ADMIN_EMPRESA->value)->whereNull('empresa_id')
+                ),
+            ],
         ], [
             'nombre.required' => 'El nombre de la empresa es obligatorio.',
             'nombre.unique' => 'Ya existe una empresa con ese nombre.',
-            'adminNombre.required' => 'El nombre del administrador es obligatorio.',
-            'adminEmail.required' => 'El correo electrónico es obligatorio.',
-            'adminEmail.email' => 'Ingresa un correo electrónico válido.',
-            'adminEmail.unique' => 'Este correo ya está registrado.',
             'llaveMaestra.required' => 'La llave maestra es obligatoria.',
             'llaveMaestra.min' => 'La llave maestra debe tener al menos 8 caracteres.',
+            'adminId.exists' => 'Este administrador ya está asignado a otra empresa. Desasígnalo primero desde Administradores o desde esa empresa.',
         ]);
 
-        $passwordPlana = Str::password(12);
+        $empresa = Empresa::create([
+            'nombre' => $this->nombre,
+            'password' => $this->llaveMaestra,
+            'activa' => true,
+            'corporativo_id' => $this->corporativoId ?: null,
+        ]);
 
-        DB::transaction(function () use ($passwordPlana) {
-            $empresa = Empresa::create([
-                'nombre' => $this->nombre,
-                'password' => $this->llaveMaestra,
-                'activa' => true,
-                'corporativo_id' => $this->corporativoId ?: null,
-            ]);
+        if ($this->adminId) {
+            User::where('id', $this->adminId)
+                ->where('role', Role::ADMIN_EMPRESA->value)
+                ->update(['empresa_id' => $empresa->id]);
+        }
 
-            User::create([
-                'name' => $this->adminNombre,
-                'email' => $this->adminEmail,
-                'password' => $passwordPlana,
-                'role' => 'admin_empresa',
-                'empresa_id' => $empresa->id,
-            ]);
-        });
-
-        $this->passwordGenerada = $passwordPlana;
         $this->modalCrear = false;
-        $this->modalPasswordGenerada = true;
     }
 
     // ── Editar empresa ───────────────────────────────────────────────────────
@@ -128,6 +122,9 @@ class EmpresasTable extends Component
         $this->empresaId = $empresa->id;
         $this->nombre = $empresa->nombre;
         $this->corporativoId = $empresa->corporativo_id;
+        $this->adminId = User::where('empresa_id', $empresa->id)
+            ->where('role', Role::ADMIN_EMPRESA->value)
+            ->first()?->id;
         $this->resetErrorBag();
         $this->modalEditarEmpresa = true;
     }
@@ -137,15 +134,37 @@ class EmpresasTable extends Component
         $this->validate([
             'nombre' => "required|string|max:255|unique:empresas,nombre,{$this->empresaId}",
             'corporativoId' => 'nullable|exists:corporativos,id',
+            'adminId' => [
+                'nullable',
+                Rule::exists('users', 'id')->where(
+                    fn ($q) => $q->where('role', Role::ADMIN_EMPRESA->value)
+                        ->where(fn ($sub) => $sub->whereNull('empresa_id')->orWhere('empresa_id', $this->empresaId))
+                ),
+            ],
         ], [
             'nombre.required' => 'El nombre es obligatorio.',
             'nombre.unique' => 'Ya existe una empresa con ese nombre.',
+            'adminId.exists' => 'Este administrador ya está asignado a otra empresa. Desasígnalo primero desde Administradores o desde esa empresa.',
         ]);
 
         Empresa::findOrFail($this->empresaId)->update([
             'nombre' => $this->nombre,
             'corporativo_id' => $this->corporativoId ?: null,
         ]);
+
+        $currentAdmin = User::where('empresa_id', $this->empresaId)
+            ->where('role', Role::ADMIN_EMPRESA->value)
+            ->first();
+
+        if ($currentAdmin && $currentAdmin->id != $this->adminId) {
+            $currentAdmin->update(['empresa_id' => null]);
+        }
+
+        if ($this->adminId) {
+            User::where('id', $this->adminId)
+                ->where('role', Role::ADMIN_EMPRESA->value)
+                ->update(['empresa_id' => $this->empresaId]);
+        }
 
         $this->modalEditarEmpresa = false;
     }
@@ -200,7 +219,8 @@ class EmpresasTable extends Component
 
     public function abrirCrearSucursal(): void
     {
-        $this->reset(['sucursalNombre', 'sucursalLlave']);
+        $this->sucursalId = null;
+        $this->reset(['sucursalNombre', 'sucursalLlave', 'sucursalAdminId']);
         $this->resetErrorBag();
         $this->modalCrearSucursal = true;
     }
@@ -210,22 +230,35 @@ class EmpresasTable extends Component
         $this->validate([
             'sucursalNombre' => "required|string|max:255|unique:sucursales,nombre,NULL,id,empresa_id,{$this->empresaSeleccionadaId}",
             'sucursalLlave' => 'required|string|min:8',
+            'sucursalAdminId' => [
+                'nullable',
+                Rule::exists('users', 'id')->where(
+                    fn ($q) => $q->where('role', Role::ADMIN_SUCURSAL->value)->whereNull('sucursal_id')
+                ),
+            ],
         ], [
             'sucursalNombre.required' => 'El nombre de la sucursal es obligatorio.',
             'sucursalNombre.unique' => 'Ya existe una sucursal con ese nombre en esta empresa.',
             'sucursalLlave.required' => 'La llave maestra es obligatoria.',
             'sucursalLlave.min' => 'La llave maestra debe tener al menos 8 caracteres.',
+            'sucursalAdminId.exists' => 'Este administrador ya está asignado a otra sucursal. Desasígnalo primero desde Administradores o desde esa sucursal.',
         ]);
 
-        Sucursal::create([
+        $sucursal = Sucursal::create([
             'empresa_id' => $this->empresaSeleccionadaId,
             'nombre' => $this->sucursalNombre,
             'password' => $this->sucursalLlave, // Auto-hashed by model cast
             'activa' => true,
         ]);
 
+        if ($this->sucursalAdminId) {
+            User::where('id', $this->sucursalAdminId)
+                ->where('role', Role::ADMIN_SUCURSAL->value)
+                ->update(['sucursal_id' => $sucursal->id]);
+        }
+
         $this->modalCrearSucursal = false;
-        $this->reset(['sucursalNombre', 'sucursalLlave']);
+        $this->reset(['sucursalNombre', 'sucursalLlave', 'sucursalAdminId']);
     }
 
     public function abrirEditarSucursal(int $id): void
@@ -233,6 +266,9 @@ class EmpresasTable extends Component
         $sucursal = Sucursal::findOrFail($id);
         $this->sucursalId = $sucursal->id;
         $this->sucursalNombre = $sucursal->nombre;
+        $this->sucursalAdminId = User::where('sucursal_id', $sucursal->id)
+            ->where('role', Role::ADMIN_SUCURSAL->value)
+            ->first()?->id;
         $this->resetErrorBag();
         $this->modalEditarSucursal = true;
     }
@@ -241,14 +277,36 @@ class EmpresasTable extends Component
     {
         $this->validate([
             'sucursalNombre' => "required|string|max:255|unique:sucursales,nombre,{$this->sucursalId},id,empresa_id,{$this->empresaSeleccionadaId}",
+            'sucursalAdminId' => [
+                'nullable',
+                Rule::exists('users', 'id')->where(
+                    fn ($q) => $q->where('role', Role::ADMIN_SUCURSAL->value)
+                        ->where(fn ($sub) => $sub->whereNull('sucursal_id')->orWhere('sucursal_id', $this->sucursalId))
+                ),
+            ],
         ], [
             'sucursalNombre.required' => 'El nombre de la sucursal es obligatorio.',
             'sucursalNombre.unique' => 'Ya existe una sucursal con ese nombre en esta empresa.',
+            'sucursalAdminId.exists' => 'Este administrador ya está asignado a otra sucursal. Desasígnalo primero desde Administradores o desde esa sucursal.',
         ]);
 
         Sucursal::findOrFail($this->sucursalId)->update([
             'nombre' => $this->sucursalNombre,
         ]);
+
+        $currentAdmin = User::where('sucursal_id', $this->sucursalId)
+            ->where('role', Role::ADMIN_SUCURSAL->value)
+            ->first();
+
+        if ($currentAdmin && $currentAdmin->id != $this->sucursalAdminId) {
+            $currentAdmin->update(['sucursal_id' => null]);
+        }
+
+        if ($this->sucursalAdminId) {
+            User::where('id', $this->sucursalAdminId)
+                ->where('role', Role::ADMIN_SUCURSAL->value)
+                ->update(['sucursal_id' => $this->sucursalId]);
+        }
 
         $this->modalEditarSucursal = false;
     }
@@ -312,15 +370,43 @@ class EmpresasTable extends Component
 
         $corporativos = Corporativo::where('activa', true)->orderBy('nombre')->get();
 
+        $adminsEmpresaDisponibles = User::where('role', Role::ADMIN_EMPRESA->value)
+            ->where(function ($q) {
+                $q->whereNull('empresa_id');
+                if ($this->empresaId) {
+                    $q->orWhere('empresa_id', $this->empresaId);
+                }
+            })
+            ->orderBy('name')
+            ->get();
+
+        $adminsSucursalDisponibles = User::where('role', Role::ADMIN_SUCURSAL->value)
+            ->where(function ($q) {
+                $q->whereNull('sucursal_id');
+                if ($this->sucursalId) {
+                    $q->orWhere('sucursal_id', $this->sucursalId);
+                }
+            })
+            ->orderBy('name')
+            ->get();
+
         $sucursales = [];
         $empresaSeleccionada = null;
         if ($this->empresaSeleccionadaId) {
             $empresaSeleccionada = Empresa::find($this->empresaSeleccionadaId);
-            $sucursales = Sucursal::where('empresa_id', $this->empresaSeleccionadaId)
+            $sucursales = Sucursal::with('users')
+                ->where('empresa_id', $this->empresaSeleccionadaId)
                 ->orderBy('nombre')
                 ->get();
         }
 
-        return view('livewire.admin.empresas-table', compact('empresas', 'corporativos', 'sucursales', 'empresaSeleccionada'));
+        return view('livewire.admin.empresas-table', compact(
+            'empresas',
+            'corporativos',
+            'sucursales',
+            'empresaSeleccionada',
+            'adminsEmpresaDisponibles',
+            'adminsSucursalDisponibles'
+        ));
     }
 }

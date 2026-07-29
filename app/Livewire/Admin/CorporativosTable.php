@@ -97,6 +97,8 @@ class CorporativosTable extends Component
     public function render()
     {
         $corporativos = Corporativo::query()
+            ->withCount('empresas')
+            ->with('users')
             ->when($this->buscar, fn ($q) => $q->where('nombre', 'like', "%{$this->buscar}%"))
             ->orderBy('nombre')
             ->paginate(10);

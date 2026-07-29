@@ -86,11 +86,11 @@ class AdministradoresTable extends Component
         ];
 
         if ($this->rol === Role::ADMIN_CORPORATIVO->value) {
-            $rules['corporativoId'] = 'required|exists:corporativos,id';
+            $rules['corporativoId'] = 'nullable|exists:corporativos,id';
         } elseif ($this->rol === Role::ADMIN_EMPRESA->value) {
-            $rules['empresaId'] = 'required|exists:empresas,id';
+            $rules['empresaId'] = 'nullable|exists:empresas,id';
         } elseif ($this->rol === Role::ADMIN_SUCURSAL->value) {
-            $rules['sucursalId'] = 'required|exists:sucursales,id';
+            $rules['sucursalId'] = 'nullable|exists:sucursales,id';
         }
 
         $this->validate($rules, [
@@ -154,11 +154,11 @@ class AdministradoresTable extends Component
         ];
 
         if ($this->rol === Role::ADMIN_CORPORATIVO->value) {
-            $rules['corporativoId'] = 'required|exists:corporativos,id';
+            $rules['corporativoId'] = 'nullable|exists:corporativos,id';
         } elseif ($this->rol === Role::ADMIN_EMPRESA->value) {
-            $rules['empresaId'] = 'required|exists:empresas,id';
+            $rules['empresaId'] = 'nullable|exists:empresas,id';
         } elseif ($this->rol === Role::ADMIN_SUCURSAL->value) {
-            $rules['sucursalId'] = 'required|exists:sucursales,id';
+            $rules['sucursalId'] = 'nullable|exists:sucursales,id';
         }
 
         $this->validate($rules, [
