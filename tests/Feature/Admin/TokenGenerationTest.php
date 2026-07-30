@@ -15,7 +15,8 @@ it('super_admin puede generar tokens para cualquier empresa', function () {
         ->set('empresaId', (string) $empresa->id)
         ->set('tokensTotal', '10')
         ->set('fechaFin', now()->addDays(30)->toDateString())
-        ->call('generar');
+        ->call('generar')
+        ->assertDispatched('notify');
 
     expect(Encuesta::whereHas('lote', fn ($q) => $q->where('empresa_id', $empresa->id))->count())->toBe(10);
 
@@ -132,7 +133,8 @@ it('inyectar() agrega tokens a lote existente y actualiza tokens_total', functio
         ->set('empresaIdModoB', (string) $empresa->id)
         ->set('loteId', (string) $lote->id)
         ->set('cantidadModoB', '5')
-        ->call('inyectar');
+        ->call('inyectar')
+        ->assertDispatched('notify');
 
     $lote->refresh();
     expect($lote->tokens_total)->toBe(15);

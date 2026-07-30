@@ -42,7 +42,7 @@
                 <tr class="border-b border-slate-200 bg-slate-50">
                     <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Nombre</th>
                     <th class="text-center px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Empresas</th>
-                    <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Admin Corporativo</th>
+                    <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Administrador</th>
                     <th class="text-center px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
                     <th class="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
                 </tr>

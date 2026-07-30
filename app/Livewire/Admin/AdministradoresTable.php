@@ -123,6 +123,7 @@ class AdministradoresTable extends Component
         $this->passwordGenerada = $passwordPlana;
         $this->modalCrear = false;
         $this->modalPasswordGenerada = true;
+        $this->dispatch('notify', mensaje: 'Administrador <b>'.e($this->nombre).'</b> creado correctamente.', tipo: 'success');
     }
 
     // ── Editar Administrador ─────────────────────────────────────────────────
@@ -187,6 +188,7 @@ class AdministradoresTable extends Component
         ]);
 
         $this->modalEditar = false;
+        $this->dispatch('notify', mensaje: 'Administrador <b>'.e($this->nombre).'</b> actualizado correctamente.', tipo: 'success');
     }
 
     // ── Eliminar Administrador ───────────────────────────────────────────────
@@ -222,8 +224,10 @@ class AdministradoresTable extends Component
             }
         }
 
+        $nombreEliminado = $user->name;
         $user->delete();
         $this->modalEliminar = false;
+        $this->dispatch('notify', mensaje: 'Administrador <b>'.e($nombreEliminado).'</b> eliminado.', tipo: 'success');
     }
 
     // ── Cerrar modal contraseña generada ─────────────────────────────────────
@@ -247,6 +251,7 @@ class AdministradoresTable extends Component
 
         $this->passwordGenerada = $passwordPlana;
         $this->modalPasswordGenerada = true;
+        $this->dispatch('notify', mensaje: 'Contraseña de <b>'.e($user->name).'</b> regenerada correctamente.', tipo: 'success');
     }
 
     // ── Render ───────────────────────────────────────────────────────────────

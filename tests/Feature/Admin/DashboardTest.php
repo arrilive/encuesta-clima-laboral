@@ -266,7 +266,9 @@ it('admin_empresa puede liberar tokens en riesgo de su empresa', function () {
 
     $this->actingAs($admin);
 
-    Livewire::test(Dashboard::class)->call('liberarTokens');
+    Livewire::test(Dashboard::class)
+        ->call('liberarTokens')
+        ->assertDispatched('notify');
 
     expect($encuesta->fresh())
         ->estado->toBe('disponible')
