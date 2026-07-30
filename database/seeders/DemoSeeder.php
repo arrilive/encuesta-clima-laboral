@@ -28,7 +28,7 @@ class DemoSeeder extends Seeder
 
     private const ATENCION = ['verdadero' => 35, 'a_veces' => 35, 'falso' => 22, 'no_responde' => 8];          // score ≈ 57.1
 
-    private const RIESGO = ['verdadero' => 24, 'a_veces' => 28, 'falso' => 38, 'no_responde' => 10];           // score ≈ 42.2
+    private const RIESGO = ['verdadero' => 18, 'a_veces' => 28, 'falso' => 44, 'no_responde' => 10];           // score ≈ 35.6
 
     public function run(): void
     {
@@ -320,7 +320,7 @@ class DemoSeeder extends Seeder
                     'en_riesgo' => 3,
                     'perfil' => self::RIESGO,
                     'nombre_entidad' => 'Sucursal Sur',
-                    'score_esperado' => '~42%',
+                    'score_esperado' => '~36%',
                 ],
             ];
 
