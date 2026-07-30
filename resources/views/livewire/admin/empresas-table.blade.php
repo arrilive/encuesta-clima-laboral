@@ -78,6 +78,7 @@
                                 {{-- Sucursales --}}
                                 <button wire:click="abrirModalSucursales({{ $empresa->id }})"
                                         title="Gestionar sucursales"
+                                        aria-label="Gestionar sucursales"
                                         class="p-2 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors duration-150">
                                     <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z" />
@@ -87,6 +88,7 @@
                                 {{-- Editar --}}
                                 <button wire:click="abrirEditarEmpresa({{ $empresa->id }})"
                                         title="Editar empresa"
+                                        aria-label="Editar empresa"
                                         class="p-2 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-150">
                                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
@@ -97,6 +99,7 @@
                                 {{-- Llave maestra --}}
                                 <button wire:click="abrirLlaveMaestra({{ $empresa->id }})"
                                         title="Cambiar llave maestra"
+                                        aria-label="Cambiar llave maestra"
                                         class="p-2 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors duration-150">
                                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/>
@@ -106,6 +109,7 @@
                                 {{-- Toggle activa --}}
                                 <button wire:click="toggleActiva({{ $empresa->id }})"
                                         title="{{ $empresa->activa ? 'Desactivar' : 'Activar' }}"
+                                        aria-label="{{ $empresa->activa ? 'Desactivar' : 'Activar' }}"
                                         class="group p-2 rounded-lg transition-colors duration-150
                                                {{ $empresa->activa
                                                   ? 'text-emerald-500 hover:text-red-500 hover:bg-red-50'
@@ -627,6 +631,7 @@
                                                 {{-- Editar nombre --}}
                                                 <button wire:click="abrirEditarSucursal({{ $suc->id }})"
                                                         title="Editar nombre"
+                                                        aria-label="Editar nombre"
                                                         class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
                                                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                         <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
@@ -636,6 +641,7 @@
                                                 {{-- Cambiar llave maestra --}}
                                                 <button wire:click="abrirLlaveSucursal({{ $suc->id }})"
                                                         title="Cambiar llave de sucursal"
+                                                        aria-label="Cambiar llave de sucursal"
                                                         class="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors">
                                                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                         <path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/>
@@ -645,6 +651,7 @@
                                                 {{-- Toggle activa --}}
                                                 <button wire:click="toggleActivaSucursal({{ $suc->id }})"
                                                         title="{{ $suc->activa ? 'Desactivar' : 'Activar' }}"
+                                                        aria-label="{{ $suc->activa ? 'Desactivar' : 'Activar' }}"
                                                         class="group p-1.5 rounded-lg transition-colors
                                                                {{ $suc->activa
                                                                   ? 'text-emerald-500 hover:text-red-500 hover:bg-red-50'

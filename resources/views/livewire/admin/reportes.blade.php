@@ -376,6 +376,7 @@
                                             </td>
                                             <td class="py-3 text-right">
                                                 <button wire:click="irNivel2({{ $item['id'] }})"
+                                                    aria-label="Ver detalle de {{ $item['nombre'] }}"
                                                     class="text-blue-600 hover:text-blue-700 inline-flex items-center group-hover:translate-x-1 transition-transform p-1">
                                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                                         viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"
