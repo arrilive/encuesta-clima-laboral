@@ -107,13 +107,23 @@
                                 </button>
 
                                 {{-- Toggle activa --}}
-                                <button wire:click="toggleActiva({{ $empresa->id }})"
-                                        title="{{ $empresa->activa ? 'Desactivar' : 'Activar' }}"
-                                        aria-label="{{ $empresa->activa ? 'Desactivar' : 'Activar' }}"
-                                        class="group p-2 rounded-lg transition-colors duration-150
-                                               {{ $empresa->activa
-                                                  ? 'text-emerald-500 hover:text-red-500 hover:bg-red-50'
-                                                  : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50' }}">
+                                @if($empresa->activa)
+                                    <button x-on:click="if (confirm('¿Seguro que quieres desactivar ' + {{ \Illuminate\Support\Js::from($empresa->nombre) }} + '? Los empleados no podrán acceder a la encuesta mientras esté desactivada.')) { $wire.toggleActiva({{ $empresa->id }}) }"
+                                            title="{{ $empresa->activa ? 'Desactivar' : 'Activar' }}"
+                                            aria-label="{{ $empresa->activa ? 'Desactivar' : 'Activar' }}"
+                                            class="group p-2 rounded-lg transition-colors duration-150
+                                                   {{ $empresa->activa
+                                                      ? 'text-emerald-500 hover:text-red-500 hover:bg-red-50'
+                                                      : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50' }}">
+                                @else
+                                    <button wire:click="toggleActiva({{ $empresa->id }})"
+                                            title="{{ $empresa->activa ? 'Desactivar' : 'Activar' }}"
+                                            aria-label="{{ $empresa->activa ? 'Desactivar' : 'Activar' }}"
+                                            class="group p-2 rounded-lg transition-colors duration-150
+                                                   {{ $empresa->activa
+                                                      ? 'text-emerald-500 hover:text-red-500 hover:bg-red-50'
+                                                      : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50' }}">
+                                @endif
                                     @if($empresa->activa)
                                         <svg class="w-4 h-4 group-hover:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <polyline points="20 6 9 17 4 12"/>
@@ -495,6 +505,7 @@
                  copiado: false,
                  get password() { return $wire.passwordGenerada ?? '' }
              }"
+             x-on:keyup.escape.window="abierto = false"
              x-show="abierto" x-cloak
              class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
 
@@ -649,13 +660,23 @@
                                                 </button>
 
                                                 {{-- Toggle activa --}}
-                                                <button wire:click="toggleActivaSucursal({{ $suc->id }})"
-                                                        title="{{ $suc->activa ? 'Desactivar' : 'Activar' }}"
-                                                        aria-label="{{ $suc->activa ? 'Desactivar' : 'Activar' }}"
-                                                        class="group p-1.5 rounded-lg transition-colors
-                                                               {{ $suc->activa
-                                                                  ? 'text-emerald-500 hover:text-red-500 hover:bg-red-50'
-                                                                  : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50' }}">
+                                                @if($suc->activa)
+                                                    <button x-on:click="if (confirm('¿Seguro que quieres desactivar ' + {{ \Illuminate\Support\Js::from($suc->nombre) }} + '? Los empleados no podrán acceder a la encuesta mientras esté desactivada.')) { $wire.toggleActivaSucursal({{ $suc->id }}) }"
+                                                            title="{{ $suc->activa ? 'Desactivar' : 'Activar' }}"
+                                                            aria-label="{{ $suc->activa ? 'Desactivar' : 'Activar' }}"
+                                                            class="group p-1.5 rounded-lg transition-colors
+                                                                   {{ $suc->activa
+                                                                      ? 'text-emerald-500 hover:text-red-500 hover:bg-red-50'
+                                                                      : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50' }}">
+                                                @else
+                                                    <button wire:click="toggleActivaSucursal({{ $suc->id }})"
+                                                            title="{{ $suc->activa ? 'Desactivar' : 'Activar' }}"
+                                                            aria-label="{{ $suc->activa ? 'Desactivar' : 'Activar' }}"
+                                                            class="group p-1.5 rounded-lg transition-colors
+                                                                   {{ $suc->activa
+                                                                      ? 'text-emerald-500 hover:text-red-500 hover:bg-red-50'
+                                                                      : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50' }}">
+                                                @endif
                                                     @if($suc->activa)
                                                         <svg class="w-3.5 h-3.5 group-hover:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                             <polyline points="20 6 9 17 4 12"/>

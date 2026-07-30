@@ -75,7 +75,7 @@
                     <path d="M12 2a10 10 0 0 1 10 10" />
                 </svg>
                 <span wire:loading.remove wire:target="siguienteBloque">
-                    {{ $dimensionActual < $totalDimensiones ? 'Siguiente dimensión' : 'Continuar' }}
+                    {{ $dimensionActual < $totalDimensiones ? 'Siguiente dimensión' : 'Finalizar dimensiones' }}
                     <span class="ml-1">→</span>
                 </span>
                 <span wire:loading wire:target="siguienteBloque">Guardando…</span>
