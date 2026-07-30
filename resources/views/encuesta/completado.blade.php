@@ -81,23 +81,21 @@
 
                 <a href="{{ route('encuesta.bloque', ['token' => $token, 'dimension' => $siguienteDimension->orden]) }}"
                     class="w-full inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700
-                          text-white font-semibold text-sm px-6 py-3 rounded-xl
+                          text-white font-semibold text-sm px-4 sm:px-6 py-3 rounded-xl
                           transition-all duration-200 hover:-translate-y-px
                           hover:shadow-[0_4px_16px_rgba(37,99,235,.25)]
                           active:translate-y-0 active:shadow-none">
-                    Comenzar {{ $siguienteDimension->nombre }}
-                    <span class="ml-1">→</span>
+                    <span class="text-center leading-snug">Comenzar {{ $siguienteDimension->nombre }} →</span>
                 </a>
             @else
                 {{-- Última dimensión completada --}}
                 <a href="{{ route('encuesta.abiertas', $token) }}"
                     class="w-full inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700
-                          text-white font-semibold text-sm px-6 py-3 rounded-xl
+                          text-white font-semibold text-sm px-4 sm:px-6 py-3 rounded-xl
                           transition-all duration-200 hover:-translate-y-px
                           hover:shadow-[0_4px_16px_rgba(37,99,235,.25)]
                           active:translate-y-0 active:shadow-none">
-                    Ir a preguntas finales
-                    <span class="ml-1">→</span>
+                    <span class="text-center leading-snug">Ir a preguntas finales →</span>
                 </a>
             @endif
 
