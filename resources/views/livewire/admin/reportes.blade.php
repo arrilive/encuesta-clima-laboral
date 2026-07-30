@@ -44,8 +44,8 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {{-- Edad --}}
             <div class="space-y-1.5">
-                <label class="text-slate-500 text-sm font-medium">Edad</label>
-                <select wire:model.live="filtroEdadId"
+                <label for="filtro-edad" class="text-slate-500 text-sm font-medium">Edad</label>
+                <select id="filtro-edad" wire:model.live="filtroEdadId"
                     class="w-full border border-slate-300 rounded-xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
                     <option value="">Todas las edades</option>
                     @foreach ($edades as $edad)
@@ -56,8 +56,8 @@
 
             {{-- Sexo --}}
             <div class="space-y-1.5">
-                <label class="text-slate-500 text-sm font-medium">Sexo</label>
-                <select wire:model.live="filtroSexoId"
+                <label for="filtro-sexo" class="text-slate-500 text-sm font-medium">Sexo</label>
+                <select id="filtro-sexo" wire:model.live="filtroSexoId"
                     class="w-full border border-slate-300 rounded-xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
                     <option value="">Todos los sexos</option>
                     @foreach ($sexos as $sexo)
@@ -68,8 +68,8 @@
 
             {{-- Cargo --}}
             <div class="space-y-1.5">
-                <label class="text-slate-500 text-sm font-medium">Cargo</label>
-                <select wire:model.live="filtroCargoId"
+                <label for="filtro-cargo" class="text-slate-500 text-sm font-medium">Cargo</label>
+                <select id="filtro-cargo" wire:model.live="filtroCargoId"
                     class="w-full border border-slate-300 rounded-xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
                     <option value="">Todos los cargos</option>
                     @foreach ($cargos as $cargo)
@@ -80,8 +80,8 @@
 
             {{-- Lugar de Trabajo --}}
             <div class="space-y-1.5">
-                <label class="text-slate-500 text-sm font-medium">Lugar de Trabajo</label>
-                <select wire:model.live="filtroLugarTrabajoId"
+                <label for="filtro-lugar-trabajo" class="text-slate-500 text-sm font-medium">Lugar de Trabajo</label>
+                <select id="filtro-lugar-trabajo" wire:model.live="filtroLugarTrabajoId"
                     class="w-full border border-slate-300 rounded-xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
                     <option value="">Todos los lugares</option>
                     @foreach ($lugares as $lugar)
@@ -92,8 +92,8 @@
 
             {{-- Grado Académico --}}
             <div class="space-y-1.5">
-                <label class="text-slate-500 text-sm font-medium">Grado Académico</label>
-                <select wire:model.live="filtroGradoAcademicoId"
+                <label for="filtro-grado-academico" class="text-slate-500 text-sm font-medium">Grado Académico</label>
+                <select id="filtro-grado-academico" wire:model.live="filtroGradoAcademicoId"
                     class="w-full border border-slate-300 rounded-xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
                     <option value="">Todos los grados</option>
                     @foreach ($grados as $grado)
@@ -104,8 +104,8 @@
 
             {{-- Antigüedad --}}
             <div class="space-y-1.5">
-                <label class="text-slate-500 text-sm font-medium">Antigüedad</label>
-                <select wire:model.live="filtroAntiguedadId"
+                <label for="filtro-antiguedad" class="text-slate-500 text-sm font-medium">Antigüedad</label>
+                <select id="filtro-antiguedad" wire:model.live="filtroAntiguedadId"
                     class="w-full border border-slate-300 rounded-xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
                     <option value="">Todas las antigüedades</option>
                     @foreach ($antiguedades as $antiguedad)

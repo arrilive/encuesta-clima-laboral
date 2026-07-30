@@ -99,6 +99,7 @@
                         </div>
                         <p class="text-sm text-slate-500 mb-5">Te enviaremos un código de un solo uso a tu WhatsApp.</p>
                         <div class="space-y-4">
+                            <label for="phone-input" class="sr-only">Número de WhatsApp</label>
                             <input id="phone-input" type="tel" placeholder="Número de WhatsApp"
                                 x-on:input="
                                     let val = $el.value;
@@ -156,6 +157,7 @@
                         <div class="flex gap-2 justify-center mb-5">
                             <template x-for="(_, i) in otp" :key="i">
                                 <input type="text" inputmode="numeric" maxlength="1" :id="'otp-' + i"
+                                    :aria-label="'Dígito ' + (i + 1) + ' del código de verificación'"
                                     x-model="otp[i]" x-on:input="moverFoco($event, i)"
                                     x-on:keydown.backspace="retrocederFoco($event, i)"
                                     x-on:paste.prevent="pegarOtp($event)"

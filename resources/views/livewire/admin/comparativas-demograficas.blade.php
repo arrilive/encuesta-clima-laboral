@@ -4,7 +4,8 @@
             <h2 class="text-base font-semibold text-slate-800 tracking-tight mb-1">Comparativas demográficas</h2>
             <p class="text-slate-500 text-sm">Puntaje promedio en cada dimensión según el grupo seleccionado</p>
         </div>
-        <select wire:model.live="campoComparativa"
+        <label for="campo-comparativa" class="sr-only">Agrupar comparativa por</label>
+        <select id="campo-comparativa" wire:model.live="campoComparativa"
             class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm min-w-[200px]
                    hover:border-blue-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10
                    transition-colors cursor-pointer">

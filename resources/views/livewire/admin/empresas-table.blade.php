@@ -183,8 +183,8 @@
                 <div class="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
                     {{-- Nombre empresa --}}
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nombre de la empresa <span class="text-red-400">*</span></label>
-                        <input wire:model="nombre" type="text" placeholder="ej. Coca-Cola México"
+                        <label for="crear-empresa-nombre" class="block text-xs font-semibold text-slate-700 mb-1.5">Nombre de la empresa <span class="text-red-400">*</span></label>
+                        <input id="crear-empresa-nombre" wire:model="nombre" type="text" placeholder="ej. Coca-Cola México"
                                class="w-full px-4 py-2.5 border rounded-xl text-sm text-slate-900
                                       placeholder-slate-400 focus:outline-none focus:border-blue-500
                                       focus:ring-4 focus:ring-blue-500/10 transition-all duration-200
@@ -235,9 +235,9 @@
 
                     {{-- Llave maestra --}}
                     <div x-data="{ mostrar: false }">
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Llave maestra de encuestas <span class="text-red-400">*</span></label>
+                        <label for="crear-empresa-llave" class="block text-xs font-semibold text-slate-700 mb-1.5">Llave maestra de encuestas <span class="text-red-400">*</span></label>
                         <div class="relative">
-                            <input wire:model="llaveMaestra"
+                            <input id="crear-empresa-llave" wire:model="llaveMaestra"
                                    :type="mostrar ? 'text' : 'password'"
                                    placeholder="Mínimo 8 caracteres"
                                    class="w-full px-4 py-2.5 pr-10 border rounded-xl text-sm text-slate-900
@@ -323,8 +323,8 @@
                 <div class="p-6 space-y-5">
                     {{-- Nombre --}}
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nombre de la empresa <span class="text-red-400">*</span></label>
-                        <input wire:model="nombre" type="text"
+                        <label for="editar-empresa-nombre" class="block text-xs font-semibold text-slate-700 mb-1.5">Nombre de la empresa <span class="text-red-400">*</span></label>
+                        <input id="editar-empresa-nombre" wire:model="nombre" type="text"
                                class="w-full px-4 py-2.5 border rounded-xl text-sm text-slate-900
                                       focus:outline-none focus:border-blue-500
                                       focus:ring-4 focus:ring-blue-500/10 transition-all duration-200
@@ -430,9 +430,9 @@
                     <p class="text-sm text-slate-500">La llave maestra es la contraseña que los empleados usan para acceder a la encuesta.</p>
 
                     <div x-data="{ mostrar: false }">
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nueva llave maestra <span class="text-red-400">*</span></label>
+                        <label for="cambiar-llave-empresa" class="block text-xs font-semibold text-slate-700 mb-1.5">Nueva llave maestra <span class="text-red-400">*</span></label>
                         <div class="relative">
-                            <input wire:model="llaveMaestra"
+                            <input id="cambiar-llave-empresa" wire:model="llaveMaestra"
                                    :type="mostrar ? 'text' : 'password'"
                                    placeholder="Mínimo 8 caracteres"
                                    class="w-full px-4 py-2.5 pr-10 border rounded-xl text-sm text-slate-900
@@ -722,8 +722,8 @@
                 <div class="p-6 space-y-5">
                     {{-- Nombre --}}
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nombre de la sucursal <span class="text-red-400">*</span></label>
-                        <input wire:model="sucursalNombre" type="text" placeholder="ej. Sucursal Centro"
+                        <label for="crear-sucursal-nombre" class="block text-xs font-semibold text-slate-700 mb-1.5">Nombre de la sucursal <span class="text-red-400">*</span></label>
+                        <input id="crear-sucursal-nombre" wire:model="sucursalNombre" type="text" placeholder="ej. Sucursal Centro"
                                class="w-full px-4 py-2.5 border rounded-xl text-sm text-slate-900
                                       focus:outline-none focus:border-blue-500
                                       focus:ring-4 focus:ring-blue-500/10 transition-all duration-200
@@ -735,8 +735,8 @@
 
                     {{-- Llave --}}
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Llave maestra de sucursal <span class="text-red-400">*</span></label>
-                        <input wire:model="sucursalLlave" type="password" placeholder="Mínimo 8 caracteres"
+                        <label for="crear-sucursal-llave" class="block text-xs font-semibold text-slate-700 mb-1.5">Llave maestra de sucursal <span class="text-red-400">*</span></label>
+                        <input id="crear-sucursal-llave" wire:model="sucursalLlave" type="password" placeholder="Mínimo 8 caracteres"
                                class="w-full px-4 py-2.5 border rounded-xl text-sm text-slate-900
                                       focus:outline-none focus:border-blue-500
                                       focus:ring-4 focus:ring-blue-500/10 transition-all duration-200
@@ -813,8 +813,8 @@
 
                 <div class="p-6 space-y-5">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nombre de la sucursal <span class="text-red-400">*</span></label>
-                        <input wire:model="sucursalNombre" type="text"
+                        <label for="editar-sucursal-nombre" class="block text-xs font-semibold text-slate-700 mb-1.5">Nombre de la sucursal <span class="text-red-400">*</span></label>
+                        <input id="editar-sucursal-nombre" wire:model="sucursalNombre" type="text"
                                class="w-full px-4 py-2.5 border rounded-xl text-sm text-slate-900
                                       focus:outline-none focus:border-blue-500
                                       focus:ring-4 focus:ring-blue-500/10 transition-all duration-200
@@ -892,8 +892,8 @@
                 <div class="p-6 space-y-5">
                     <p class="text-sm text-slate-500">Ingrese la nueva llave maestra propia de esta sucursal.</p>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nueva llave maestra <span class="text-red-400">*</span></label>
-                        <input wire:model="sucursalLlave" type="password" placeholder="Mínimo 8 caracteres"
+                        <label for="cambiar-llave-sucursal" class="block text-xs font-semibold text-slate-700 mb-1.5">Nueva llave maestra <span class="text-red-400">*</span></label>
+                        <input id="cambiar-llave-sucursal" wire:model="sucursalLlave" type="password" placeholder="Mínimo 8 caracteres"
                                class="w-full px-4 py-2.5 border rounded-xl text-sm text-slate-900
                                       focus:outline-none focus:border-blue-500
                                       focus:ring-4 focus:ring-blue-500/10 transition-all duration-200
