@@ -112,6 +112,7 @@ class EmpresasTable extends Component
         }
 
         $this->modalCrear = false;
+        $this->dispatch('notify', mensaje: 'Empresa <b>'.e($this->nombre).'</b> creada correctamente.', tipo: 'success');
     }
 
     // ── Editar empresa ───────────────────────────────────────────────────────
@@ -167,6 +168,7 @@ class EmpresasTable extends Component
         }
 
         $this->modalEditarEmpresa = false;
+        $this->dispatch('notify', mensaje: 'Empresa <b>'.e($this->nombre).'</b> actualizada correctamente.', tipo: 'success');
     }
 
     // ── Cambiar llave maestra ────────────────────────────────────────────────
@@ -188,9 +190,11 @@ class EmpresasTable extends Component
             'llaveMaestra.min' => 'La llave maestra debe tener al menos 8 caracteres.',
         ]);
 
-        Empresa::findOrFail($this->empresaId)->update(['password' => $this->llaveMaestra]);
+        $empresa = Empresa::findOrFail($this->empresaId);
+        $empresa->update(['password' => $this->llaveMaestra]);
 
         $this->modalLlaveMaestra = false;
+        $this->dispatch('notify', mensaje: 'Llave maestra de <b>'.e($empresa->nombre).'</b> actualizada.', tipo: 'success');
     }
 
     // ── Toggle activa ────────────────────────────────────────────────────────
@@ -199,6 +203,7 @@ class EmpresasTable extends Component
     {
         $empresa = Empresa::findOrFail($id);
         $empresa->update(['activa' => ! $empresa->activa]);
+        $this->dispatch('notify', mensaje: $empresa->activa ? 'Empresa <b>'.e($empresa->nombre).'</b> activada.' : 'Empresa <b>'.e($empresa->nombre).'</b> desactivada.', tipo: 'success');
     }
 
     // ── Cerrar modal contraseña generada ─────────────────────────────────────
@@ -258,7 +263,9 @@ class EmpresasTable extends Component
         }
 
         $this->modalCrearSucursal = false;
+        $nombreSucursal = $this->sucursalNombre;
         $this->reset(['sucursalNombre', 'sucursalLlave', 'sucursalAdminId']);
+        $this->dispatch('notify', mensaje: 'Sucursal <b>'.e($nombreSucursal).'</b> creada correctamente.', tipo: 'success');
     }
 
     public function abrirEditarSucursal(int $id): void
@@ -309,6 +316,7 @@ class EmpresasTable extends Component
         }
 
         $this->modalEditarSucursal = false;
+        $this->dispatch('notify', mensaje: 'Sucursal <b>'.e($this->sucursalNombre).'</b> actualizada correctamente.', tipo: 'success');
     }
 
     public function abrirLlaveSucursal(int $id): void
@@ -328,17 +336,20 @@ class EmpresasTable extends Component
             'sucursalLlave.min' => 'La llave maestra debe tener al menos 8 caracteres.',
         ]);
 
-        Sucursal::findOrFail($this->sucursalId)->update([
+        $sucursal = Sucursal::findOrFail($this->sucursalId);
+        $sucursal->update([
             'password' => $this->sucursalLlave, // Auto-hashed by model cast
         ]);
 
         $this->modalLlaveSucursal = false;
+        $this->dispatch('notify', mensaje: 'Llave maestra de <b>'.e($sucursal->nombre).'</b> actualizada.', tipo: 'success');
     }
 
     public function toggleActivaSucursal(int $id): void
     {
         $sucursal = Sucursal::findOrFail($id);
         $sucursal->update(['activa' => ! $sucursal->activa]);
+        $this->dispatch('notify', mensaje: $sucursal->activa ? 'Sucursal <b>'.e($sucursal->nombre).'</b> activada.' : 'Sucursal <b>'.e($sucursal->nombre).'</b> desactivada.', tipo: 'success');
     }
 
     // ── Render ───────────────────────────────────────────────────────────────

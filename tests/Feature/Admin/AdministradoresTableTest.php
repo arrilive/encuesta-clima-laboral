@@ -36,7 +36,8 @@ it('puede crear un administrador corporativo sin corporativoId (opcional)', func
         ->set('email', 'admincorp_sin@test.com')
         ->set('rol', Role::ADMIN_CORPORATIVO->value)
         ->call('crear')
-        ->assertHasNoErrors();
+        ->assertHasNoErrors()
+        ->assertDispatched('notify');
 
     expect(User::where('email', 'admincorp_sin@test.com')->first())
         ->not->toBeNull()
@@ -154,7 +155,8 @@ it('limpia las FKs que no corresponden al cambiar de rol en edicion', function (
         ->set('rol', Role::ADMIN_EMPRESA->value)
         ->set('empresaId', $empresa->id)
         ->call('editar')
-        ->assertHasNoErrors();
+        ->assertHasNoErrors()
+        ->assertDispatched('notify');
 
     $fresh = $targetUser->fresh();
     expect($fresh->role)->toBe(Role::ADMIN_EMPRESA->value)
@@ -226,7 +228,8 @@ it('permite la eliminacion si hay otros admins en la empresa activa', function (
 
     Livewire::test(AdministradoresTable::class)
         ->call('abrirEliminar', $user1->id)
-        ->call('eliminar');
+        ->call('eliminar')
+        ->assertDispatched('notify');
 
     expect(User::find($user1->id))->toBeNull();
 });
@@ -244,7 +247,8 @@ it('puede regenerar la contraseña de un administrador', function () {
 
     Livewire::test(AdministradoresTable::class)
         ->call('regenerarPassword', $targetUser->id)
-        ->assertHasNoErrors();
+        ->assertHasNoErrors()
+        ->assertDispatched('notify');
 
     $targetUser = $targetUser->fresh();
     expect($targetUser->password)->not->toBe('old_password');

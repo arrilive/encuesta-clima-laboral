@@ -25,19 +25,6 @@
     >
         <h2 class="text-base font-semibold text-slate-800 tracking-tight mb-5 transition-all duration-300" x-text="modo === 'a' ? 'Generar nuevo lote de tokens' : 'Agregar tokens a un lote existente'"></h2>
 
-        @if($generado)
-            <div class="flex items-center gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-xl mb-5">
-                <svg class="w-5 h-5 text-emerald-600 flex-shrink-0" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                    <polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
-                <p class="text-sm text-emerald-700 font-medium">
-                    {{ $totalGenerado }} {{ $totalGenerado === 1 ? 'token generado' : 'tokens generados' }} correctamente.
-                </p>
-            </div>
-        @endif
-
         {{-- Tabs de Selección de Modo --}}
         <div class="flex border-b border-slate-200 mb-6">
             <button

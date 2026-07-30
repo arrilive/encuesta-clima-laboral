@@ -113,10 +113,16 @@ class Dashboard extends Component
 
         $query->whereHas('lote', fn ($q) => $this->scopeByRole($q));
 
-        $query->update([
+        $count = $query->update([
             'estado' => 'disponible',
             'fecha_asignacion' => null,
         ]);
+
+        $mensaje = $count === 1
+            ? '1 token liberado.'
+            : "{$count} tokens liberados.";
+
+        $this->dispatch('notify', mensaje: $mensaje, tipo: 'success');
     }
 
     public function render(ClimaScoringService $scoring)

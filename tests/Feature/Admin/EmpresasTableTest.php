@@ -55,7 +55,8 @@ it('crear() genera empresa sin crear User y asigna adminId opcional', function (
         ->set('corporativoId', $corp->id)
         ->set('adminId', $adminEmp->id)
         ->call('crear')
-        ->assertHasNoErrors();
+        ->assertHasNoErrors()
+        ->assertDispatched('notify');
 
     // No se crea ningún nuevo usuario
     expect(User::count())->toBe($initialUserCount);
@@ -153,7 +154,8 @@ it('editarEmpresa() actualiza el nombre y el corporativo de la empresa', functio
         ->set('nombre', 'Nombre Editado')
         ->set('corporativoId', $corp->id)
         ->call('editarEmpresa')
-        ->assertHasNoErrors();
+        ->assertHasNoErrors()
+        ->assertDispatched('notify');
 
     $fresh = $empresa->fresh();
     expect($fresh->nombre)->toBe('Nombre Editado')
@@ -167,12 +169,30 @@ it('toggleActiva() cambia el estado de activa a inactiva y viceversa', function 
     $empresa = Empresa::factory()->create(['activa' => true]);
 
     Livewire::test(EmpresasTable::class)
-        ->call('toggleActiva', $empresa->id);
+        ->call('toggleActiva', $empresa->id)
+        ->assertDispatched('notify');
     expect($empresa->fresh()->activa)->toBeFalse();
 
     Livewire::test(EmpresasTable::class)
-        ->call('toggleActiva', $empresa->id);
+        ->call('toggleActiva', $empresa->id)
+        ->assertDispatched('notify');
     expect($empresa->fresh()->activa)->toBeTrue();
+});
+
+it('puede cambiar la llave maestra de la empresa', function () {
+    $admin = User::factory()->superAdmin()->create();
+    $this->actingAs($admin);
+
+    $empresa = Empresa::factory()->create();
+
+    Livewire::test(EmpresasTable::class)
+        ->call('abrirLlaveMaestra', $empresa->id)
+        ->set('llaveMaestra', 'nuevallave1234')
+        ->call('cambiarLlave')
+        ->assertHasNoErrors()
+        ->assertDispatched('notify');
+
+    expect(Hash::check('nuevallave1234', $empresa->fresh()->password))->toBeTrue();
 });
 
 // ── Acciones del componente Sucursales ────────────────────────────────────────
@@ -196,7 +216,8 @@ it('puede crear una sucursal para una empresa seleccionada y asignar un admin_su
         ->set('sucursalLlave', 'llavesuc123')
         ->set('sucursalAdminId', $adminSuc->id)
         ->call('crearSucursal')
-        ->assertHasNoErrors();
+        ->assertHasNoErrors()
+        ->assertDispatched('notify');
 
     $suc = Sucursal::where('empresa_id', $empresa->id)->where('nombre', 'Sucursal A')->first();
     expect($suc)->not->toBeNull()
@@ -320,7 +341,8 @@ it('puede editar una sucursal', function () {
         ->call('abrirEditarSucursal', $suc->id)
         ->set('sucursalNombre', 'Sucursal Renombrada')
         ->call('editarSucursal')
-        ->assertHasNoErrors();
+        ->assertHasNoErrors()
+        ->assertDispatched('notify');
 
     expect($suc->fresh()->nombre)->toBe('Sucursal Renombrada');
 });
@@ -341,7 +363,8 @@ it('puede cambiar la llave maestra de la sucursal', function () {
         ->call('abrirLlaveSucursal', $suc->id)
         ->set('sucursalLlave', 'nuevallave123')
         ->call('cambiarLlaveSucursal')
-        ->assertHasNoErrors();
+        ->assertHasNoErrors()
+        ->assertDispatched('notify');
 
     expect(Hash::check('nuevallave123', $suc->fresh()->password))->toBeTrue();
 });
@@ -359,10 +382,12 @@ it('puede alternar el estado activa de una sucursal', function () {
     ]);
 
     Livewire::test(EmpresasTable::class)
-        ->call('toggleActivaSucursal', $suc->id);
+        ->call('toggleActivaSucursal', $suc->id)
+        ->assertDispatched('notify');
     expect($suc->fresh()->activa)->toBeFalse();
 
     Livewire::test(EmpresasTable::class)
-        ->call('toggleActivaSucursal', $suc->id);
+        ->call('toggleActivaSucursal', $suc->id)
+        ->assertDispatched('notify');
     expect($suc->fresh()->activa)->toBeTrue();
 });

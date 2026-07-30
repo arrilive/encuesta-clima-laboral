@@ -15,6 +15,8 @@
 </head>
 <body class="bg-slate-50 antialiased">
 
+    <x-toast />
+
     <div class="flex min-h-screen">
 
         <x-admin.sidebar />
