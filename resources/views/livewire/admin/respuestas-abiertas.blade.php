@@ -43,47 +43,53 @@
                     </p>
                 </div>
             @else
-                {{-- Tabs de preguntas --}}
-                <div role="tablist" class="flex gap-2 flex-wrap mb-6 border-b border-slate-100 pb-3">
-                    @foreach ($preguntasAbiertas as $preguntaAbierta)
-                        <button wire:click="seleccionarPreguntaAbierta({{ $preguntaAbierta->id }})"
-                            role="tab"
-                            id="tab-{{ $preguntaAbierta->id }}"
-                            aria-selected="{{ $preguntaAbiertaActiva === $preguntaAbierta->id ? 'true' : 'false' }}"
-                            class="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200
-                                   {{ $preguntaAbiertaActiva === $preguntaAbierta->id
-                                       ? 'bg-blue-600 text-white shadow-sm'
-                                       : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100' }}">
-                            {{ $preguntaAbierta->texto }}
-                        </button>
-                    @endforeach
-                </div>
+                @if($preguntasAbiertas->isEmpty())
+                    <div class="text-center py-10">
+                        <p class="text-slate-400 text-sm">No hay preguntas abiertas configuradas para esta encuesta.</p>
+                    </div>
+                @else
+                    {{-- Tabs de preguntas --}}
+                    <div role="tablist" class="flex gap-2 flex-wrap mb-6 border-b border-slate-100 pb-3">
+                        @foreach ($preguntasAbiertas as $preguntaAbierta)
+                            <button wire:click="seleccionarPreguntaAbierta({{ $preguntaAbierta->id }})"
+                                role="tab"
+                                id="tab-{{ $preguntaAbierta->id }}"
+                                aria-selected="{{ $preguntaAbiertaActiva === $preguntaAbierta->id ? 'true' : 'false' }}"
+                                class="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200
+                                       {{ $preguntaAbiertaActiva === $preguntaAbierta->id
+                                           ? 'bg-blue-600 text-white shadow-sm'
+                                           : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100' }}">
+                                {{ $preguntaAbierta->texto }}
+                            </button>
+                        @endforeach
+                    </div>
 
-                {{-- Lista de respuestas --}}
-                <div role="tabpanel" aria-labelledby="tab-{{ $preguntaAbiertaActiva }}">
-                    @if ($respuestasAbiertas && $respuestasAbiertas->count() > 0)
-                        <div class="space-y-3 page-enter" wire:key="respuestas-lista-{{ $preguntaAbiertaActiva }}-page-{{ $respuestasAbiertas->currentPage() }}">
-                            @foreach ($respuestasAbiertas as $respuesta)
-                                <div class="bg-slate-50 rounded-xl px-5 py-4 border border-slate-100">
-                                    <p class="text-slate-700 text-sm leading-relaxed">
-                                        {{ $respuesta->texto }}
-                                    </p>
-                                </div>
-                            @endforeach
-                        </div>
+                    {{-- Lista de respuestas --}}
+                    <div role="tabpanel" aria-labelledby="tab-{{ $preguntaAbiertaActiva }}">
+                        @if ($respuestasAbiertas && $respuestasAbiertas->count() > 0)
+                            <div class="space-y-3 page-enter" wire:key="respuestas-lista-{{ $preguntaAbiertaActiva }}-page-{{ $respuestasAbiertas->currentPage() }}">
+                                @foreach ($respuestasAbiertas as $respuesta)
+                                    <div class="bg-slate-50 rounded-xl px-5 py-4 border border-slate-100">
+                                        <p class="text-slate-700 text-sm leading-relaxed">
+                                            {{ $respuesta->texto }}
+                                        </p>
+                                    </div>
+                                @endforeach
+                            </div>
 
-                        {{-- Paginación --}}
-                        <div class="mt-6">
-                            {{ $respuestasAbiertas->links(data: ['scrollTo' => false]) }}
-                        </div>
-                    @else
-                        <div class="text-center py-10 page-enter" wire:key="sin-respuestas-{{ $preguntaAbiertaActiva }}">
-                            <p class="text-slate-400 text-sm">
-                                No hay respuestas para esta pregunta con los filtros seleccionados.
-                            </p>
-                        </div>
-                    @endif
-                </div>
+                            {{-- Paginación --}}
+                            <div class="mt-6">
+                                {{ $respuestasAbiertas->links(data: ['scrollTo' => false]) }}
+                            </div>
+                        @else
+                            <div class="text-center py-10 page-enter" wire:key="sin-respuestas-{{ $preguntaAbiertaActiva }}">
+                                <p class="text-slate-400 text-sm">
+                                    No hay respuestas para esta pregunta con los filtros seleccionados.
+                                </p>
+                            </div>
+                        @endif
+                    </div>
+                @endif
             @endif
         </div>
     @endif

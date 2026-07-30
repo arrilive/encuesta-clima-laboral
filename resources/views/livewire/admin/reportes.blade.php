@@ -194,6 +194,13 @@
                 </x-admin.combobox-entidad>
             </div>
         </div>
+        <div wire:loading wire:target="filtroEdadId,filtroSexoId,filtroCargoId,filtroLugarTrabajoId,filtroGradoAcademicoId,filtroAntiguedadId,filtroCorporativoId,filtroEmpresaId,filtroSucursalId,filtroLoteId" class="flex items-center gap-1.5 text-xs text-slate-400 mt-2">
+            <svg class="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+                <path d="M12 2a10 10 0 0 1 10 10"/>
+            </svg>
+            Actualizando resultados…
+        </div>
     </div>
 
     {{-- SECCIÓN 2 — Breadcrumb --}}
@@ -637,9 +644,9 @@
                 let radarEl = document.querySelector('#radar-chart svg');
                 if (radarEl) svgs.radar = radarEl.outerHTML;
                 $wire.prepararExportacion(svgs, this.alcance, this.limite);
-                setTimeout(() => { this.exporting = false; }, 2500);
             }
         }" x-on:abrir-modal-pdf.window="abierto = true"
+            x-on:pdf-exportacion-lista.window="exporting = false"
             x-on:keyup.escape.window="abierto = false" x-cloak x-show="abierto"
             class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
 
@@ -856,6 +863,7 @@
                 });
 
                 window.open(`/admin/reportes/pdf?${params.toString()}`, '_blank');
+                window.dispatchEvent(new CustomEvent('pdf-exportacion-lista'));
             });
 
             // ── Nivel 2: Barras horizontales ──────────────────────────────────

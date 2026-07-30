@@ -18,25 +18,31 @@
         </select>
     </div>
 
-    <div x-data="{ chart: null }" x-init="let initialData = @js($comparativas);
-    if (chart) { chart.destroy(); }
-    let opts = { ...window.comparativasOptions };
-    opts.series = initialData.series;
-    opts.xaxis = { ...opts.xaxis, categories: initialData.categorias };
-    chart = new ApexCharts($el.querySelector('#comparativas-chart'), opts);
-    chart.render();"
-        x-on:comparativas-actualizadas.window="
-            if (chart) { chart.destroy(); }
-            let opts = { ...window.comparativasOptions };
-            opts.series = $event.detail.comparativas.series;
-            opts.xaxis = { ...opts.xaxis, categories: $event.detail.comparativas.categorias };
-            chart = new ApexCharts($el.querySelector('#comparativas-chart'), opts);
-            chart.render();
-        ">
-        <div x-ignore>
-            <div id="comparativas-chart" style="min-height: 400px"></div>
+    @if(empty($comparativas['series']))
+        <div class="text-center py-10">
+            <p class="text-slate-400 text-sm">No hay suficientes datos para mostrar esta comparativa.</p>
         </div>
-    </div>
+    @else
+        <div x-data="{ chart: null }" x-init="let initialData = @js($comparativas);
+        if (chart) { chart.destroy(); }
+        let opts = { ...window.comparativasOptions };
+        opts.series = initialData.series;
+        opts.xaxis = { ...opts.xaxis, categories: initialData.categorias };
+        chart = new ApexCharts($el.querySelector('#comparativas-chart'), opts);
+        chart.render();"
+            x-on:comparativas-actualizadas.window="
+                if (chart) { chart.destroy(); }
+                let opts = { ...window.comparativasOptions };
+                opts.series = $event.detail.comparativas.series;
+                opts.xaxis = { ...opts.xaxis, categories: $event.detail.comparativas.categorias };
+                chart = new ApexCharts($el.querySelector('#comparativas-chart'), opts);
+                chart.render();
+            ">
+            <div x-ignore>
+                <div id="comparativas-chart" style="min-height: 400px"></div>
+            </div>
+        </div>
+    @endif
 
     @script
         <script>
