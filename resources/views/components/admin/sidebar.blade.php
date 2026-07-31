@@ -1,7 +1,13 @@
-<aside class="flex flex-col w-64 h-screen max-h-screen bg-white border-r border-slate-200 flex-shrink-0 sticky top-0">
+<aside class="flex flex-col w-64 h-screen max-h-screen bg-white border-r border-slate-200 flex-shrink-0 fixed inset-y-0 left-0 z-40 transition-transform duration-200 md:translate-x-0 md:static md:sticky md:top-0" :class="sidebarAbierto ? 'translate-x-0' : '-translate-x-full'" x-on:keyup.escape.window="sidebarAbierto = false">
 
     {{-- Header: usuario y rol --}}
-    <div class="px-6 py-5 border-b border-slate-200">
+    <div class="px-6 py-5 border-b border-slate-200 relative">
+        <button @click="sidebarAbierto = false" aria-label="Cerrar menú de navegación" class="md:hidden absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </button>
         <p class="font-semibold text-slate-900 text-sm truncate">{{ auth()->user()->name }}</p>
         <p class="text-xs text-slate-400 mt-0.5 truncate">{{ auth()->user()->email }}</p>
         <span class="inline-block mt-2 text-xs font-medium px-2 py-0.5 rounded-full {{ match(auth()->user()->role) {
