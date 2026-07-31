@@ -22,7 +22,7 @@
     </div>
 
     {{-- Navegación --}}
-    <nav class="flex-1 px-3 py-4 space-y-0.5">
+    <nav aria-label="Navegación principal" class="flex-1 px-3 py-4 space-y-0.5">
 
         <x-admin.sidebar-item
             route="admin.dashboard"

@@ -6,7 +6,7 @@
             ¡Ya casi terminamos!
         </h1>
         <p class="text-sm text-slate-500 leading-relaxed">
-            Compártenos tu opinión final. Tu opinión adicional nos ayuda a mejorar.
+            Compártenos tu opinión final. Nos ayuda a mejorar.
         </p>
     </div>
 
@@ -16,13 +16,14 @@
             <div class="bg-white border border-slate-200 rounded-2xl p-6">
 
                 {{-- Label --}}
-                <label class="block text-sm font-semibold text-slate-700 leading-relaxed mb-3">
+                <label for="pregunta-abierta-{{ $pregunta->id }}" class="block text-sm font-semibold text-slate-700 leading-relaxed mb-3">
                     {{ $pregunta->texto }}
                     <span class="text-xs font-normal text-slate-400 ml-1">(opcional)</span>
                 </label>
 
                 {{-- Textarea --}}
                 <textarea
+                    id="pregunta-abierta-{{ $pregunta->id }}"
                     wire:model.live.debounce.800ms="respuestas.{{ $pregunta->id }}"
                     maxlength="300"
                     rows="4"

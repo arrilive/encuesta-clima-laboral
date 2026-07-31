@@ -3,6 +3,7 @@
 @php $active = request()->routeIs($route); @endphp
 
 <a href="{{ route($route) }}"
+   @if($active) aria-current="page" @endif
    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150
           {{ $active
              ? 'bg-blue-50 text-blue-700'

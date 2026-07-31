@@ -94,7 +94,7 @@
 
                                 <div class="flex-1 min-w-0">
                                     {{-- Nombre --}}
-                                    <h3 class="text-white font-bold text-base leading-snug mb-1">
+                                    <h3 class="text-white font-bold text-base leading-snug mb-1 {{ $esCompletada ? 'pr-16' : '' }}">
                                         {{ $dim->nombre }}
                                     </h3>
 
