@@ -12,6 +12,7 @@ use App\Models\OtpVerificacion;
 use App\Models\Pregunta;
 use App\Models\Respuesta;
 use App\Models\Sucursal;
+use App\Services\WhatsappService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -90,7 +91,7 @@ class EncuestaController extends Controller
         ]);
     }
 
-    public function solicitarOtp(Request $request): JsonResponse
+    public function solicitarOtp(Request $request, WhatsappService $whatsappService): JsonResponse
     {
         // 1. Validar campos de entrada
         $request->validate([
@@ -162,13 +163,15 @@ class EncuestaController extends Controller
             'expira_en' => now()->addMinutes(config('encuesta.otp.expiracion_minutos')),
         ]);
 
-        // 6. Simular envío (nunca loggear el número real)
+        // 6. Enviar OTP por WhatsApp
+        $whatsappService->enviarOtp($numero_e164, (string) $otp);
+
         Log::info('OTP generado para lote', ['lote_id' => $lote->id]);
 
         return response()->json(['status' => 'otp_enviado'], 200);
     }
 
-    public function verificarOtp(Request $request): JsonResponse
+    public function verificarOtp(Request $request, WhatsappService $whatsappService): JsonResponse
     {
         // 1. Validar campos de entrada
         $request->validate([
@@ -248,6 +251,12 @@ class EncuestaController extends Controller
         if (! $encuesta) {
             return response()->json(['error' => 'sin_tokens'], 422);
         }
+
+        $lote = Lote::with(['empresa', 'sucursal'])->find($lote_id);
+        $nombreEntidad = $lote?->sucursal?->nombre ?? $lote?->empresa?->nombre ?? 'Empresa';
+        $urlAcceso = route('encuesta.demograficos', $token);
+
+        $whatsappService->enviarEnlaceAcceso($numero_e164, $urlAcceso, $nombreEntidad);
 
         Log::info('Token asignado', ['lote_id' => $lote_id, 'token' => $token]);
 
