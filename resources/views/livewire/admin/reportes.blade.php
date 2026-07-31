@@ -272,7 +272,7 @@
 
                     {{-- Encuestas Completadas --}}
                     <div class="bg-white rounded-2xl shadow-sm p-4">
-                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Completadas</p>
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Encuestas Completadas</p>
                         <div class="flex items-center justify-between">
                             <div>
                                 <h3 class="text-2xl font-bold text-slate-900 tabular-nums">{{ $completadasFiltradas }}</h3>

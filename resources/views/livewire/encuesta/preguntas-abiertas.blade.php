@@ -6,7 +6,7 @@
             ¡Ya casi terminamos!
         </h1>
         <p class="text-sm text-slate-500 leading-relaxed">
-            Compártenos tu opinión final. Tu opinión adicional nos ayuda a mejorar.
+            Compártenos tu opinión final. Nos ayuda a mejorar.
         </p>
     </div>
 
