@@ -97,10 +97,10 @@
                                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-blue-50 text-blue-700 border border-blue-100"
                                 x-text="nombreEntidad"></span>
                         </div>
-                        <p class="text-sm text-slate-500 mb-5">Te enviaremos un código de un solo uso a tu WhatsApp.</p>
+                        <p class="text-sm text-slate-500 mb-5">Te enviaremos un código de un solo uso a tu teléfono por SMS.</p>
                         <div class="space-y-4">
-                            <label for="phone-input" class="sr-only">Número de WhatsApp</label>
-                            <input id="phone-input" type="tel" placeholder="Número de WhatsApp"
+                            <label for="phone-input" class="sr-only">Número de teléfono</label>
+                            <input id="phone-input" type="tel" placeholder="Número de teléfono"
                                 x-on:input="
                                     let val = $el.value;
                                     let clean = val.startsWith('+') ? '+' + val.slice(1).replace(/\D/g, '') : val.replace(/\D/g, '');
@@ -145,13 +145,13 @@
                             <circle cx="12" cy="12" r="10" stroke-opacity="0.25" />
                             <path d="M12 2a10 10 0 0 1 10 10" />
                         </svg>
-                        <p class="text-base text-slate-600">Enviando código a tu WhatsApp…</p>
+                        <p class="text-base text-slate-600">Enviando código SMS a tu teléfono…</p>
                     </div>
 
                     {{-- ── Estado: ingreso_otp ──────────────────────────────── --}}
                     <div x-show="estado === 'ingreso_otp'">
                         <p class="text-sm text-slate-500 mb-5">
-                            Revisa tu WhatsApp. El código expira en
+                            Revisa tus mensajes SMS. El código expira en
                             <span class="font-semibold tabular-nums text-slate-700" x-text="timerFormateado()"></span>.
                         </p>
                         <div class="flex gap-2 justify-center mb-5">
@@ -349,7 +349,7 @@
                     this.phoneError = '';
 
                     if (this.iti && !this.iti.isValidNumber()) {
-                        this.phoneError = 'Ingresa un número de WhatsApp válido.';
+                        this.phoneError = 'Ingresa un número de teléfono válido.';
                         return;
                     }
 
@@ -413,6 +413,10 @@
                         } else if (data.error === 'intentos_agotados') {
                             clearInterval(this.timer);
                             this.estado = 'bloqueado';
+                        } else if (data.error === 'sin_tokens') {
+                            clearInterval(this.timer);
+                            this.errorMsg = 'No hay encuestas disponibles en este lote.';
+                            this.estado = 'error';
                         } else {
                             this.intentosRestantes = data.intentos_restantes ?? this
                                 .intentosRestantes;

@@ -12,7 +12,7 @@ use App\Models\OtpVerificacion;
 use App\Models\Pregunta;
 use App\Models\Respuesta;
 use App\Models\Sucursal;
-use App\Services\WhatsappService;
+use App\Services\SmsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -91,7 +91,7 @@ class EncuestaController extends Controller
         ]);
     }
 
-    public function solicitarOtp(Request $request, WhatsappService $whatsappService): JsonResponse
+    public function solicitarOtp(Request $request, SmsService $smsService): JsonResponse
     {
         // 1. Validar campos de entrada
         $request->validate([
@@ -163,15 +163,15 @@ class EncuestaController extends Controller
             'expira_en' => now()->addMinutes(config('encuesta.otp.expiracion_minutos')),
         ]);
 
-        // 6. Enviar OTP por WhatsApp
-        $whatsappService->enviarOtp($numero_e164, (string) $otp);
+        // 6. Enviar OTP por SMS
+        $smsService->enviarOtp($numero_e164, (string) $otp);
 
         Log::info('OTP generado para lote', ['lote_id' => $lote->id]);
 
         return response()->json(['status' => 'otp_enviado'], 200);
     }
 
-    public function verificarOtp(Request $request, WhatsappService $whatsappService): JsonResponse
+    public function verificarOtp(Request $request, SmsService $smsService): JsonResponse
     {
         // 1. Validar campos de entrada
         $request->validate([
@@ -217,20 +217,9 @@ class EncuestaController extends Controller
             ], 422);
         }
 
-        // 6. OTP válido — orden estricto
-        // 6a. Guardar hash de unicidad
-        EncuestaHash::create([
-            'phone_hash' => hash('sha256', $numero_e164.$lote_id.config('app.phone_hash_salt')),
-            'lote_id' => $lote_id,
-        ]);
-
-        // 6b. Eliminar registro OTP
-        $otpRecord->delete();
-
-        // 6c. Generar token
+        // 6. OTP válido — buscar encuesta disponible y asignar token
         $token = 'TK-'.Str::upper(Str::random(4)).'-'.Str::upper(Str::random(4));
 
-        // 6d. Buscar encuesta disponible
         $encuesta = DB::transaction(function () use ($lote_id, $token) {
             $registro = Encuesta::where('lote_id', $lote_id)
                 ->where('estado', 'disponible')
@@ -252,11 +241,20 @@ class EncuestaController extends Controller
             return response()->json(['error' => 'sin_tokens'], 422);
         }
 
+        // 6a. Guardar hash de unicidad solo si se asignó encuesta
+        EncuestaHash::create([
+            'phone_hash' => hash('sha256', $numero_e164.$lote_id.config('app.phone_hash_salt')),
+            'lote_id' => $lote_id,
+        ]);
+
+        // 6b. Eliminar registro OTP
+        $otpRecord->delete();
+
         $lote = Lote::with(['empresa', 'sucursal'])->find($lote_id);
         $nombreEntidad = $lote?->sucursal?->nombre ?? $lote?->empresa?->nombre ?? 'Empresa';
         $urlAcceso = route('encuesta.demograficos', $token);
 
-        $whatsappService->enviarEnlaceAcceso($numero_e164, $urlAcceso, $nombreEntidad);
+        $smsService->enviarEnlaceAcceso($numero_e164, $urlAcceso, $nombreEntidad);
 
         Log::info('Token asignado', ['lote_id' => $lote_id, 'token' => $token]);
 
