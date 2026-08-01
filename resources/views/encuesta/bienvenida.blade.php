@@ -156,7 +156,7 @@
                         </p>
                         <div class="flex gap-1.5 sm:gap-2 justify-center mb-5">
                             <template x-for="(_, i) in otp" :key="i">
-                                <input type="text" inputmode="numeric" maxlength="1" :id="'otp-' + i"
+                                <input type="text" inputmode="numeric" maxlength="1" autocomplete="one-time-code" :id="'otp-' + i"
                                     :aria-label="'Dígito ' + (i + 1) + ' del código de verificación'"
                                     x-model="otp[i]" x-on:input="moverFoco($event, i)"
                                     x-on:keydown.backspace="retrocederFoco($event, i)"
@@ -189,7 +189,7 @@
 
                     {{-- ── Estado: error ────────────────────────────────────── --}}
                     <div x-show="estado === 'error'">
-                        <div class="flex items-start gap-3 p-4 rounded-lg bg-red-50 border border-red-200 mb-5">
+                        <div role="alert" class="flex items-start gap-3 p-4 rounded-lg bg-red-50 border border-red-200 mb-5">
                             <svg aria-hidden="true" class="w-4 h-4 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor"
                                 stroke-width="2" viewBox="0 0 24 24">
                                 <circle cx="12" cy="12" r="10" />
@@ -215,7 +215,7 @@
 
                     {{-- ── Estado: bloqueado ────────────────────────────────── --}}
                     <div x-show="estado === 'bloqueado'">
-                        <div class="flex items-start gap-3 p-4 rounded-lg bg-amber-50 border border-amber-200 mb-5">
+                        <div role="alert" class="flex items-start gap-3 p-4 rounded-lg bg-amber-50 border border-amber-200 mb-5">
                             <svg aria-hidden="true" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor"
                                 stroke-width="2" viewBox="0 0 24 24">
                                 <path

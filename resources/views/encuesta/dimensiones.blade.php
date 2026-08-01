@@ -17,10 +17,10 @@
                 $gradientes = [
                     1 => 'from-blue-600 to-blue-500',
                     2 => 'from-green-600 to-green-500',
-                    3 => 'from-amber-500 to-amber-400',
+                    3 => 'from-amber-800 to-amber-700',
                     4 => 'from-red-600 to-red-500',
                     5 => 'from-purple-600 to-purple-500',
-                    6 => 'from-cyan-500 to-cyan-400',
+                    6 => 'from-cyan-800 to-cyan-700',
                 ];
 
                 $glowColors = [

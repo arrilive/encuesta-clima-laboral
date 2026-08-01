@@ -7,6 +7,10 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>Encuesta de Clima Laboral</title>
+    <meta name="description" content="Encuesta de clima laboral anónima y confidencial.">
+    <meta property="og:title" content="Encuesta de Clima Laboral">
+    <meta property="og:description" content="Tu opinión es anónima y ayuda a mejorar el ambiente de trabajo.">
+    <meta property="og:type" content="website">
 
     <!-- DM Sans — Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

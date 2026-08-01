@@ -41,10 +41,10 @@
                     $gradientes = [
                         1 => 'from-blue-600 to-blue-500',
                         2 => 'from-emerald-600 to-emerald-500',
-                        3 => 'from-amber-500 to-amber-400',
+                        3 => 'from-amber-800 to-amber-700',
                         4 => 'from-rose-600 to-rose-500',
                         5 => 'from-violet-600 to-violet-500',
-                        6 => 'from-cyan-600 to-cyan-500',
+                        6 => 'from-cyan-800 to-cyan-700',
                     ];
 
                     $iconPaths = [

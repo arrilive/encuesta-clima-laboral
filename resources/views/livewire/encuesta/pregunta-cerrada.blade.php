@@ -24,14 +24,22 @@
         @foreach ($opciones as $opcion)
             <button wire:click="seleccionar({{ $opcion->id }})" wire:loading.attr="disabled"
                 wire:target="seleccionar({{ $opcion->id }})"
-                class="w-full text-left px-4 py-3 rounded-xl border text-sm
+                class="w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl border text-sm
                        transition-all duration-200
                        {{ $opcionSeleccionada === $opcion->id
                            ? 'border-blue-500 bg-blue-50 text-blue-800 font-medium'
                            : ($mostrarError
                                ? 'border-red-200 hover:border-red-300 hover:bg-red-50 text-slate-700'
                                : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50 text-slate-700') }}">
-                {{ $opcion->opcion }}
+                <span class="flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center
+                             {{ $opcionSeleccionada === $opcion->id ? 'border-blue-600 bg-blue-600' : 'border-slate-300' }}">
+                    @if ($opcionSeleccionada === $opcion->id)
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 6L9 17l-5-5" />
+                        </svg>
+                    @endif
+                </span>
+                <span>{{ $opcion->opcion }}</span>
             </button>
         @endforeach
     </div>
