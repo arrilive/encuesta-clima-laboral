@@ -252,6 +252,7 @@
                 numeroE164: '',
                 otp: ['', '', '', '', '', ''],
                 intentosRestantes: 3,
+                otpValido: false,
                 errorMsg: '',
                 phoneError: '',
                 timer: null,
@@ -295,6 +296,7 @@
                         this.segundos--;
                         if (this.segundos <= 0) {
                             clearInterval(this.timer);
+                            this.otpValido = false;
                             this.errorMsg = 'El código expiró. Solicita uno nuevo.';
                             this.estado = 'error';
                         }
@@ -372,6 +374,7 @@
                         });
                         const data = await res.json();
                         if (data.status === 'otp_enviado') {
+                            this.otpValido = true;
                             this.otp = ['', '', '', '', '', ''];
                             this.estado = 'ingreso_otp';
                             this.iniciarTimer();
@@ -379,6 +382,7 @@
                                 document.getElementById('otp-0')?.focus();
                             });
                         } else {
+                            this.otpValido = false;
                             this.errorMsg = data.error === 'ya_participaste' ?
                                 'Ya participaste en esta encuesta.' :
                                 'No fue posible enviar el código. Intenta de nuevo.';
@@ -415,6 +419,7 @@
                             this.estado = 'bloqueado';
                         } else if (data.error === 'sin_tokens') {
                             clearInterval(this.timer);
+                            this.otpValido = false;
                             this.errorMsg = 'No hay encuestas disponibles en este lote.';
                             this.estado = 'error';
                         } else {
@@ -432,7 +437,7 @@
 
                 reiniciarDesdeError() {
                     this.errorMsg = '';
-                    if (this.loteId && this.numeroE164) {
+                    if (this.otpValido && this.loteId && this.numeroE164) {
                         this.otp = ['', '', '', '', '', ''];
                         this.estado = 'ingreso_otp';
                         this.iniciarTimer();

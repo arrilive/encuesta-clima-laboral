@@ -44,7 +44,7 @@
         {{-- Botón finalizar --}}
         <div class="pt-4">
             <button
-                wire:click="finalizar"
+                x-on:click="if (confirm('¿Estás seguro? Una vez finalizada no podrás modificar tus respuestas.')) { $wire.finalizar() }"
                 wire:loading.attr="disabled"
                 class="w-full inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700
                        text-white font-semibold text-sm px-6 py-3 rounded-xl
