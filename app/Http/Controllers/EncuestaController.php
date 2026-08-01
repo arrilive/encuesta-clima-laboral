@@ -270,7 +270,11 @@ class EncuestaController extends Controller
 
     public function demograficos(string $token)
     {
-        $this->obtenerEncuestaValida($token, ['asignado', 'en_progreso']);
+        $encuesta = $this->obtenerEncuestaValida($token, ['asignado', 'en_progreso']);
+
+        if (DatoDemografico::where('encuesta_id', $encuesta->id)->exists()) {
+            return redirect()->route('encuesta.dimensiones', $token);
+        }
 
         return view('encuesta.demografico', compact('token'));
     }
