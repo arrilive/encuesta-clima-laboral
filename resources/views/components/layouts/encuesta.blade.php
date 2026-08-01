@@ -30,8 +30,8 @@
     <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-white focus:px-4 focus:py-2 focus:rounded-xl focus:shadow-lg focus:text-blue-600 focus:text-sm focus:font-semibold">Saltar al contenido principal</a>
 
     <!-- Header sticky -->
-    <header class="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-20">
-        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+    <header class="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-20 h-14">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
 
             <!-- Izquierda: título -->
             <span class="text-sm font-semibold text-slate-800 tracking-tight">Clima Laboral</span>

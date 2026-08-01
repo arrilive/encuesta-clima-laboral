@@ -1,6 +1,6 @@
 <div x-data="{ modalInfo: false }">
     {{-- Barra de progreso sticky --}}
-    <div class="bg-white/90 backdrop-blur-md border-b border-slate-200 px-6 py-3 sticky top-0 z-10">
+    <div class="bg-white/90 backdrop-blur-md border-b border-slate-200 px-6 py-3 sticky top-14 z-10">
         <div class="max-w-2xl mx-auto">
             <div class="flex justify-between text-xs text-slate-500 mb-1.5">
                 <div class="flex items-center gap-1.5">
