@@ -1,5 +1,5 @@
 <x-layouts.encuesta>
-    <div class="max-w-lg mx-auto px-4 py-12 page-enter">
+    <div class="max-w-lg sm:max-w-xl mx-auto px-4 py-12 page-enter">
 
         {{-- Encabezado --}}
         <div class="text-center mb-10">
