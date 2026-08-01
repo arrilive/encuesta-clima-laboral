@@ -74,10 +74,6 @@ class GenerarTokens extends Component
         ];
     }
 
-    public bool $generado = false;
-
-    public int $totalGenerado = 0;
-
     public function mount(): void
     {
         $user = auth()->user();
@@ -154,8 +150,7 @@ class GenerarTokens extends Component
             Encuesta::insert($tokens->toArray());
         });
 
-        $this->totalGenerado = (int) $this->tokensTotal;
-        $this->generado = true;
+        $totalGenerado = (int) $this->tokensTotal;
 
         // Reset del formulario
         $this->tokensTotal = '10';
@@ -164,6 +159,9 @@ class GenerarTokens extends Component
         $this->fechaFin = '';
         $this->empresaId = '';
         $this->sucursalId = '';
+
+        $texto = $totalGenerado === 1 ? '1 token generado' : "{$totalGenerado} tokens generados";
+        $this->dispatch('notify', mensaje: "{$texto} correctamente.", tipo: 'success');
     }
 
     public function updatedEmpresaId(): void
@@ -283,8 +281,7 @@ class GenerarTokens extends Component
             Encuesta::insert($tokens->toArray());
         });
 
-        $this->totalGenerado = (int) $this->cantidadModoB;
-        $this->generado = true;
+        $totalInyectado = (int) $this->cantidadModoB;
 
         $this->empresaIdModoB = '';
         $this->loteId = '';
@@ -292,7 +289,8 @@ class GenerarTokens extends Component
         $this->nuevaFechaFin = '';
         $this->mostrarConfirmacion = false;
 
-        $this->dispatch('tokens-inyectados');
+        $texto = $totalInyectado === 1 ? '1 token inyectado' : "{$totalInyectado} tokens inyectados";
+        $this->dispatch('notify', mensaje: "{$texto} correctamente.", tipo: 'success');
     }
 
     public function getLotesVigentesProperty()
@@ -305,8 +303,12 @@ class GenerarTokens extends Component
             ->where('empresa_id', $this->empresaIdModoB)
             ->where('activo', 1)
             ->where('fecha_fin', '>=', today())
-            ->orderBy('nombre')
-            ->get();
+            ->get()
+            ->sortBy([
+                fn ($a, $b) => ($a->sucursal_id ? 1 : 0) <=> ($b->sucursal_id ? 1 : 0),
+                fn ($a, $b) => ($a->sucursal?->nombre ?? '') <=> ($b->sucursal?->nombre ?? ''),
+                fn ($a, $b) => $a->nombre <=> $b->nombre,
+            ]);
     }
 
     public function getLoteSeleccionadoProperty(): ?Lote

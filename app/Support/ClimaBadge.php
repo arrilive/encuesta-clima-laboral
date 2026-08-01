@@ -7,7 +7,7 @@ class ClimaBadge
     public static function resolver(?float $puntaje): array
     {
         return match (true) {
-            $puntaje >= 75 => [
+            $puntaje >= 80 => [
                 'label' => 'Excelente',
                 'compact' => 'bg-emerald-50 text-emerald-600',
                 'standard' => 'bg-emerald-100 text-emerald-700',
@@ -21,7 +21,7 @@ class ClimaBadge
                 'pdf_class' => 'badge-bueno',
                 'color_hex' => '#3b82f6',
             ],
-            $puntaje >= 45 => [
+            $puntaje >= 40 => [
                 'label' => 'En atención',
                 'compact' => 'bg-amber-50 text-amber-600',
                 'standard' => 'bg-amber-100 text-amber-700',

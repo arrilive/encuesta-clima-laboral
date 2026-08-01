@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\DatoDemografico;
 use App\Models\Empresa;
 use App\Models\Encuesta;
 use App\Models\EncuestaHash;
@@ -168,4 +169,22 @@ test('retorna 404 con token completado', function () {
 
     $this->get(route('encuesta.demograficos', $encuesta->token))
         ->assertNotFound();
+});
+
+test('redirige a dimensiones si ya existen datos demográficos al reingresar', function () {
+    $this->seed();
+    $encuesta = Encuesta::factory()->asignada()->create();
+    DatoDemografico::factory()->for($encuesta)->create();
+
+    $this->get(route('encuesta.demograficos', $encuesta->token))
+        ->assertRedirect(route('encuesta.dimensiones', $encuesta->token));
+});
+
+test('muestra el formulario demográfico si aún no existen datos demográficos', function () {
+    $this->seed();
+    $encuesta = Encuesta::factory()->asignada()->create();
+
+    $this->get(route('encuesta.demograficos', $encuesta->token))
+        ->assertOk()
+        ->assertViewIs('encuesta.demografico');
 });

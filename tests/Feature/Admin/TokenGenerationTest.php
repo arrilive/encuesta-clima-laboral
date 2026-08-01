@@ -15,7 +15,8 @@ it('super_admin puede generar tokens para cualquier empresa', function () {
         ->set('empresaId', (string) $empresa->id)
         ->set('tokensTotal', '10')
         ->set('fechaFin', now()->addDays(30)->toDateString())
-        ->call('generar');
+        ->call('generar')
+        ->assertDispatched('notify');
 
     expect(Encuesta::whereHas('lote', fn ($q) => $q->where('empresa_id', $empresa->id))->count())->toBe(10);
 
@@ -132,7 +133,8 @@ it('inyectar() agrega tokens a lote existente y actualiza tokens_total', functio
         ->set('empresaIdModoB', (string) $empresa->id)
         ->set('loteId', (string) $lote->id)
         ->set('cantidadModoB', '5')
-        ->call('inyectar');
+        ->call('inyectar')
+        ->assertDispatched('notify');
 
     $lote->refresh();
     expect($lote->tokens_total)->toBe(15);
@@ -442,4 +444,61 @@ it('lotesVigentes incluye nombre de sucursal en modo B', function () {
 
     $loteGeneral = $lotesVigentes->firstWhere('sucursal_id', null);
     expect($loteGeneral->sucursal)->toBeNull();
+});
+
+it('lotesVigentes ordena generales primero y sucursales alfabéticamente', function () {
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->superAdmin()->create();
+
+    $sucursales = [
+        'Sucursal Zeta' => 5,
+        'Sucursal Mango' => 4,
+        'Sucursal Bravo' => 3,
+        'Sucursal Alpha' => 2,
+        'Sucursal Tango' => 1,
+    ];
+
+    $sucursalIds = [];
+    foreach ($sucursales as $nombre => $orden) {
+        $sucursalIds[$nombre] = \App\Models\Sucursal::factory()->create([
+            'empresa_id' => $empresa->id,
+            'activa' => true,
+            'nombre' => $nombre,
+        ])->id;
+    }
+
+    // Orden de creación deliberadamente revuelto (no alfabético), igual que en la verificación empírica
+    $ordenCreacion = ['Sucursal Zeta', 'Sucursal Mango', null, 'Sucursal Bravo', 'Sucursal Alpha', 'Sucursal Tango'];
+
+    foreach ($ordenCreacion as $i => $nombreSucursal) {
+        \App\Models\Lote::create([
+            'empresa_id' => $empresa->id,
+            'sucursal_id' => $nombreSucursal ? $sucursalIds[$nombreSucursal] : null,
+            'user_id' => $admin->id,
+            'tokens_total' => 10,
+            'nombre' => 'Lote '.($i + 1),
+            'fecha_inicio' => now()->toDateString(),
+            'fecha_fin' => now()->addDays(30)->toDateString(),
+            'activo' => true,
+        ]);
+    }
+
+    $component = Livewire::actingAs($admin)
+        ->test(GenerarTokens::class)
+        ->set('modo', 'b')
+        ->set('empresaIdModoB', (string) $empresa->id);
+
+    $nombresSucursalOrdenados = $component->get('lotesVigentes')
+        ->values()
+        ->map(fn ($l) => $l->sucursal?->nombre ?? 'GENERAL')
+        ->toArray();
+
+    expect($nombresSucursalOrdenados)->toBe([
+        'GENERAL',
+        'Sucursal Alpha',
+        'Sucursal Bravo',
+        'Sucursal Mango',
+        'Sucursal Tango',
+        'Sucursal Zeta',
+    ]);
 });

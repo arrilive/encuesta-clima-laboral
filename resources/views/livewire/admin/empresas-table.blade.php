@@ -37,7 +37,8 @@
 
     {{-- Tabla --}}
     <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <table class="w-full text-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
             <thead>
                 <tr class="border-b border-slate-200 bg-slate-50">
                     <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Nombre</th>
@@ -55,7 +56,7 @@
                     <tr class="hover:bg-slate-50 transition-colors duration-100">
                         <td class="px-6 py-3.5 text-slate-900 font-medium">{{ $empresa->nombre }}</td>
                         <td class="px-6 py-3.5 text-slate-500">{{ $empresa->corporativo?->nombre ?? '—' }}</td>
-                        <td class="px-6 py-3.5 text-slate-500">{{ $admin?->name ?? '—' }}</td>
+                        <td class="px-6 py-3.5 text-slate-500">{{ $admin?->name ?? 'Sin asignar' }}</td>
                         <td class="px-6 py-3.5 text-center">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
                                 {{ $empresa->completadas }}
@@ -78,6 +79,7 @@
                                 {{-- Sucursales --}}
                                 <button wire:click="abrirModalSucursales({{ $empresa->id }})"
                                         title="Gestionar sucursales"
+                                        aria-label="Gestionar sucursales"
                                         class="p-2 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors duration-150">
                                     <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z" />
@@ -87,6 +89,7 @@
                                 {{-- Editar --}}
                                 <button wire:click="abrirEditarEmpresa({{ $empresa->id }})"
                                         title="Editar empresa"
+                                        aria-label="Editar empresa"
                                         class="p-2 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-150">
                                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
@@ -97,6 +100,7 @@
                                 {{-- Llave maestra --}}
                                 <button wire:click="abrirLlaveMaestra({{ $empresa->id }})"
                                         title="Cambiar llave maestra"
+                                        aria-label="Cambiar llave maestra"
                                         class="p-2 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors duration-150">
                                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/>
@@ -104,12 +108,23 @@
                                 </button>
 
                                 {{-- Toggle activa --}}
-                                <button wire:click="toggleActiva({{ $empresa->id }})"
-                                        title="{{ $empresa->activa ? 'Desactivar' : 'Activar' }}"
-                                        class="group p-2 rounded-lg transition-colors duration-150
-                                               {{ $empresa->activa
-                                                  ? 'text-emerald-500 hover:text-red-500 hover:bg-red-50'
-                                                  : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50' }}">
+                                @if($empresa->activa)
+                                    <button x-on:click="if (confirm('¿Seguro que quieres desactivar ' + {{ \Illuminate\Support\Js::from($empresa->nombre) }} + '? Los empleados no podrán acceder a la encuesta mientras esté desactivada.')) { $wire.toggleActiva({{ $empresa->id }}) }"
+                                            title="{{ $empresa->activa ? 'Desactivar' : 'Activar' }}"
+                                            aria-label="{{ $empresa->activa ? 'Desactivar' : 'Activar' }}"
+                                            class="group p-2 rounded-lg transition-colors duration-150
+                                                   {{ $empresa->activa
+                                                      ? 'text-emerald-500 hover:text-red-500 hover:bg-red-50'
+                                                      : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50' }}">
+                                @else
+                                    <button wire:click="toggleActiva({{ $empresa->id }})"
+                                            title="{{ $empresa->activa ? 'Desactivar' : 'Activar' }}"
+                                            aria-label="{{ $empresa->activa ? 'Desactivar' : 'Activar' }}"
+                                            class="group p-2 rounded-lg transition-colors duration-150
+                                                   {{ $empresa->activa
+                                                      ? 'text-emerald-500 hover:text-red-500 hover:bg-red-50'
+                                                      : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50' }}">
+                                @endif
                                     @if($empresa->activa)
                                         <svg class="w-4 h-4 group-hover:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <polyline points="20 6 9 17 4 12"/>
@@ -138,6 +153,7 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
     </div>
 
     {{-- Paginación --}}
@@ -167,7 +183,7 @@
                  x-transition:leave="transition ease-in duration-200"
                  x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                  x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden ring-1 ring-slate-900/5">
+                 class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-visible ring-1 ring-slate-900/5">
 
                 {{-- Header --}}
                 <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
@@ -183,8 +199,8 @@
                 <div class="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
                     {{-- Nombre empresa --}}
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nombre de la empresa <span class="text-red-400">*</span></label>
-                        <input wire:model="nombre" type="text" placeholder="ej. Coca-Cola México"
+                        <label for="crear-empresa-nombre" class="block text-xs font-semibold text-slate-700 mb-1.5">Nombre de la empresa <span class="text-red-400">*</span></label>
+                        <input id="crear-empresa-nombre" wire:model="nombre" type="text" placeholder="ej. Coca-Cola México"
                                class="w-full px-4 py-2.5 border rounded-xl text-sm text-slate-900
                                       placeholder-slate-400 focus:outline-none focus:border-blue-500
                                       focus:ring-4 focus:ring-blue-500/10 transition-all duration-200
@@ -215,43 +231,29 @@
                         @enderror
                     </div>
 
-                    {{-- Nombre admin --}}
+                    {{-- Administrador (opcional) --}}
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nombre del administrador <span class="text-red-400">*</span></label>
-                        <input wire:model="adminNombre" type="text" placeholder="ej. Juan Pérez"
-                               class="w-full px-4 py-2.5 border rounded-xl text-sm text-slate-900
-                                      placeholder-slate-400 focus:outline-none focus:border-blue-500
-                                      focus:ring-4 focus:ring-blue-500/10 transition-all duration-200
-                                      {{ $errors->has('adminNombre') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}" />
-                        @error('adminNombre')
-                            <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">
-                                <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                                {{ $message }}
-                            </p>
-                        @enderror
-                    </div>
-
-                    {{-- Email admin --}}
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Correo electrónico <span class="text-red-400">*</span></label>
-                        <input wire:model="adminEmail" type="email" placeholder="admin@empresa.com"
-                               class="w-full px-4 py-2.5 border rounded-xl text-sm text-slate-900
-                                      placeholder-slate-400 focus:outline-none focus:border-blue-500
-                                      focus:ring-4 focus:ring-blue-500/10 transition-all duration-200
-                                      {{ $errors->has('adminEmail') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}" />
-                        @error('adminEmail')
-                            <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">
-                                <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                                {{ $message }}
-                            </p>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Administrador (Opcional)</label>
+                        <x-admin.combobox-entidad
+                            wire-model="adminId"
+                            placeholder="Sin asignar"
+                            :has-error="$errors->has('adminId')"
+                            :disabled="false">
+                            <option value="">Sin asignar</option>
+                            @foreach($adminsEmpresaDisponibles as $adm)
+                                <option value="{{ $adm->id }}">{{ $adm->name }} ({{ $adm->email }})</option>
+                            @endforeach
+                        </x-admin.combobox-entidad>
+                        @error('adminId')
+                            <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">{{ $message }}</p>
                         @enderror
                     </div>
 
                     {{-- Llave maestra --}}
                     <div x-data="{ mostrar: false }">
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Llave maestra de encuestas <span class="text-red-400">*</span></label>
+                        <label for="crear-empresa-llave" class="block text-xs font-semibold text-slate-700 mb-1.5">Llave maestra de encuestas <span class="text-red-400">*</span></label>
                         <div class="relative">
-                            <input wire:model="llaveMaestra"
+                            <input id="crear-empresa-llave" wire:model="llaveMaestra"
                                    :type="mostrar ? 'text' : 'password'"
                                    placeholder="Mínimo 8 caracteres"
                                    class="w-full px-4 py-2.5 pr-10 border rounded-xl text-sm text-slate-900
@@ -282,7 +284,7 @@
                 </div>
 
                 {{-- Footer --}}
-                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 rounded-b-2xl">
                     <button @click="abierto = false" type="button"
                             class="px-4 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
                         Cancelar
@@ -323,7 +325,7 @@
                  x-transition:leave="transition ease-in duration-200"
                  x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                  x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 class="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden ring-1 ring-slate-900/5">
+                 class="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-visible ring-1 ring-slate-900/5">
 
                 <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
                     <h3 class="text-base font-semibold text-slate-900">Editar empresa</h3>
@@ -337,8 +339,8 @@
                 <div class="p-6 space-y-5">
                     {{-- Nombre --}}
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nombre de la empresa <span class="text-red-400">*</span></label>
-                        <input wire:model="nombre" type="text"
+                        <label for="editar-empresa-nombre" class="block text-xs font-semibold text-slate-700 mb-1.5">Nombre de la empresa <span class="text-red-400">*</span></label>
+                        <input id="editar-empresa-nombre" wire:model="nombre" type="text"
                                class="w-full px-4 py-2.5 border rounded-xl text-sm text-slate-900
                                       focus:outline-none focus:border-blue-500
                                       focus:ring-4 focus:ring-blue-500/10 transition-all duration-200
@@ -368,9 +370,27 @@
                             <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">{{ $message }}</p>
                         @enderror
                     </div>
+
+                    {{-- Administrador --}}
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Administrador (Opcional)</label>
+                        <x-admin.combobox-entidad
+                            wire-model="adminId"
+                            placeholder="Sin asignar"
+                            :has-error="$errors->has('adminId')"
+                            :disabled="false">
+                            <option value="">Sin asignar</option>
+                            @foreach($adminsEmpresaDisponibles as $adm)
+                                <option value="{{ $adm->id }}">{{ $adm->name }} ({{ $adm->email }})</option>
+                            @endforeach
+                        </x-admin.combobox-entidad>
+                        @error('adminId')
+                            <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
 
-                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 rounded-b-2xl">
                     <button @click="abierto = false" type="button"
                             class="px-4 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
                         Cancelar
@@ -426,9 +446,9 @@
                     <p class="text-sm text-slate-500">La llave maestra es la contraseña que los empleados usan para acceder a la encuesta.</p>
 
                     <div x-data="{ mostrar: false }">
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nueva llave maestra <span class="text-red-400">*</span></label>
+                        <label for="cambiar-llave-empresa" class="block text-xs font-semibold text-slate-700 mb-1.5">Nueva llave maestra <span class="text-red-400">*</span></label>
                         <div class="relative">
-                            <input wire:model="llaveMaestra"
+                            <input id="cambiar-llave-empresa" wire:model="llaveMaestra"
                                    :type="mostrar ? 'text' : 'password'"
                                    placeholder="Mínimo 8 caracteres"
                                    class="w-full px-4 py-2.5 pr-10 border rounded-xl text-sm text-slate-900
@@ -487,6 +507,7 @@
                  copiado: false,
                  get password() { return $wire.passwordGenerada ?? '' }
              }"
+             x-on:keyup.escape.window="abierto = false"
              x-show="abierto" x-cloak
              class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
 
@@ -600,14 +621,17 @@
                             <thead>
                                 <tr class="border-b border-slate-200 bg-slate-50">
                                     <th class="text-left px-5 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Nombre</th>
+                                    <th class="text-left px-5 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Administrador</th>
                                     <th class="text-center px-5 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
                                     <th class="text-right px-5 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 @forelse($sucursales as $suc)
+                                    @php $sucAdmin = $suc->users->where('role', 'admin_sucursal')->first(); @endphp
                                     <tr class="hover:bg-slate-50 transition-colors duration-100">
                                         <td class="px-5 py-3 text-slate-900 font-medium">{{ $suc->nombre }}</td>
+                                        <td class="px-5 py-3 text-slate-500">{{ $sucAdmin?->name ?? 'Sin asignar' }}</td>
                                         <td class="px-5 py-3 text-center">
                                             @if($suc->activa)
                                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">Activa</span>
@@ -620,6 +644,7 @@
                                                 {{-- Editar nombre --}}
                                                 <button wire:click="abrirEditarSucursal({{ $suc->id }})"
                                                         title="Editar nombre"
+                                                        aria-label="Editar nombre"
                                                         class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
                                                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                         <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
@@ -629,6 +654,7 @@
                                                 {{-- Cambiar llave maestra --}}
                                                 <button wire:click="abrirLlaveSucursal({{ $suc->id }})"
                                                         title="Cambiar llave de sucursal"
+                                                        aria-label="Cambiar llave de sucursal"
                                                         class="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors">
                                                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                         <path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/>
@@ -636,12 +662,23 @@
                                                 </button>
 
                                                 {{-- Toggle activa --}}
-                                                <button wire:click="toggleActivaSucursal({{ $suc->id }})"
-                                                        title="{{ $suc->activa ? 'Desactivar' : 'Activar' }}"
-                                                        class="group p-1.5 rounded-lg transition-colors
-                                                               {{ $suc->activa
-                                                                  ? 'text-emerald-500 hover:text-red-500 hover:bg-red-50'
-                                                                  : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50' }}">
+                                                @if($suc->activa)
+                                                    <button x-on:click="if (confirm('¿Seguro que quieres desactivar ' + {{ \Illuminate\Support\Js::from($suc->nombre) }} + '? Los empleados no podrán acceder a la encuesta mientras esté desactivada.')) { $wire.toggleActivaSucursal({{ $suc->id }}) }"
+                                                            title="{{ $suc->activa ? 'Desactivar' : 'Activar' }}"
+                                                            aria-label="{{ $suc->activa ? 'Desactivar' : 'Activar' }}"
+                                                            class="group p-1.5 rounded-lg transition-colors
+                                                                   {{ $suc->activa
+                                                                      ? 'text-emerald-500 hover:text-red-500 hover:bg-red-50'
+                                                                      : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50' }}">
+                                                @else
+                                                    <button wire:click="toggleActivaSucursal({{ $suc->id }})"
+                                                            title="{{ $suc->activa ? 'Desactivar' : 'Activar' }}"
+                                                            aria-label="{{ $suc->activa ? 'Desactivar' : 'Activar' }}"
+                                                            class="group p-1.5 rounded-lg transition-colors
+                                                                   {{ $suc->activa
+                                                                      ? 'text-emerald-500 hover:text-red-500 hover:bg-red-50'
+                                                                      : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50' }}">
+                                                @endif
                                                     @if($suc->activa)
                                                         <svg class="w-3.5 h-3.5 group-hover:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                             <polyline points="20 6 9 17 4 12"/>
@@ -663,7 +700,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="3" class="px-5 py-8 text-center text-slate-400 text-xs">
+                                        <td colspan="4" class="px-5 py-8 text-center text-slate-400 text-xs">
                                             No hay sucursales registradas para esta empresa.
                                         </td>
                                     </tr>
@@ -715,8 +752,8 @@
                 <div class="p-6 space-y-5">
                     {{-- Nombre --}}
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nombre de la sucursal <span class="text-red-400">*</span></label>
-                        <input wire:model="sucursalNombre" type="text" placeholder="ej. Sucursal Centro"
+                        <label for="crear-sucursal-nombre" class="block text-xs font-semibold text-slate-700 mb-1.5">Nombre de la sucursal <span class="text-red-400">*</span></label>
+                        <input id="crear-sucursal-nombre" wire:model="sucursalNombre" type="text" placeholder="ej. Sucursal Centro"
                                class="w-full px-4 py-2.5 border rounded-xl text-sm text-slate-900
                                       focus:outline-none focus:border-blue-500
                                       focus:ring-4 focus:ring-blue-500/10 transition-all duration-200
@@ -728,13 +765,31 @@
 
                     {{-- Llave --}}
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Llave maestra de sucursal <span class="text-red-400">*</span></label>
-                        <input wire:model="sucursalLlave" type="password" placeholder="Mínimo 8 caracteres"
+                        <label for="crear-sucursal-llave" class="block text-xs font-semibold text-slate-700 mb-1.5">Llave maestra de sucursal <span class="text-red-400">*</span></label>
+                        <input id="crear-sucursal-llave" wire:model="sucursalLlave" type="password" placeholder="Mínimo 8 caracteres"
                                class="w-full px-4 py-2.5 border rounded-xl text-sm text-slate-900
                                       focus:outline-none focus:border-blue-500
                                       focus:ring-4 focus:ring-blue-500/10 transition-all duration-200
                                       {{ $errors->has('sucursalLlave') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}" />
                         @error('sucursalLlave')
+                            <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    {{-- Administrador de Sucursal --}}
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Administrador (Opcional)</label>
+                        <x-admin.combobox-entidad
+                            wire-model="sucursalAdminId"
+                            placeholder="Sin asignar"
+                            :has-error="$errors->has('sucursalAdminId')"
+                            :disabled="false">
+                            <option value="">Sin asignar</option>
+                            @foreach($adminsSucursalDisponibles as $sadm)
+                                <option value="{{ $sadm->id }}">{{ $sadm->name }} ({{ $sadm->email }})</option>
+                            @endforeach
+                        </x-admin.combobox-entidad>
+                        @error('sucursalAdminId')
                             <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">{{ $message }}</p>
                         @enderror
                     </div>
@@ -788,13 +843,31 @@
 
                 <div class="p-6 space-y-5">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nombre de la sucursal <span class="text-red-400">*</span></label>
-                        <input wire:model="sucursalNombre" type="text"
+                        <label for="editar-sucursal-nombre" class="block text-xs font-semibold text-slate-700 mb-1.5">Nombre de la sucursal <span class="text-red-400">*</span></label>
+                        <input id="editar-sucursal-nombre" wire:model="sucursalNombre" type="text"
                                class="w-full px-4 py-2.5 border rounded-xl text-sm text-slate-900
                                       focus:outline-none focus:border-blue-500
                                       focus:ring-4 focus:ring-blue-500/10 transition-all duration-200
                                       {{ $errors->has('sucursalNombre') ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white' }}" />
                         @error('sucursalNombre')
+                            <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    {{-- Administrador de Sucursal --}}
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Administrador (Opcional)</label>
+                        <x-admin.combobox-entidad
+                            wire-model="sucursalAdminId"
+                            placeholder="Sin asignar"
+                            :has-error="$errors->has('sucursalAdminId')"
+                            :disabled="false">
+                            <option value="">Sin asignar</option>
+                            @foreach($adminsSucursalDisponibles as $sadm)
+                                <option value="{{ $sadm->id }}">{{ $sadm->name }} ({{ $sadm->email }})</option>
+                            @endforeach
+                        </x-admin.combobox-entidad>
+                        @error('sucursalAdminId')
                             <p class="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">{{ $message }}</p>
                         @enderror
                     </div>
@@ -849,8 +922,8 @@
                 <div class="p-6 space-y-5">
                     <p class="text-sm text-slate-500">Ingrese la nueva llave maestra propia de esta sucursal.</p>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nueva llave maestra <span class="text-red-400">*</span></label>
-                        <input wire:model="sucursalLlave" type="password" placeholder="Mínimo 8 caracteres"
+                        <label for="cambiar-llave-sucursal" class="block text-xs font-semibold text-slate-700 mb-1.5">Nueva llave maestra <span class="text-red-400">*</span></label>
+                        <input id="cambiar-llave-sucursal" wire:model="sucursalLlave" type="password" placeholder="Mínimo 8 caracteres"
                                class="w-full px-4 py-2.5 border rounded-xl text-sm text-slate-900
                                       focus:outline-none focus:border-blue-500
                                       focus:ring-4 focus:ring-blue-500/10 transition-all duration-200

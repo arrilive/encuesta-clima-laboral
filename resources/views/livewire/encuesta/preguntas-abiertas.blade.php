@@ -6,24 +6,26 @@
             ¡Ya casi terminamos!
         </h1>
         <p class="text-sm text-slate-500 leading-relaxed">
-            Compártenos tu opinión final. Tu opinión adicional nos ayuda a mejorar.
+            Compártenos tu opinión final. Nos ayuda a mejorar.
         </p>
     </div>
 
     {{-- Preguntas abiertas --}}
     <div class="space-y-4">
         @foreach($preguntas as $pregunta)
-            <div class="bg-white border border-slate-200 rounded-2xl p-6">
+            <div x-data="{ count: {{ strlen($respuestas[$pregunta->id] ?? '') }} }" class="bg-white border border-slate-200 rounded-2xl p-6">
 
                 {{-- Label --}}
-                <label class="block text-sm font-semibold text-slate-700 leading-relaxed mb-3">
+                <label for="pregunta-abierta-{{ $pregunta->id }}" class="block text-sm font-semibold text-slate-700 leading-relaxed mb-3">
                     {{ $pregunta->texto }}
                     <span class="text-xs font-normal text-slate-400 ml-1">(opcional)</span>
                 </label>
 
                 {{-- Textarea --}}
                 <textarea
+                    id="pregunta-abierta-{{ $pregunta->id }}"
                     wire:model.live.debounce.800ms="respuestas.{{ $pregunta->id }}"
+                    x-on:input="count = $event.target.value.length"
                     maxlength="300"
                     rows="4"
                     placeholder="Escribe tu respuesta aquí…"
@@ -33,8 +35,8 @@
                            transition-all duration-200"></textarea>
 
                 {{-- Contador de caracteres --}}
-                <p class="text-right text-xs text-slate-400 mt-1.5">
-                    {{ strlen($respuestas[$pregunta->id] ?? '') }}/300
+                <p class="text-right text-xs mt-1.5" :class="count >= 300 ? 'text-red-500 font-medium' : (count >= 270 ? 'text-amber-500' : 'text-slate-400')">
+                    <span x-text="count"></span>/300
                 </p>
 
             </div>
@@ -43,7 +45,7 @@
         {{-- Botón finalizar --}}
         <div class="pt-4">
             <button
-                wire:click="finalizar"
+                x-on:click="if (confirm('¿Estás seguro? Una vez finalizada no podrás modificar tus respuestas.')) { $wire.finalizar() }"
                 wire:loading.attr="disabled"
                 class="w-full inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700
                        text-white font-semibold text-sm px-6 py-3 rounded-xl

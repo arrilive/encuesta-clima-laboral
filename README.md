@@ -4,7 +4,7 @@
 ![PHP 8.4](https://img.shields.io/badge/PHP-8.4-777BB4?style=for-the-badge&logo=php&logoColor=white)
 ![Livewire 3](https://img.shields.io/badge/Livewire-3-4E56A6?style=for-the-badge)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-190%20passing-brightgreen?style=for-the-badge)
+![Tests](https://img.shields.io/badge/tests-229%20passing-brightgreen?style=for-the-badge)
 
 ## ¿De qué trata este proyecto?
 
@@ -29,7 +29,7 @@ Nació para solucionar un problema muy típico de Recursos Humanos: conseguir qu
 ## Funcionalidades Core
 
 ### Para el empleado (Flujo de la Encuesta)
-* **Verificación OTP y anonimato garantizado:** El empleado valida su número de WhatsApp con un código de un solo uso (6 dígitos, máximo 3 intentos, expira en 10 minutos). El número nunca se almacena en texto plano de forma permanente: se calcula un hash SHA-256 irreversible para controlar que nadie participe dos veces en el mismo lote, y los registros temporales se eliminan automáticamente cada hora. En ningún punto del sistema existe un vínculo entre la identidad del empleado y sus respuestas.
+* **Verificación OTP y anonimato garantizado:** El empleado valida su número de teléfono con un código de un solo uso enviado por SMS (6 dígitos, máximo 3 intentos, expira en 10 minutos). El número nunca se almacena en texto plano de forma permanente: se calcula un hash SHA-256 irreversible para controlar que nadie participe dos veces en el mismo lote, y los registros temporales se eliminan automáticamente cada hora. En ningún punto del sistema existe un vínculo entre la identidad del empleado y sus respuestas.
 * **Formulario demográfico:** Los empleados pueden dejar su antigüedad, cargo o rango de edad al inicio. Esto es vital para que Recursos Humanos pueda segmentar luego (ej: "las personas de 5+ años de antigüedad evalúan peor el liderazgo").
 * **Métricas claras:** Evaluamos 6 grandes dimensiones con 64 preguntas cerradas, rematando con 3 preguntas de desarrollo para contexto extra.
 * **Fácil de pausar y retomar:** Las respuestas se guardan en tiempo real. Si a mitad del cuestionario la persona debe cerrar la app móvil porque entró a una junta, puede usar su token en la PC de escritorio más tarde y retomar exactamente donde se quedó.
@@ -91,7 +91,7 @@ Poner a rodar este repo en local te tomará solo un par de minutos, si ya tienes
 
 ## Testing Integrados
 
-La suite de tests que he armado con PestPHP cubre 190 escenarios que respaldan cada cálculo del clima y comportamiento del panel. 
+La suite de tests que he armado con PestPHP cubre 229 escenarios que respaldan cada cálculo del clima y comportamiento del panel. 
 
 Si bajas el repositorio, haz el intento de correr la suite:
 ```bash
@@ -100,8 +100,8 @@ php artisan test
 
 ## 5 Decisiones Técnicas que valen la pena destacar
 
-1. **Privacidad by-design con OTP y hash unidireccional:** La verificación por número de WhatsApp garantiza que cada empleado participe una sola vez por lote, sin comprometer el anonimato. El número nunca se vincula a las respuestas: un hash SHA-256 salteado registra la participación, y el número desaparece de la base de datos en cuanto se valida el OTP. Un job programado limpia automáticamente los registros temporales cada hora.
-2. **Scoring que todo el mundo entiende:** Las encuestas contestan sobre Likert (Ej: del 1 al 3). Matemáticamente transformé esto en backend a escalas directas de 0 al 100 puntos y monté una clasificación de semáforo simple de leer: En atención entre 45 y 59 puntos, Buen Clima entre 60 y 74, o Excelente desde 75 puntos en adelante. Por debajo de 45 es En riesgo.
+1. **Privacidad by-design con OTP y hash unidireccional:** La verificación por número de teléfono vía SMS garantiza que cada empleado participe una sola vez por lote, sin comprometer el anonimato. El número nunca se vincula a las respuestas: un hash SHA-256 salteado registra la participación, y el número desaparece de la base de datos en cuanto se valida el OTP. Un job programado limpia automáticamente los registros temporales cada hora.
+2. **Scoring que todo el mundo entiende:** Las encuestas contestan sobre Likert (Ej: del 1 al 3). Matemáticamente transformé esto en backend a escalas directas de 0 al 100 puntos y monté una clasificación de semáforo simple de leer: En atención entre 40 y 59 puntos, Buen Clima entre 60 y 79, o Excelente desde 80 puntos en adelante. Por debajo de 40 es En riesgo.
 3. **Optimización con GROUP BY en bases de datos:** Empujar todo el peso de sacar el clima laboral directo a la base de datos evadiendo a Eloquent resolviendo promedios grandes mejoró la escalabilidad y salvó picos locos de RAM cuando filtramos por 3 ó 4 datos demográficos. 
 4. **Arquitectura responsiva sin pesadez SPA:** Mantuvimos el front con Livewire para acelerar los despachos asíncronos y refrescar los tableros al vuelo en el navegador simulando el flujo de una Single Page App muy bien armada, pero consumiendo poquísimo peso en Javascript total.
 5. **Mantenimiento de `email_verified_at` como deuda técnica:** La columna `email_verified_at` en la tabla de usuarios (`users`) es una herencia del scaffolding de Laravel Breeze. Dado que el sistema no utiliza la verificación de correo electrónico en ningún flujo y no es crítico removerla, se mantiene en la base de datos y modelo de forma documentada como deuda técnica aceptada, evitando romper la compatibilidad con las vistas y las pruebas de Breeze.
@@ -114,7 +114,7 @@ El sistema fue diseñado desde cero para que sea técnicamente imposible rastrea
 
 El flujo de verificación está diseñado para que el número de teléfono del empleado **nunca quede vinculado a sus respuestas**:
 
-1. El empleado ingresa su número de WhatsApp para recibir un código de verificación (OTP).
+1. El empleado ingresa su número de teléfono para recibir un código de verificación (OTP) por SMS.
 2. El sistema calcula una huella digital irreversible (hash SHA-256) del número combinado con un código secreto del servidor — esta huella solo sirve para verificar que la persona no haya participado antes en ese lote.
 3. Una vez validado el OTP, el número de teléfono se elimina permanentemente de la base de datos. Lo que queda es únicamente la huella digital anónima.
 4. El empleado recibe un token de acceso (ej. `TK-A3F9-2K81`) que es su única identidad en el sistema. Nadie — ni el administrador, ni el sistema — puede reconstruir qué número generó ese token.

@@ -18,7 +18,7 @@
             {{-- Edad --}}
             <div>
                 <label for="edad_id" class="block text-sm font-semibold text-slate-700 mb-1.5">
-                    Rango de edad
+                    Rango de edad <span class="text-red-400">*</span>
                 </label>
                 <select id="edad_id" wire:model.live="edad_id"
                     class="w-full rounded-xl border px-4 py-2.5 text-sm text-slate-800
@@ -38,7 +38,7 @@
             {{-- Sexo --}}
             <div>
                 <label for="sexo_id" class="block text-sm font-semibold text-slate-700 mb-1.5">
-                    Sexo
+                    Sexo <span class="text-red-400">*</span>
                 </label>
                 <select id="sexo_id" wire:model.live="sexo_id"
                     class="w-full rounded-xl border px-4 py-2.5 text-sm text-slate-800
@@ -58,7 +58,7 @@
             {{-- Antigüedad --}}
             <div>
                 <label for="antiguedad_id" class="block text-sm font-semibold text-slate-700 mb-1.5">
-                    Antigüedad en la empresa
+                    Antigüedad en la empresa <span class="text-red-400">*</span>
                 </label>
                 <select id="antiguedad_id" wire:model.live="antiguedad_id"
                     class="w-full rounded-xl border px-4 py-2.5 text-sm text-slate-800
@@ -78,7 +78,7 @@
             {{-- Lugar de trabajo --}}
             <div>
                 <label for="lugar_trabajo_id" class="block text-sm font-semibold text-slate-700 mb-1.5">
-                    Lugar de trabajo
+                    Lugar de trabajo <span class="text-red-400">*</span>
                 </label>
                 <select id="lugar_trabajo_id" wire:model.live="lugar_trabajo_id"
                     class="w-full rounded-xl border px-4 py-2.5 text-sm text-slate-800
@@ -98,7 +98,7 @@
             {{-- Grado académico --}}
             <div>
                 <label for="grado_academico_id" class="block text-sm font-semibold text-slate-700 mb-1.5">
-                    Grado académico
+                    Grado académico <span class="text-red-400">*</span>
                 </label>
                 <select id="grado_academico_id" wire:model.live="grado_academico_id"
                     class="w-full rounded-xl border px-4 py-2.5 text-sm text-slate-800
@@ -118,7 +118,7 @@
             {{-- Cargo --}}
             <div>
                 <label for="cargo_id" class="block text-sm font-semibold text-slate-700 mb-1.5">
-                    Cargo o nivel jerárquico
+                    Cargo o nivel jerárquico <span class="text-red-400">*</span>
                 </label>
                 <select id="cargo_id" wire:model.live="cargo_id"
                     class="w-full rounded-xl border px-4 py-2.5 text-sm text-slate-800
@@ -159,5 +159,26 @@
         </div>
 
     </div>
+
+    {{-- Script para hacer scroll al primer campo faltante --}}
+    @script
+        <script>
+            $wire.on('scroll-to-campo', ({
+                campoId
+            }) => {
+                const el = document.getElementById(campoId);
+                if (el) {
+                    setTimeout(() => {
+                        const y = el.getBoundingClientRect().top + window.scrollY -
+                            100;
+                        window.scrollTo({
+                            top: y,
+                            behavior: 'smooth'
+                        });
+                    }, 50);
+                }
+            });
+        </script>
+    @endscript
 
 </div>

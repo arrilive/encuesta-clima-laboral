@@ -73,13 +73,13 @@ class AuthenticationTest extends TestCase
 
         $this->actingAs($user);
 
-        $component = Volt::test('layout.navigation');
+        $component = \Livewire\Livewire::test(\App\Livewire\Admin\LogoutButton::class);
 
         $component->call('logout');
 
         $component
             ->assertHasNoErrors()
-            ->assertRedirect('/');
+            ->assertRedirect(route('login'));
 
         $this->assertGuest();
     }

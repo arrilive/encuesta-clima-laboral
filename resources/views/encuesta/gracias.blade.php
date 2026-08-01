@@ -1,6 +1,6 @@
 <x-layouts.encuesta>
     <div class="flex items-center justify-center px-4 py-14 min-h-[calc(100vh-5rem)]">
-        <div class="w-full max-w-sm text-center page-enter">
+        <div class="w-full max-w-sm sm:max-w-md text-center page-enter">
 
             {{-- Ícono de éxito --}}
             <div class="flex items-center justify-center w-16 h-16 rounded-full bg-emerald-50 mx-auto mb-6">

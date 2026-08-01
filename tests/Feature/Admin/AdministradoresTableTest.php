@@ -24,63 +24,76 @@ it('admin_empresa no puede acceder a /admin/administradores', function () {
         ->assertForbidden();
 });
 
-it('puede crear un administrador corporativo y requiere corporativoId', function () {
+it('puede crear un administrador corporativo sin corporativoId (opcional)', function () {
     $admin = User::factory()->superAdmin()->create();
     $this->actingAs($admin);
 
     $corp = Corporativo::create(['nombre' => 'Corporativo A', 'activa' => true]);
 
-    // Intentar crear sin corporativoId debe fallar
+    // Crear sin corporativoId debe ser valido
     Livewire::test(AdministradoresTable::class)
-        ->set('nombre', 'Admin Corp')
-        ->set('email', 'admincorp@test.com')
+        ->set('nombre', 'Admin Corp Sin Asignar')
+        ->set('email', 'admincorp_sin@test.com')
         ->set('rol', Role::ADMIN_CORPORATIVO->value)
         ->call('crear')
-        ->assertHasErrors(['corporativoId']);
+        ->assertHasNoErrors()
+        ->assertDispatched('notify');
 
-    // Con corporativoId debe tener éxito
+    expect(User::where('email', 'admincorp_sin@test.com')->first())
+        ->not->toBeNull()
+        ->role->toBe(Role::ADMIN_CORPORATIVO->value)
+        ->corporativo_id->toBeNull();
+
+    // Con corporativoId debe tener exito y asignar corporativo_id
     Livewire::test(AdministradoresTable::class)
-        ->set('nombre', 'Admin Corp')
-        ->set('email', 'admincorp@test.com')
+        ->set('nombre', 'Admin Corp Asignado')
+        ->set('email', 'admincorp_con@test.com')
         ->set('rol', Role::ADMIN_CORPORATIVO->value)
         ->set('corporativoId', $corp->id)
         ->call('crear')
         ->assertHasNoErrors();
 
-    expect(User::where('email', 'admincorp@test.com')->first())
+    expect(User::where('email', 'admincorp_con@test.com')->first())
         ->not->toBeNull()
         ->role->toBe(Role::ADMIN_CORPORATIVO->value)
         ->corporativo_id->toBe($corp->id);
 });
 
-it('puede crear un administrador empresa y requiere empresaId', function () {
+it('puede crear un administrador empresa sin empresaId (opcional)', function () {
     $admin = User::factory()->superAdmin()->create();
     $this->actingAs($admin);
 
     $empresa = Empresa::factory()->create(['activa' => true]);
 
+    // Sin empresaId
     Livewire::test(AdministradoresTable::class)
-        ->set('nombre', 'Admin Emp')
-        ->set('email', 'adminemp@test.com')
+        ->set('nombre', 'Admin Emp Sin Asignar')
+        ->set('email', 'adminemp_sin@test.com')
         ->set('rol', Role::ADMIN_EMPRESA->value)
         ->call('crear')
-        ->assertHasErrors(['empresaId']);
+        ->assertHasNoErrors();
 
+    expect(User::where('email', 'adminemp_sin@test.com')->first())
+        ->not->toBeNull()
+        ->role->toBe(Role::ADMIN_EMPRESA->value)
+        ->empresa_id->toBeNull();
+
+    // Con empresaId
     Livewire::test(AdministradoresTable::class)
-        ->set('nombre', 'Admin Emp')
-        ->set('email', 'adminemp@test.com')
+        ->set('nombre', 'Admin Emp Asignado')
+        ->set('email', 'adminemp_con@test.com')
         ->set('rol', Role::ADMIN_EMPRESA->value)
         ->set('empresaId', $empresa->id)
         ->call('crear')
         ->assertHasNoErrors();
 
-    expect(User::where('email', 'adminemp@test.com')->first())
+    expect(User::where('email', 'adminemp_con@test.com')->first())
         ->not->toBeNull()
         ->role->toBe(Role::ADMIN_EMPRESA->value)
         ->empresa_id->toBe($empresa->id);
 });
 
-it('puede crear un administrador sucursal y requiere sucursalId', function () {
+it('puede crear un administrador sucursal sin sucursalId (opcional)', function () {
     $admin = User::factory()->superAdmin()->create();
     $this->actingAs($admin);
 
@@ -92,22 +105,29 @@ it('puede crear un administrador sucursal y requiere sucursalId', function () {
         'activa' => true,
     ]);
 
+    // Sin sucursalId
     Livewire::test(AdministradoresTable::class)
-        ->set('nombre', 'Admin Suc')
-        ->set('email', 'adminsuc@test.com')
+        ->set('nombre', 'Admin Suc Sin Asignar')
+        ->set('email', 'adminsuc_sin@test.com')
         ->set('rol', Role::ADMIN_SUCURSAL->value)
         ->call('crear')
-        ->assertHasErrors(['sucursalId']);
+        ->assertHasNoErrors();
 
+    expect(User::where('email', 'adminsuc_sin@test.com')->first())
+        ->not->toBeNull()
+        ->role->toBe(Role::ADMIN_SUCURSAL->value)
+        ->sucursal_id->toBeNull();
+
+    // Con sucursalId
     Livewire::test(AdministradoresTable::class)
-        ->set('nombre', 'Admin Suc')
-        ->set('email', 'adminsuc@test.com')
+        ->set('nombre', 'Admin Suc Asignado')
+        ->set('email', 'adminsuc_con@test.com')
         ->set('rol', Role::ADMIN_SUCURSAL->value)
         ->set('sucursalId', $sucursal->id)
         ->call('crear')
         ->assertHasNoErrors();
 
-    expect(User::where('email', 'adminsuc@test.com')->first())
+    expect(User::where('email', 'adminsuc_con@test.com')->first())
         ->not->toBeNull()
         ->role->toBe(Role::ADMIN_SUCURSAL->value)
         ->sucursal_id->toBe($sucursal->id);
@@ -135,7 +155,8 @@ it('limpia las FKs que no corresponden al cambiar de rol en edicion', function (
         ->set('rol', Role::ADMIN_EMPRESA->value)
         ->set('empresaId', $empresa->id)
         ->call('editar')
-        ->assertHasNoErrors();
+        ->assertHasNoErrors()
+        ->assertDispatched('notify');
 
     $fresh = $targetUser->fresh();
     expect($fresh->role)->toBe(Role::ADMIN_EMPRESA->value)
@@ -207,7 +228,8 @@ it('permite la eliminacion si hay otros admins en la empresa activa', function (
 
     Livewire::test(AdministradoresTable::class)
         ->call('abrirEliminar', $user1->id)
-        ->call('eliminar');
+        ->call('eliminar')
+        ->assertDispatched('notify');
 
     expect(User::find($user1->id))->toBeNull();
 });
@@ -225,7 +247,8 @@ it('puede regenerar la contraseña de un administrador', function () {
 
     Livewire::test(AdministradoresTable::class)
         ->call('regenerarPassword', $targetUser->id)
-        ->assertHasNoErrors();
+        ->assertHasNoErrors()
+        ->assertDispatched('notify');
 
     $targetUser = $targetUser->fresh();
     expect($targetUser->password)->not->toBe('old_password');

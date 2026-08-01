@@ -1,5 +1,5 @@
 <x-layouts.encuesta>
-    <div class="max-w-lg mx-auto px-4 py-12 page-enter">
+    <div class="max-w-lg sm:max-w-xl mx-auto px-4 py-12 page-enter">
 
         {{-- Encabezado --}}
         <div class="text-center mb-10">
@@ -17,10 +17,10 @@
                 $gradientes = [
                     1 => 'from-blue-600 to-blue-500',
                     2 => 'from-green-600 to-green-500',
-                    3 => 'from-amber-500 to-amber-400',
+                    3 => 'from-amber-800 to-amber-700',
                     4 => 'from-red-600 to-red-500',
                     5 => 'from-purple-600 to-purple-500',
-                    6 => 'from-cyan-500 to-cyan-400',
+                    6 => 'from-cyan-800 to-cyan-700',
                 ];
 
                 $glowColors = [
@@ -94,7 +94,7 @@
 
                                 <div class="flex-1 min-w-0">
                                     {{-- Nombre --}}
-                                    <h3 class="text-white font-bold text-base leading-snug mb-1">
+                                    <h3 class="text-white font-bold text-base leading-snug mb-1 {{ $esCompletada ? 'pr-28' : '' }}">
                                         {{ $dim->nombre }}
                                     </h3>
 

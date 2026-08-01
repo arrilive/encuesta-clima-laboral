@@ -55,6 +55,7 @@ class CorporativosTable extends Component
         ]);
 
         $this->modalCrear = false;
+        $this->dispatch('notify', mensaje: 'Corporativo <b>'.e($this->nombre).'</b> creado correctamente.', tipo: 'success');
     }
 
     // ── Editar Corporativo ───────────────────────────────────────────────────
@@ -82,6 +83,7 @@ class CorporativosTable extends Component
         ]);
 
         $this->modalEditar = false;
+        $this->dispatch('notify', mensaje: 'Corporativo <b>'.e($this->nombre).'</b> actualizado correctamente.', tipo: 'success');
     }
 
     // ── Toggle activa ────────────────────────────────────────────────────────
@@ -90,6 +92,7 @@ class CorporativosTable extends Component
     {
         $corporativo = Corporativo::findOrFail($id);
         $corporativo->update(['activa' => ! $corporativo->activa]);
+        $this->dispatch('notify', mensaje: $corporativo->activa ? 'Corporativo <b>'.e($corporativo->nombre).'</b> activado.' : 'Corporativo <b>'.e($corporativo->nombre).'</b> desactivado.', tipo: 'success');
     }
 
     // ── Render ───────────────────────────────────────────────────────────────
@@ -97,6 +100,8 @@ class CorporativosTable extends Component
     public function render()
     {
         $corporativos = Corporativo::query()
+            ->withCount('empresas')
+            ->with('users')
             ->when($this->buscar, fn ($q) => $q->where('nombre', 'like', "%{$this->buscar}%"))
             ->orderBy('nombre')
             ->paginate(10);

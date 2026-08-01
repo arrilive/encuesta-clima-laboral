@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Admin;
 
+use App\Enums\Role;
 use App\Models\Dimension;
 use App\Models\Respuesta;
 use App\Services\ClimaScoringService;
+use App\Traits\HasTenantScope;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Reactive;
@@ -12,6 +14,8 @@ use Livewire\Component;
 
 class ComparativasDemograficas extends Component
 {
+    use HasTenantScope;
+
     #[Reactive]
     public string $filtroEdadId = '';
 
@@ -41,12 +45,17 @@ class ComparativasDemograficas extends Component
         $query = Respuesta::query()
             ->whereHas('encuesta', fn ($q) => $q->where('estado', 'completado'));
 
-        if ($user->role === 'admin_empresa') {
-            $query->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $user->empresa_id)
-            );
-        } elseif ($this->filtroEmpresaId) {
-            $query->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId)
-            );
+        $query->whereHas('encuesta.lote', fn ($q) => $this->scopeByRole($q));
+
+        if (in_array($user->role, [
+            Role::SUPER_ADMIN->value,
+            Role::ADMIN_CORPORATIVO->value,
+        ]) && $this->filtroEmpresaId) {
+            $sucursalIds = $this->sucursalIdsDeEmpresa((int) $this->filtroEmpresaId);
+            $query->whereHas('encuesta.lote', function ($q) use ($sucursalIds) {
+                $q->where('empresa_id', $this->filtroEmpresaId)
+                    ->orWhereIn('sucursal_id', $sucursalIds);
+            });
         }
 
         if ($this->filtroEdadId) {

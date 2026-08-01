@@ -25,19 +25,6 @@
     >
         <h2 class="text-base font-semibold text-slate-800 tracking-tight mb-5 transition-all duration-300" x-text="modo === 'a' ? 'Generar nuevo lote de tokens' : 'Agregar tokens a un lote existente'"></h2>
 
-        @if($generado)
-            <div class="flex items-center gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-xl mb-5">
-                <svg class="w-5 h-5 text-emerald-600 flex-shrink-0" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                    <polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
-                <p class="text-sm text-emerald-700 font-medium">
-                    {{ $totalGenerado }} {{ $totalGenerado === 1 ? 'token generado' : 'tokens generados' }} correctamente.
-                </p>
-            </div>
-        @endif
-
         {{-- Tabs de Selección de Modo --}}
         <div class="flex border-b border-slate-200 mb-6">
             <button
@@ -235,7 +222,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {{-- Empresa Selector --}}
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Empresa <span class="text-red-400">*</span></label>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Filtrar por empresa <span class="text-red-400">*</span></label>
                     <x-admin.combobox-entidad
                         wire-model="empresaIdModoB"
                         placeholder="Buscar empresa..."
@@ -267,9 +254,7 @@
                         <option value="">Selecciona un lote vigente</option>
                         @foreach($lotesVigentes as $l)
                             <option value="{{ $l->id }}">
-                                {{ $l->nombre ?? 'Lote #'.$l->id }}
-                                ({{ $l->sucursal ? $l->sucursal->nombre : 'General' }})
-                                — vence {{ $l->fecha_fin->format('d/m/Y') }}
+                                [{{ $l->sucursal ? mb_strtoupper($l->sucursal->nombre) : 'GENERAL' }}] {{ $l->nombre ?? 'Lote #'.$l->id }} — vence {{ $l->fecha_fin->format('d/m/Y') }}
                             </option>
                         @endforeach
                     </x-admin.combobox-entidad>
@@ -474,7 +459,7 @@
                             wire:target="inyectar"
                             class="inline-flex w-full justify-center rounded-xl bg-blue-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:col-start-2 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
-                            <span wire:loading.remove wire:target="inyectar">Confirmar y Generar</span>
+                            <span wire:loading.remove wire:target="inyectar">Confirmar y generar</span>
                             <span wire:loading wire:target="inyectar">Generando...</span>
                         </button>
                         <button
@@ -509,7 +494,6 @@
                             <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Nombre del lote</th>
                             <th class="text-center px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Cantidad</th>
                             <th class="text-center px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Estado</th>
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Generado por</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -556,13 +540,10 @@
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">Activo</span>
                                 @endif
                             </td>
-                            <td class="px-6 py-3 text-slate-500 text-xs whitespace-nowrap">
-                                {{ $lote->user?->name ?? '—' }}
-                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-6 py-12 text-center text-slate-400 text-sm">
+                            <td colspan="{{ auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value ? 7 : 5 }}" class="px-6 py-12 text-center text-slate-400 text-sm">
                                 Aún no se han generado tokens.
                             </td>
                         </tr>

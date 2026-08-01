@@ -112,101 +112,137 @@
                 \App\Enums\Role::ADMIN_CORPORATIVO->value,
                 \App\Enums\Role::ADMIN_SUCURSAL->value,
             ]))
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {{-- Promedio General — tarjeta hero --}}
-                    <div class="bg-white rounded-2xl border border-slate-200 p-8">
-                        <div class="flex justify-between h-full">
-                            {{-- Izquierda: label + numero --}}
-                            <div class="flex flex-col justify-between">
-                                <p class="text-sm font-semibold text-slate-500 uppercase tracking-wide">Promedio general</p>
-                                <div class="mt-4">
-                                    @if($clima['promedio_general'] > 0)
-                                        <p class="text-3xl font-bold text-slate-900 leading-none tabular-nums">
-                                            {{ number_format($clima['promedio_general'], 1) }}
-                                        </p>
-                                    @else
-                                        <p class="text-2xl font-bold text-slate-300 leading-none">Sin datos</p>
-                                    @endif
-                                </div>
+                @if($clima['sinDatos'])
+                    <x-admin.empty-state titulo="Sin datos de clima" mensaje="No hay datos de encuestas disponibles para esta entidad." :conBotonFiltros="false" />
+                @else
+                    {{-- Banners Informativos de Escenarios --}}
+                    <div class="mb-4">
+                        @if($clima['escenario'] === 2)
+                            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                                <span class="flex h-2 w-2 relative">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                                </span>
+                                Ronda <strong>{{ $clima['lote_nombre'] }}</strong> en curso. Resultados parciales.
                             </div>
-
-                            {{-- Derecha: badge + accion --}}
-                            <div class="flex flex-col items-end justify-between text-right">
-                                @if($clima['promedio_general'] > 0)
-                                    @php
-                                        $p = $clima['promedio_general'];
-                                        $climaBadge = \App\Support\ClimaBadge::resolver($p);
-                                    @endphp
-                                    <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $climaBadge['standard'] }}">
-                                        {{ $climaBadge['label'] }}
-                                    </span>
-                                @endif
-
-                                <a href="{{ route('admin.reportes') }}"
-                                   class="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors mt-auto">
-                                    Ver análisis completo
-                                    <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <polyline points="9 18 15 12 9 6"/>
+                        @elseif($clima['escenario'] === 3)
+                            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-50 text-slate-700 border border-slate-200/80">
+                                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Estado actual: ronda <strong>{{ $clima['lote_nombre'] }}</strong>. cerrada el {{ $clima['lote_fecha_fin'] }}.
+                            </div>
+                        @elseif($clima['escenario'] === 4)
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-xl text-xs bg-amber-50 text-amber-800 border border-amber-200/80">
+                                <div class="flex items-center gap-2 font-medium shrink-0">
+                                    <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                     </svg>
-                                </a>
+                                    <span>Estado actual: ronda <strong>{{ $clima['lote_nombre'] }}</strong>. cerrada el {{ $clima['lote_fecha_fin'] }}.</span>
+                                </div>
+                                <span class="hidden sm:inline text-amber-300">•</span>
+                                <span>Hay una nueva ronda en curso (<strong>{{ $clima['lote_activo_nombre'] }}</strong>), este panorama se actualizará cuando cierre.</span>
+                            </div>
+                        @endif
+                    </div>
+
+                    {{-- Grid normal de clima --}}
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {{-- Promedio General — tarjeta hero --}}
+                        <div class="bg-white rounded-2xl border border-slate-200 p-8">
+                            <div class="flex justify-between h-full">
+                                {{-- Izquierda: label + numero --}}
+                                <div class="flex flex-col justify-between">
+                                    <p class="text-sm font-semibold text-slate-500 uppercase tracking-wide">Promedio general</p>
+                                    <div class="mt-4">
+                                        @if($clima['promedio_general'] !== null && $clima['promedio_general'] > 0)
+                                            <p class="text-3xl font-bold text-slate-900 leading-none tabular-nums">
+                                                {{ number_format($clima['promedio_general'], 1) }}
+                                            </p>
+                                        @else
+                                            <p class="text-2xl font-bold text-slate-300 leading-none">Sin datos</p>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                {{-- Derecha: badge + accion --}}
+                                <div class="flex flex-col items-end justify-between text-right">
+                                    @if($clima['promedio_general'] !== null && $clima['promedio_general'] > 0)
+                                        @php
+                                            $p = $clima['promedio_general'];
+                                            $climaBadge = \App\Support\ClimaBadge::resolver($p);
+                                        @endphp
+                                        <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $climaBadge['standard'] }}">
+                                            {{ $climaBadge['label'] }}
+                                        </span>
+                                    @endif
+
+                                    <a href="{{ route('admin.reportes') }}"
+                                       class="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors mt-auto">
+                                        Ver análisis completo
+                                        <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <polyline points="9 18 15 12 9 6"/>
+                                        </svg>
+                                    </a>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {{-- Dimensiones destacadas --}}
-                    <div class="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col gap-4">
-                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Dimensiones destacadas</p>
-                        @if($clima['dimension_alta'])
-                            <div class="flex items-start justify-between">
-                                <div>
-                                    <p class="text-xs font-medium text-slate-500 mb-0.5">Más alta</p>
-                                    <p class="text-sm font-medium text-slate-700">{{ $clima['dimension_alta']['nombre'] }}</p>
+                        {{-- Dimensiones destacadas --}}
+                        <div class="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col gap-4">
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Dimensiones destacadas</p>
+                            @if($clima['dimension_alta'])
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <p class="text-xs font-medium text-slate-500 mb-0.5">Más alta</p>
+                                        <p class="text-sm font-medium text-slate-700">{{ $clima['dimension_alta']['nombre'] }}</p>
+                                    </div>
+                                    <span class="text-2xl font-bold text-emerald-600 tabular-nums">{{ number_format($clima['dimension_alta']['puntaje'], 1) }}</span>
                                 </div>
-                                <span class="text-2xl font-bold text-emerald-600 tabular-nums">{{ number_format($clima['dimension_alta']['puntaje'], 1) }}</span>
-                            </div>
-                            <div class="border-t border-slate-100"></div>
-                        @endif
-                        @if($clima['dimension_baja'])
-                            <div class="flex items-start justify-between">
-                                <div>
-                                    <p class="text-xs font-medium text-slate-500 mb-0.5">Más baja</p>
-                                    <p class="text-sm font-medium text-slate-700">{{ $clima['dimension_baja']['nombre'] }}</p>
+                                <div class="border-t border-slate-100"></div>
+                            @endif
+                            @if($clima['dimension_baja'])
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <p class="text-xs font-medium text-slate-500 mb-0.5">Más baja</p>
+                                        <p class="text-sm font-medium text-slate-700">{{ $clima['dimension_baja']['nombre'] }}</p>
+                                    </div>
+                                    <span class="text-2xl font-bold text-red-500 tabular-nums">{{ number_format($clima['dimension_baja']['puntaje'], 1) }}</span>
                                 </div>
-                                <span class="text-2xl font-bold text-red-500 tabular-nums">{{ number_format($clima['dimension_baja']['puntaje'], 1) }}</span>
-                            </div>
-                        @endif
-                        @if(!$clima['dimension_alta'] && !$clima['dimension_baja'])
-                            <p class="text-sm text-slate-400">Sin datos suficientes</p>
-                        @endif
-                    </div>
+                            @endif
+                            @if(!$clima['dimension_alta'] && !$clima['dimension_baja'])
+                                <p class="text-sm text-slate-400">Sin datos suficientes</p>
+                            @endif
+                        </div>
 
-                    {{-- Subdimensiones destacadas --}}
-                    <div class="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col gap-4">
-                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Subdimensiones destacadas</p>
-                        @if($clima['subdimension_alta'])
-                            <div class="flex items-start justify-between">
-                                <div>
-                                    <p class="text-xs font-medium text-slate-500 mb-0.5">Más alta</p>
-                                    <p class="text-sm font-medium text-slate-700">{{ $clima['subdimension_alta']['nombre'] }}</p>
+                        {{-- Subdimensiones destacadas --}}
+                        <div class="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col gap-4">
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Subdimensiones destacadas</p>
+                            @if($clima['subdimension_alta'])
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <p class="text-xs font-medium text-slate-500 mb-0.5">Más alta</p>
+                                        <p class="text-sm font-medium text-slate-700">{{ $clima['subdimension_alta']['nombre'] }}</p>
+                                    </div>
+                                    <span class="text-2xl font-bold text-emerald-600 tabular-nums">{{ number_format($clima['subdimension_alta']['puntaje'], 1) }}</span>
                                 </div>
-                                <span class="text-2xl font-bold text-emerald-600 tabular-nums">{{ number_format($clima['subdimension_alta']['puntaje'], 1) }}</span>
-                            </div>
-                            <div class="border-t border-slate-100"></div>
-                        @endif
-                        @if($clima['subdimension_baja'])
-                            <div class="flex items-start justify-between">
-                                <div>
-                                    <p class="text-xs font-medium text-slate-500 mb-0.5">Más baja</p>
-                                    <p class="text-sm font-medium text-slate-700">{{ $clima['subdimension_baja']['nombre'] }}</p>
+                                <div class="border-t border-slate-100"></div>
+                            @endif
+                            @if($clima['subdimension_baja'])
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <p class="text-xs font-medium text-slate-500 mb-0.5">Más baja</p>
+                                        <p class="text-sm font-medium text-slate-700">{{ $clima['subdimension_baja']['nombre'] }}</p>
+                                    </div>
+                                    <span class="text-2xl font-bold text-red-500 tabular-nums">{{ number_format($clima['subdimension_baja']['puntaje'], 1) }}</span>
                                 </div>
-                                <span class="text-2xl font-bold text-red-500 tabular-nums">{{ number_format($clima['subdimension_baja']['puntaje'], 1) }}</span>
-                            </div>
-                        @endif
-                        @if(!$clima['subdimension_alta'] && !$clima['subdimension_baja'])
-                            <p class="text-sm text-slate-400">Sin datos suficientes</p>
-                        @endif
+                            @endif
+                            @if(!$clima['subdimension_alta'] && !$clima['subdimension_baja'])
+                                <p class="text-sm text-slate-400">Sin datos suficientes</p>
+                            @endif
+                        </div>
                     </div>
-                </div>
+                @endif
             @endif
         </div>
 
@@ -260,28 +296,34 @@
                                 </p>
 
                                 {{-- Acción — cambia según estado --}}
-                                <div x-show="!confirmar">
-                                    <button x-on:click="confirmar = true"
-                                            class="inline-flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all duration-200">
-                                        Liberar tokens
-                                    </button>
-                                </div>
-                                <div x-show="confirmar" x-cloak class="flex gap-2">
-                                    <button wire:click="liberarTokens"
-                                            wire:loading.attr="disabled"
-                                            class="inline-flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all duration-200 disabled:opacity-75">
-                                        <svg wire:loading wire:target="liberarTokens" class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                            <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
-                                            <path d="M12 2a10 10 0 0 1 10 10"/>
-                                        </svg>
-                                        <span wire:loading.remove wire:target="liberarTokens">Sí, liberar</span>
-                                        <span wire:loading wire:target="liberarTokens">Liberando…</span>
-                                    </button>
-                                    <button x-on:click="confirmar = false"
-                                            class="text-xs font-medium text-slate-500 hover:text-slate-700 px-3 py-2 rounded-xl transition-colors">
-                                        Cancelar
-                                    </button>
-                                </div>
+                                @if(auth()->user()->role !== \App\Enums\Role::ADMIN_CORPORATIVO->value)
+                                    <div x-show="!confirmar">
+                                        <button x-on:click="confirmar = true"
+                                                class="inline-flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all duration-200">
+                                            Liberar tokens
+                                        </button>
+                                    </div>
+                                    <div x-show="confirmar" x-cloak class="flex gap-2">
+                                        <button wire:click="liberarTokens"
+                                                wire:loading.attr="disabled"
+                                                class="inline-flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all duration-200 disabled:opacity-75">
+                                            <svg wire:loading wire:target="liberarTokens" class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+                                                <path d="M12 2a10 10 0 0 1 10 10"/>
+                                            </svg>
+                                            <span wire:loading.remove wire:target="liberarTokens">Sí, liberar</span>
+                                            <span wire:loading wire:target="liberarTokens">Liberando…</span>
+                                        </button>
+                                        <button x-on:click="confirmar = false"
+                                                class="text-xs font-medium text-slate-500 hover:text-slate-700 px-3 py-2 rounded-xl transition-colors">
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                @else
+                                    <span class="text-[10px] text-red-400 font-medium mt-auto">
+                                        Solo lectura corporativa
+                                    </span>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -359,31 +401,35 @@
             </div>
         </div>
 
-        {{-- ── RANKING EMPRESAS (solo super_admin) ──────────────────────────── --}}
+        {{-- ── RANKING EMPRESAS (solo super_admin y admin_corporativo) ──────────────────────────── --}}
         @if(in_array(auth()->user()->role, [
             \App\Enums\Role::SUPER_ADMIN->value,
             \App\Enums\Role::ADMIN_CORPORATIVO->value,
-        ]) && $rankingEmpresas->isNotEmpty())
+        ]))
             <div>
                 <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Ranking de empresas</p>
-                <div class="bg-white rounded-2xl border border-slate-200 p-6">
-                    <div class="divide-y divide-slate-100">
-                        @foreach($rankingEmpresas as $i => $empresa)
-                            <div class="flex items-center justify-between py-3 first:pt-0 last:pb-0">
-                                <div class="flex items-center gap-3">
-                                    <span class="text-sm font-bold text-slate-300 w-6 text-center tabular-nums">{{ $i + 1 }}</span>
-                                    <span class="text-sm font-medium text-slate-700">{{ $empresa['nombre'] }}</span>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <div class="w-32 bg-slate-100 rounded-full h-1.5 hidden sm:block">
-                                        <div class="h-1.5 rounded-full" style="width: {{ $empresa['puntaje'] }}%; background-color: {{ \App\Support\ClimaBadge::resolver($empresa['puntaje'])['color_hex'] }};"></div>
+                @if($rankingEmpresas->isNotEmpty())
+                    <div class="bg-white rounded-2xl border border-slate-200 p-6">
+                        <div class="divide-y divide-slate-100">
+                            @foreach($rankingEmpresas as $i => $empresa)
+                                <div class="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-sm font-bold text-slate-300 w-6 text-center tabular-nums">{{ $i + 1 }}</span>
+                                        <span class="text-sm font-medium text-slate-700">{{ $empresa['nombre'] }}</span>
                                     </div>
-                                    <span class="text-sm font-bold text-slate-900 w-10 text-right tabular-nums">{{ number_format($empresa['puntaje'], 1) }}</span>
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-32 bg-slate-100 rounded-full h-1.5 hidden sm:block">
+                                            <div class="h-1.5 rounded-full" style="width: {{ $empresa['puntaje'] }}%; background-color: {{ \App\Support\ClimaBadge::resolver($empresa['puntaje'])['color_hex'] }};"></div>
+                                        </div>
+                                        <span class="text-sm font-bold text-slate-900 w-10 text-right tabular-nums">{{ number_format($empresa['puntaje'], 1) }}</span>
+                                    </div>
                                 </div>
-                            </div>
-                        @endforeach
+                            @endforeach
+                        </div>
                     </div>
-                </div>
+                @else
+                    <x-admin.empty-state titulo="Sin datos de ranking" mensaje="No hay empresas con datos de clima laboral para mostrar en el ranking." :conBotonFiltros="false" />
+                @endif
             </div>
         @endif
 

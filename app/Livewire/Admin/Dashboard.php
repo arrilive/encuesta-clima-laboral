@@ -105,14 +105,24 @@ class Dashboard extends Component
 
     public function liberarTokens(): void
     {
+        if (auth()->user()->role === \App\Enums\Role::ADMIN_CORPORATIVO->value) {
+            return;
+        }
+
         $query = Encuesta::enRiesgo();
 
         $query->whereHas('lote', fn ($q) => $this->scopeByRole($q));
 
-        $query->update([
+        $count = $query->update([
             'estado' => 'disponible',
             'fecha_asignacion' => null,
         ]);
+
+        $mensaje = $count === 1
+            ? '1 token liberado.'
+            : "{$count} tokens liberados.";
+
+        $this->dispatch('notify', mensaje: $mensaje, tipo: 'success');
     }
 
     public function render(ClimaScoringService $scoring)
@@ -208,8 +218,23 @@ class Dashboard extends Component
                 ->whereHas('lote', fn ($loteQuery) => $this->scopeByRole($loteQuery))
             );
 
-        if ($this->filtroLoteId) {
-            $respuestasBase->whereHas('encuesta', fn ($q) => $q->where('lote_id', $this->filtroLoteId));
+        // Determine the lote to use based on rules or manual filter
+        $loteId = null;
+        $escenario = 1;
+        $loteEstadoActual = null;
+        $loteActivo = null;
+
+        $infoLote = $this->resolverLoteEstadoActual();
+        $loteEstadoActual = $infoLote['lote'];
+        $escenario = $infoLote['escenario'];
+        $loteActivo = $infoLote['lote_activo'];
+
+        if ($loteEstadoActual) {
+            $loteId = $loteEstadoActual->id;
+            $respuestasBase->whereHas('encuesta', fn ($q) => $q->where('lote_id', $loteId));
+        } else {
+            // Force empty results if no current lote is found
+            $respuestasBase->whereRaw('1=0');
         }
 
         if ($this->filtroCorporativoId && auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value) {
@@ -217,7 +242,11 @@ class Dashboard extends Component
         }
 
         if ($this->filtroEmpresaId) {
-            $respuestasBase->whereHas('encuesta.lote', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId));
+            $sucursalIds = $this->sucursalIdsDeEmpresa((int) $this->filtroEmpresaId);
+            $respuestasBase->whereHas('encuesta.lote', function ($q) use ($sucursalIds) {
+                $q->where('empresa_id', $this->filtroEmpresaId)
+                    ->orWhereIn('sucursal_id', $sucursalIds);
+            });
         }
 
         if ($this->filtroSucursalId) {
@@ -227,12 +256,30 @@ class Dashboard extends Component
         $scoresDimensiones = $scoring->scoresPorDimension($respuestasBase);
         $scoresSubdimensiones = $scoring->scoresPorSubdimension($respuestasBase);
 
+        $completadasLote = 0;
+        if ($loteEstadoActual) {
+            $encuestasQuery = Encuesta::where('estado', 'completado')
+                ->where('lote_id', $loteEstadoActual->id);
+            if ($this->filtroSucursalId) {
+                $encuestasQuery->whereHas('lote', fn ($q) => $q->where('sucursal_id', $this->filtroSucursalId));
+            }
+            $completadasLote = $encuestasQuery->count();
+        }
+
+        $sinDatos = ! $loteEstadoActual || $completadasLote === 0;
+
         return [
-            'promedio_general' => $scoring->promedioGeneral($respuestasBase),
-            'dimension_alta' => $scoresDimensiones->sortByDesc('puntaje')->first(),
-            'dimension_baja' => $scoresDimensiones->sortBy('puntaje')->first(),
-            'subdimension_alta' => $scoresSubdimensiones->sortByDesc('puntaje')->first(),
-            'subdimension_baja' => $scoresSubdimensiones->sortBy('puntaje')->first(),
+            'promedio_general' => ($loteId && ! $sinDatos) ? $scoring->promedioGeneral($respuestasBase) : null,
+            'dimension_alta' => $sinDatos ? null : $scoresDimensiones->sortByDesc('puntaje')->first(),
+            'dimension_baja' => $sinDatos ? null : $scoresDimensiones->sortBy('puntaje')->first(),
+            'subdimension_alta' => $sinDatos ? null : $scoresSubdimensiones->sortByDesc('puntaje')->first(),
+            'subdimension_baja' => $sinDatos ? null : $scoresSubdimensiones->sortBy('puntaje')->first(),
+            'sinDatos' => $sinDatos,
+            'completadasLote' => $completadasLote,
+            'escenario' => $escenario,
+            'lote_nombre' => $loteEstadoActual ? $loteEstadoActual->nombre : '',
+            'lote_fecha_fin' => ($loteEstadoActual && $loteEstadoActual->fecha_fin) ? $loteEstadoActual->fecha_fin->format('d/m/Y') : '',
+            'lote_activo_nombre' => $loteActivo ? $loteActivo->nombre : '',
         ];
     }
 
@@ -255,8 +302,9 @@ class Dashboard extends Component
         return $empresas
             ->map(fn ($empresa) => [
                 'nombre' => $empresa->nombre,
-                'puntaje' => $promedios->get($empresa->id, 0.0),
+                'puntaje' => $promedios->get($empresa->id, null),
             ])
+            ->filter(fn ($empresa) => $empresa['puntaje'] !== null)
             ->sortByDesc('puntaje')
             ->values();
     }

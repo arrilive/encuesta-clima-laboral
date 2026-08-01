@@ -53,7 +53,12 @@
                         <td class="px-6 py-3.5 text-slate-900 font-medium">{{ $user->name }}</td>
                         <td class="px-6 py-3.5 text-slate-500">{{ $user->email }}</td>
                         <td class="px-6 py-3.5">
-                            <span class="inline-block text-xs font-medium bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+                            <span class="inline-block text-xs font-medium px-2 py-0.5 rounded-full {{ match($user->role) {
+                                'admin_corporativo' => 'bg-indigo-50 text-indigo-700',
+                                'admin_empresa'     => 'bg-blue-50 text-blue-700',
+                                'admin_sucursal'    => 'bg-violet-50 text-violet-700',
+                                default             => 'bg-blue-50 text-blue-700',
+                            } }}">
                                 {{ match($user->role) {
                                     'admin_corporativo' => 'Admin Corporativo',
                                     'admin_empresa'     => 'Admin Empresa',
@@ -64,13 +69,25 @@
                         </td>
                         <td class="px-6 py-3.5 text-slate-500">
                             @if($user->role === 'admin_corporativo')
-                                <span class="text-slate-600 font-medium">{{ $user->corporativo?->nombre ?? '—' }}</span> <span class="text-xs text-slate-400">(Corporativo)</span>
+                                @if($user->corporativo)
+                                    <span class="text-slate-600 font-medium">{{ $user->corporativo->nombre }}</span> <span class="text-xs text-slate-400">(Corporativo)</span>
+                                @else
+                                    Sin asignar
+                                @endif
                             @elseif($user->role === 'admin_empresa')
-                                <span class="text-slate-600 font-medium">{{ $user->empresa?->nombre ?? '—' }}</span> <span class="text-xs text-slate-400">(Empresa)</span>
+                                @if($user->empresa)
+                                    <span class="text-slate-600 font-medium">{{ $user->empresa->nombre }}</span> <span class="text-xs text-slate-400">(Empresa)</span>
+                                @else
+                                    Sin asignar
+                                @endif
                             @elseif($user->role === 'admin_sucursal')
-                                <span class="text-slate-600 font-medium">{{ $user->sucursal?->nombre ?? '—' }}</span> <span class="text-xs text-slate-400">({{ $user->sucursal?->empresa?->nombre ?? '—' }})</span>
+                                @if($user->sucursal)
+                                    <span class="text-slate-600 font-medium">{{ $user->sucursal->nombre }}</span> <span class="text-xs text-slate-400">({{ $user->sucursal->empresa?->nombre ?? '—' }})</span>
+                                @else
+                                    Sin asignar
+                                @endif
                             @else
-                                —
+                                Sin asignar
                             @endif
                         </td>
                         <td class="px-6 py-3.5">
@@ -145,7 +162,7 @@
                  x-transition:leave="transition ease-in duration-200"
                  x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                  x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden ring-1 ring-slate-900/5">
+                 class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-visible ring-1 ring-slate-900/5">
 
                 <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
                     <h3 class="text-base font-semibold text-slate-900">Nuevo administrador</h3>
@@ -253,7 +270,7 @@
                     @endif
                 </div>
 
-                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 rounded-b-2xl">
                     <button @click="abierto = false" type="button"
                             class="px-4 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
                         Cancelar
@@ -294,7 +311,7 @@
                  x-transition:leave="transition ease-in duration-200"
                  x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                  x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden ring-1 ring-slate-900/5">
+                 class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-visible ring-1 ring-slate-900/5">
 
                 <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
                     <h3 class="text-base font-semibold text-slate-900">Editar administrador</h3>
@@ -402,7 +419,7 @@
                     @endif
                 </div>
 
-                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 rounded-b-2xl">
                     <button @click="abierto = false" type="button"
                             class="px-4 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
                         Cancelar

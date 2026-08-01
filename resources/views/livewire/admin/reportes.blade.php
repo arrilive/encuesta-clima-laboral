@@ -29,8 +29,8 @@
                 <div class="hidden md:block w-px h-6 bg-slate-200"></div>
 
                 <button @click="$dispatch('abrir-modal-pdf')"
-                    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-all duration-200 hover:-translate-y-px active:translate-y-0 whitespace-nowrap">
-                    <svg class="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-indigo-600 rounded-lg hover:bg-indigo-700 hover:border-indigo-700 transition-all duration-200 hover:-translate-y-px active:translate-y-0 whitespace-nowrap">
+                    <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                         <polyline points="7 10 12 15 17 10" />
@@ -44,8 +44,8 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {{-- Edad --}}
             <div class="space-y-1.5">
-                <label class="text-slate-500 text-sm font-medium">Edad</label>
-                <select wire:model.live="filtroEdadId"
+                <label for="filtro-edad" class="text-slate-500 text-sm font-medium">Edad</label>
+                <select id="filtro-edad" wire:model.live="filtroEdadId"
                     class="w-full border border-slate-300 rounded-xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
                     <option value="">Todas las edades</option>
                     @foreach ($edades as $edad)
@@ -56,8 +56,8 @@
 
             {{-- Sexo --}}
             <div class="space-y-1.5">
-                <label class="text-slate-500 text-sm font-medium">Sexo</label>
-                <select wire:model.live="filtroSexoId"
+                <label for="filtro-sexo" class="text-slate-500 text-sm font-medium">Sexo</label>
+                <select id="filtro-sexo" wire:model.live="filtroSexoId"
                     class="w-full border border-slate-300 rounded-xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
                     <option value="">Todos los sexos</option>
                     @foreach ($sexos as $sexo)
@@ -68,8 +68,8 @@
 
             {{-- Cargo --}}
             <div class="space-y-1.5">
-                <label class="text-slate-500 text-sm font-medium">Cargo</label>
-                <select wire:model.live="filtroCargoId"
+                <label for="filtro-cargo" class="text-slate-500 text-sm font-medium">Cargo</label>
+                <select id="filtro-cargo" wire:model.live="filtroCargoId"
                     class="w-full border border-slate-300 rounded-xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
                     <option value="">Todos los cargos</option>
                     @foreach ($cargos as $cargo)
@@ -80,8 +80,8 @@
 
             {{-- Lugar de Trabajo --}}
             <div class="space-y-1.5">
-                <label class="text-slate-500 text-sm font-medium">Lugar de Trabajo</label>
-                <select wire:model.live="filtroLugarTrabajoId"
+                <label for="filtro-lugar-trabajo" class="text-slate-500 text-sm font-medium">Lugar de Trabajo</label>
+                <select id="filtro-lugar-trabajo" wire:model.live="filtroLugarTrabajoId"
                     class="w-full border border-slate-300 rounded-xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
                     <option value="">Todos los lugares</option>
                     @foreach ($lugares as $lugar)
@@ -92,8 +92,8 @@
 
             {{-- Grado Académico --}}
             <div class="space-y-1.5">
-                <label class="text-slate-500 text-sm font-medium">Grado Académico</label>
-                <select wire:model.live="filtroGradoAcademicoId"
+                <label for="filtro-grado-academico" class="text-slate-500 text-sm font-medium">Grado Académico</label>
+                <select id="filtro-grado-academico" wire:model.live="filtroGradoAcademicoId"
                     class="w-full border border-slate-300 rounded-xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
                     <option value="">Todos los grados</option>
                     @foreach ($grados as $grado)
@@ -104,8 +104,8 @@
 
             {{-- Antigüedad --}}
             <div class="space-y-1.5">
-                <label class="text-slate-500 text-sm font-medium">Antigüedad</label>
-                <select wire:model.live="filtroAntiguedadId"
+                <label for="filtro-antiguedad" class="text-slate-500 text-sm font-medium">Antigüedad</label>
+                <select id="filtro-antiguedad" wire:model.live="filtroAntiguedadId"
                     class="w-full border border-slate-300 rounded-xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
                     <option value="">Todas las antigüedades</option>
                     @foreach ($antiguedades as $antiguedad)
@@ -194,6 +194,13 @@
                 </x-admin.combobox-entidad>
             </div>
         </div>
+        <div wire:loading wire:target="filtroEdadId,filtroSexoId,filtroCargoId,filtroLugarTrabajoId,filtroGradoAcademicoId,filtroAntiguedadId,filtroCorporativoId,filtroEmpresaId,filtroSucursalId,filtroLoteId" class="flex items-center gap-1.5 text-xs text-slate-400 mt-2">
+            <svg class="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+                <path d="M12 2a10 10 0 0 1 10 10"/>
+            </svg>
+            Actualizando resultados…
+        </div>
     </div>
 
     {{-- SECCIÓN 2 — Breadcrumb --}}
@@ -265,7 +272,7 @@
 
                     {{-- Encuestas Completadas --}}
                     <div class="bg-white rounded-2xl shadow-sm p-4">
-                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Completadas</p>
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Encuestas Completadas</p>
                         <div class="flex items-center justify-between">
                             <div>
                                 <h3 class="text-2xl font-bold text-slate-900 tabular-nums">{{ $completadasFiltradas }}</h3>
@@ -376,6 +383,7 @@
                                             </td>
                                             <td class="py-3 text-right">
                                                 <button wire:click="irNivel2({{ $item['id'] }})"
+                                                    aria-label="Ver detalle de {{ $item['nombre'] }}"
                                                     class="text-blue-600 hover:text-blue-700 inline-flex items-center group-hover:translate-x-1 transition-transform p-1">
                                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                                         viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"
@@ -399,7 +407,8 @@
 
                 {{-- 3e. Respuestas abiertas --}}
                 <livewire:admin.respuestas-abiertas :filtro-edad-id="$filtroEdadId" :filtro-sexo-id="$filtroSexoId" :filtro-cargo-id="$filtroCargoId"
-                    :filtro-lugar-trabajo-id="$filtroLugarTrabajoId" :filtro-grado-academico-id="$filtroGradoAcademicoId" :filtro-antiguedad-id="$filtroAntiguedadId" :filtro-empresa-id="$filtroEmpresaId" />
+                    :filtro-lugar-trabajo-id="$filtroLugarTrabajoId" :filtro-grado-academico-id="$filtroGradoAcademicoId" :filtro-antiguedad-id="$filtroAntiguedadId" :filtro-empresa-id="$filtroEmpresaId"
+                    :filtro-corporativo-id="$filtroCorporativoId" :filtro-sucursal-id="$filtroSucursalId" :filtro-lote-id="$filtroLoteId" />
             </div>
         @endif
     @endif
@@ -635,9 +644,9 @@
                 let radarEl = document.querySelector('#radar-chart svg');
                 if (radarEl) svgs.radar = radarEl.outerHTML;
                 $wire.prepararExportacion(svgs, this.alcance, this.limite);
-                setTimeout(() => { this.exporting = false; }, 2500);
             }
         }" x-on:abrir-modal-pdf.window="abierto = true"
+            x-on:pdf-exportacion-lista.window="exporting = false"
             x-on:keyup.escape.window="abierto = false" x-cloak x-show="abierto"
             class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
 
@@ -854,6 +863,7 @@
                 });
 
                 window.open(`/admin/reportes/pdf?${params.toString()}`, '_blank');
+                window.dispatchEvent(new CustomEvent('pdf-exportacion-lista'));
             });
 
             // ── Nivel 2: Barras horizontales ──────────────────────────────────

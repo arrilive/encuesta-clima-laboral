@@ -1,7 +1,8 @@
 @props([
     'titulo' => 'Sin resultados',
     'mensaje' => 'No hay datos para los filtros seleccionados.',
-    'conBotonFiltros' => true
+    'conBotonFiltros' => true,
+    'metodoLimpiar' => 'limpiarFiltros',
 ])
 
 <div class="bg-white rounded-2xl shadow-sm p-12 flex flex-col items-center justify-center text-center gap-4">
@@ -15,7 +16,7 @@
         <p class="text-slate-500 text-sm">{{ $mensaje }}</p>
     </div>
     @if ($conBotonFiltros)
-        <button wire:click="limpiarFiltros" class="mt-2 text-blue-600 hover:text-blue-700 text-sm font-semibold transition-colors">
+        <button wire:click="{{ $metodoLimpiar }}" class="mt-2 text-blue-600 hover:text-blue-700 text-sm font-semibold transition-colors">
             Limpiar filtros
         </button>
     @endif

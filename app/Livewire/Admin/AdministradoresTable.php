@@ -86,11 +86,11 @@ class AdministradoresTable extends Component
         ];
 
         if ($this->rol === Role::ADMIN_CORPORATIVO->value) {
-            $rules['corporativoId'] = 'required|exists:corporativos,id';
+            $rules['corporativoId'] = 'nullable|exists:corporativos,id';
         } elseif ($this->rol === Role::ADMIN_EMPRESA->value) {
-            $rules['empresaId'] = 'required|exists:empresas,id';
+            $rules['empresaId'] = 'nullable|exists:empresas,id';
         } elseif ($this->rol === Role::ADMIN_SUCURSAL->value) {
-            $rules['sucursalId'] = 'required|exists:sucursales,id';
+            $rules['sucursalId'] = 'nullable|exists:sucursales,id';
         }
 
         $this->validate($rules, [
@@ -123,6 +123,7 @@ class AdministradoresTable extends Component
         $this->passwordGenerada = $passwordPlana;
         $this->modalCrear = false;
         $this->modalPasswordGenerada = true;
+        $this->dispatch('notify', mensaje: 'Administrador <b>'.e($this->nombre).'</b> creado correctamente.', tipo: 'success');
     }
 
     // ── Editar Administrador ─────────────────────────────────────────────────
@@ -154,11 +155,11 @@ class AdministradoresTable extends Component
         ];
 
         if ($this->rol === Role::ADMIN_CORPORATIVO->value) {
-            $rules['corporativoId'] = 'required|exists:corporativos,id';
+            $rules['corporativoId'] = 'nullable|exists:corporativos,id';
         } elseif ($this->rol === Role::ADMIN_EMPRESA->value) {
-            $rules['empresaId'] = 'required|exists:empresas,id';
+            $rules['empresaId'] = 'nullable|exists:empresas,id';
         } elseif ($this->rol === Role::ADMIN_SUCURSAL->value) {
-            $rules['sucursalId'] = 'required|exists:sucursales,id';
+            $rules['sucursalId'] = 'nullable|exists:sucursales,id';
         }
 
         $this->validate($rules, [
@@ -187,6 +188,7 @@ class AdministradoresTable extends Component
         ]);
 
         $this->modalEditar = false;
+        $this->dispatch('notify', mensaje: 'Administrador <b>'.e($this->nombre).'</b> actualizado correctamente.', tipo: 'success');
     }
 
     // ── Eliminar Administrador ───────────────────────────────────────────────
@@ -222,8 +224,10 @@ class AdministradoresTable extends Component
             }
         }
 
+        $nombreEliminado = $user->name;
         $user->delete();
         $this->modalEliminar = false;
+        $this->dispatch('notify', mensaje: 'Administrador <b>'.e($nombreEliminado).'</b> eliminado.', tipo: 'success');
     }
 
     // ── Cerrar modal contraseña generada ─────────────────────────────────────
@@ -247,6 +251,7 @@ class AdministradoresTable extends Component
 
         $this->passwordGenerada = $passwordPlana;
         $this->modalPasswordGenerada = true;
+        $this->dispatch('notify', mensaje: 'Contraseña de <b>'.e($user->name).'</b> regenerada correctamente.', tipo: 'success');
     }
 
     // ── Render ───────────────────────────────────────────────────────────────

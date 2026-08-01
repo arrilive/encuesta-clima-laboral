@@ -165,17 +165,20 @@ it('clima contiene promedio_general para admin_empresa cuando hay respuestas', f
 
     $empresa = Empresa::factory()->create();
     $admin = User::factory()->adminEmpresa($empresa->id)->create();
-    $encuesta = Encuesta::factory()->completada()->create(['lote_id' => \App\Models\Lote::factory()->for($empresa)->create()->id]);
+    $lote = \App\Models\Lote::factory()->for($empresa)->create();
 
     $opcion = OpcionRespuesta::where('valor_numerico', 3)->first();
     $preguntas = Pregunta::all();
 
-    foreach ($preguntas as $pregunta) {
-        Respuesta::create([
-            'encuesta_id' => $encuesta->id,
-            'pregunta_id' => $pregunta->id,
-            'opcion_respuesta_id' => $opcion->id,
-        ]);
+    for ($i = 0; $i < 5; $i++) {
+        $encuesta = Encuesta::factory()->completada()->create(['lote_id' => $lote->id]);
+        foreach ($preguntas as $pregunta) {
+            Respuesta::create([
+                'encuesta_id' => $encuesta->id,
+                'pregunta_id' => $pregunta->id,
+                'opcion_respuesta_id' => $opcion->id,
+            ]);
+        }
     }
 
     $this->actingAs($admin);
@@ -229,4 +232,278 @@ it('filtroSucursalId filtra KPIs a la sucursal seleccionada', function () {
 
     $component->set('filtroSucursalId', '');
     expect($component->viewData('kpis')['total_tokens'])->toBe(5);
+});
+
+it('admin_corporativo no puede liberar tokens en riesgo', function () {
+    $corporativo = \App\Models\Corporativo::factory()->create();
+    $empresa = Empresa::factory()->create(['corporativo_id' => $corporativo->id]);
+    $lote = \App\Models\Lote::factory()->for($empresa)->create();
+    $encuesta = Encuesta::factory()->create([
+        'lote_id' => $lote->id,
+        'estado' => 'asignado',
+        'fecha_asignacion' => now()->subDays(20),
+    ]);
+
+    $admin = User::factory()->adminCorporativo($corporativo->id)->create();
+
+    $this->actingAs($admin);
+
+    Livewire::test(Dashboard::class)->call('liberarTokens');
+
+    expect($encuesta->fresh()->estado)->toBe('asignado');
+});
+
+it('admin_empresa puede liberar tokens en riesgo de su empresa', function () {
+    $empresa = Empresa::factory()->create();
+    $lote = \App\Models\Lote::factory()->for($empresa)->create();
+    $encuesta = Encuesta::factory()->create([
+        'lote_id' => $lote->id,
+        'estado' => 'asignado',
+        'fecha_asignacion' => now()->subDays(20),
+    ]);
+
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    $this->actingAs($admin);
+
+    Livewire::test(Dashboard::class)
+        ->call('liberarTokens')
+        ->assertDispatched('notify');
+
+    expect($encuesta->fresh())
+        ->estado->toBe('disponible')
+        ->fecha_asignacion->toBeNull();
+});
+
+it('admin_sucursal puede liberar tokens en riesgo de su sucursal', function () {
+    $empresa = Empresa::factory()->create();
+    $sucursal = \App\Models\Sucursal::factory()->create(['empresa_id' => $empresa->id]);
+    $lote = \App\Models\Lote::factory()->create(['empresa_id' => $empresa->id, 'sucursal_id' => $sucursal->id]);
+    $encuesta = Encuesta::factory()->create([
+        'lote_id' => $lote->id,
+        'estado' => 'asignado',
+        'fecha_asignacion' => now()->subDays(20),
+    ]);
+
+    $admin = User::factory()->adminSucursal($sucursal->id)->create();
+
+    $this->actingAs($admin);
+
+    Livewire::test(Dashboard::class)->call('liberarTokens');
+
+    expect($encuesta->fresh())
+        ->estado->toBe('disponible')
+        ->fecha_asignacion->toBeNull();
+});
+
+it('super_admin puede liberar cualquier token en riesgo', function () {
+    $empresa = Empresa::factory()->create();
+    $lote = \App\Models\Lote::factory()->for($empresa)->create();
+    $encuesta = Encuesta::factory()->create([
+        'lote_id' => $lote->id,
+        'estado' => 'asignado',
+        'fecha_asignacion' => now()->subDays(20),
+    ]);
+
+    $admin = User::factory()->superAdmin()->create();
+
+    $this->actingAs($admin);
+
+    Livewire::test(Dashboard::class)->call('liberarTokens');
+
+    expect($encuesta->fresh())
+        ->estado->toBe('disponible')
+        ->fecha_asignacion->toBeNull();
+});
+
+it('clima muestra escenario 1 (vacio) cuando no hay ningun lote', function () {
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    $this->actingAs($admin);
+
+    $component = Livewire::test(Dashboard::class);
+    $clima = $component->viewData('clima');
+
+    expect($clima['sinDatos'])->toBeTrue()
+        ->and($clima['escenario'])->toBe(1);
+
+    $component->assertSee('Sin datos de clima');
+});
+
+it('clima muestra escenario 2 (lote activo) cuando hay un lote activo sin cerrado previo', function () {
+    $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    $loteActivo = \App\Models\Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'fecha_inicio' => now()->subDays(5),
+        'fecha_fin' => null,
+        'activo' => true,
+        'nombre' => 'Ronda Activa 2026',
+    ]);
+
+    // Ponemos 5 respuestas para pasar el umbral
+    $opcion = OpcionRespuesta::where('valor_numerico', 3)->first();
+    for ($i = 0; $i < 5; $i++) {
+        $enc = Encuesta::factory()->completada()->create(['lote_id' => $loteActivo->id]);
+        foreach (Pregunta::all() as $pregunta) {
+            Respuesta::create([
+                'encuesta_id' => $enc->id,
+                'pregunta_id' => $pregunta->id,
+                'opcion_respuesta_id' => $opcion->id,
+            ]);
+        }
+    }
+
+    $this->actingAs($admin);
+
+    $component = Livewire::test(Dashboard::class);
+    $clima = $component->viewData('clima');
+
+    expect($clima['sinDatos'])->toBeFalse()
+        ->and($clima['escenario'])->toBe(2)
+        ->and($clima['promedio_general'])->toBe(100.0);
+
+    $component->assertSee('Ronda')
+        ->assertSee('Ronda Activa 2026')
+        ->assertSee('en curso. Resultados parciales.');
+});
+
+it('clima muestra escenario 3 (lote cerrado) cuando hay un lote cerrado sin lote activo', function () {
+    $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    $loteCerrado = \App\Models\Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'fecha_inicio' => now()->subDays(20),
+        'fecha_fin' => now()->subDays(5),
+        'activo' => false,
+        'nombre' => 'Ronda Cerrada 2026',
+    ]);
+
+    // Ponemos 5 respuestas para pasar el umbral
+    $opcion = OpcionRespuesta::where('valor_numerico', 3)->first();
+    for ($i = 0; $i < 5; $i++) {
+        $enc = Encuesta::factory()->completada()->create(['lote_id' => $loteCerrado->id]);
+        foreach (Pregunta::all() as $pregunta) {
+            Respuesta::create([
+                'encuesta_id' => $enc->id,
+                'pregunta_id' => $pregunta->id,
+                'opcion_respuesta_id' => $opcion->id,
+            ]);
+        }
+    }
+
+    $this->actingAs($admin);
+
+    $component = Livewire::test(Dashboard::class);
+    $clima = $component->viewData('clima');
+
+    expect($clima['sinDatos'])->toBeFalse()
+        ->and($clima['escenario'])->toBe(3)
+        ->and($clima['promedio_general'])->toBe(100.0);
+
+    $component->assertSee('Estado actual: ronda')
+        ->assertSee('Ronda Cerrada 2026')
+        ->assertSee('cerrada el '.$loteCerrado->fecha_fin->format('d/m/Y'));
+});
+
+it('clima muestra escenario 4 (lote cerrado + activo) cuando hay un lote cerrado y un lote activo', function () {
+    $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    $loteCerrado = \App\Models\Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'fecha_inicio' => now()->subDays(20),
+        'fecha_fin' => now()->subDays(5),
+        'activo' => false,
+        'nombre' => 'Ronda Cerrada 2026',
+    ]);
+
+    $loteActivo = \App\Models\Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'fecha_inicio' => now()->subDays(3),
+        'fecha_fin' => null,
+        'activo' => true,
+        'nombre' => 'Ronda Nueva 2026',
+    ]);
+
+    // Ponemos 5 respuestas en el cerrado, y 2 en el activo (que no se deben usar)
+    $opcionMax = OpcionRespuesta::where('valor_numerico', 3)->first();
+    $opcionMin = OpcionRespuesta::where('valor_numerico', 1)->first();
+
+    for ($i = 0; $i < 5; $i++) {
+        $enc = Encuesta::factory()->completada()->create(['lote_id' => $loteCerrado->id]);
+        foreach (Pregunta::all() as $pregunta) {
+            Respuesta::create([
+                'encuesta_id' => $enc->id,
+                'pregunta_id' => $pregunta->id,
+                'opcion_respuesta_id' => $opcionMax->id,
+            ]);
+        }
+    }
+
+    for ($i = 0; $i < 2; $i++) {
+        $enc = Encuesta::factory()->completada()->create(['lote_id' => $loteActivo->id]);
+        foreach (Pregunta::all() as $pregunta) {
+            Respuesta::create([
+                'encuesta_id' => $enc->id,
+                'pregunta_id' => $pregunta->id,
+                'opcion_respuesta_id' => $opcionMin->id,
+            ]);
+        }
+    }
+
+    $this->actingAs($admin);
+
+    $component = Livewire::test(Dashboard::class);
+    $clima = $component->viewData('clima');
+
+    // Debe mostrar la puntuación del lote cerrado (100.0) y no del activo
+    expect($clima['sinDatos'])->toBeFalse()
+        ->and($clima['escenario'])->toBe(4)
+        ->and($clima['promedio_general'])->toBe(100.0);
+
+    $component->assertSee('Hay una nueva ronda en curso')
+        ->assertSee('Ronda Nueva 2026')
+        ->assertSee('este panorama se actualizará cuando cierre.');
+});
+
+it('clima calcula y muestra promedio_general aun con solo 1 respuesta completada en el lote', function () {
+    $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+
+    $lote = \App\Models\Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'fecha_inicio' => now()->subDays(10),
+        'fecha_fin' => now()->subDays(2),
+        'activo' => false,
+        'nombre' => 'Ronda Unica Respuesta',
+    ]);
+
+    // Solo 1 encuesta completada
+    $opcion = OpcionRespuesta::where('valor_numerico', 3)->first();
+    $enc = Encuesta::factory()->completada()->create(['lote_id' => $lote->id]);
+    foreach (Pregunta::all() as $pregunta) {
+        Respuesta::create([
+            'encuesta_id' => $enc->id,
+            'pregunta_id' => $pregunta->id,
+            'opcion_respuesta_id' => $opcion->id,
+        ]);
+    }
+
+    $this->actingAs($admin);
+
+    $component = Livewire::test(Dashboard::class);
+    $clima = $component->viewData('clima');
+
+    expect($clima['sinDatos'])->toBeFalse()
+        ->and($clima['promedio_general'])->toBe(100.0);
+
+    $component->assertSee('100.0');
 });

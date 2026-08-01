@@ -121,3 +121,62 @@ test('cuando hay menos de 10 respuestas completadas bajoUmbral es true en la vis
         ->assertSee('Comentarios protegidos')
         ->assertSee('Se necesitan al menos 10 respuestas');
 });
+
+test('sin filtroLoteId explicito el resultado se limita al lote de estado actual', function () {
+    seedPreguntasAbiertas();
+    $empresa = \App\Models\Empresa::factory()->create();
+    $user = User::factory()->adminEmpresa($empresa->id)->create();
+
+    $loteAntiguo = \App\Models\Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'fecha_inicio' => now()->subDays(60),
+        'fecha_fin' => now()->subDays(30),
+        'activo' => false,
+    ]);
+
+    $loteReciente = \App\Models\Lote::factory()->create([
+        'empresa_id' => $empresa->id,
+        'fecha_inicio' => now()->subDays(20),
+        'fecha_fin' => now()->subDays(5),
+        'activo' => false,
+    ]);
+
+    $enc1 = Encuesta::factory()->completada()->create(['lote_id' => $loteAntiguo->id]);
+    $enc2 = Encuesta::factory()->completada()->create(['lote_id' => $loteReciente->id]);
+
+    $comp = Livewire::actingAs($user)->test(RespuestasAbiertas::class);
+
+    $reflection = new \ReflectionMethod(RespuestasAbiertas::class, 'getEncuestasBaseQuery');
+    $reflection->setAccessible(true);
+    $query = $reflection->invoke($comp->instance());
+
+    expect($query->count())->toBe(1);
+    expect($query->first()->id)->toBe($enc2->id);
+});
+
+test('con filtroSucursalId seleccionado el resultado se limita a esa sucursal', function () {
+    seedPreguntasAbiertas();
+    $empresa = \App\Models\Empresa::factory()->create();
+    $sucursal1 = \App\Models\Sucursal::factory()->create(['empresa_id' => $empresa->id]);
+    $sucursal2 = \App\Models\Sucursal::factory()->create(['empresa_id' => $empresa->id]);
+
+    $user = User::factory()->adminEmpresa($empresa->id)->create();
+
+    $lote1 = \App\Models\Lote::factory()->create(['empresa_id' => $empresa->id, 'sucursal_id' => $sucursal1->id]);
+    $lote2 = \App\Models\Lote::factory()->create(['empresa_id' => $empresa->id, 'sucursal_id' => $sucursal2->id]);
+
+    $enc1 = Encuesta::factory()->completada()->create(['lote_id' => $lote1->id]);
+    $enc2 = Encuesta::factory()->completada()->create(['lote_id' => $lote2->id]);
+
+    $comp = Livewire::actingAs($user)
+        ->test(RespuestasAbiertas::class, [
+            'filtroSucursalId' => (string) $sucursal1->id,
+        ]);
+
+    $reflection = new \ReflectionMethod(RespuestasAbiertas::class, 'getEncuestasBaseQuery');
+    $reflection->setAccessible(true);
+    $query = $reflection->invoke($comp->instance());
+
+    expect($query->count())->toBe(1);
+    expect($query->first()->id)->toBe($enc1->id);
+});

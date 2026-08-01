@@ -21,16 +21,20 @@ Route::prefix('admin')
         Route::get('/encuestas', \App\Livewire\Admin\EncuestasTable::class)
             ->name('encuestas');
 
+        Route::get('/tokens', \App\Livewire\Admin\GenerarTokens::class)
+            ->name('tokens');
+
         Route::get('/reportes', \App\Livewire\Admin\Reportes::class)
             ->name('reportes');
 
         Route::get('/reportes/pdf', [PdfController::class, 'reportePDF'])
             ->name('reportes.pdf');
 
+        Route::get('/tendencias', \App\Livewire\Admin\ComparativasHistoricas::class)
+            ->name('tendencias');
+
         // Solo super_admin
         Route::middleware('role:super_admin')->group(function () {
-            Route::get('/tokens', \App\Livewire\Admin\GenerarTokens::class)
-                ->name('tokens');
             Route::get('/empresas', \App\Livewire\Admin\EmpresasTable::class)
                 ->name('empresas');
             Route::get('/corporativos', \App\Livewire\Admin\CorporativosTable::class)

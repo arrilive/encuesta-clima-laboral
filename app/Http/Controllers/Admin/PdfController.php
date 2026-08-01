@@ -79,6 +79,18 @@ class PdfController extends Controller
 
         if ($request->filled('lote_id')) {
             $query->whereHas('encuesta.lote', fn ($q) => $q->where('lotes.id', $request->lote_id));
+        } else {
+            $infoLote = $this->resolverLoteEstadoActualDesdeFiltros([
+                'corporativo_id' => $request->input('corporativo_id'),
+                'empresa_id' => $request->input('empresa_id'),
+                'sucursal_id' => $request->input('sucursal_id'),
+                'lote_id' => $request->input('lote_id'),
+            ]);
+            if ($infoLote['lote']) {
+                $query->whereHas('encuesta.lote', fn ($q) => $q->where('lotes.id', $infoLote['lote']->id));
+            } else {
+                $query->whereRaw('1=0');
+            }
         }
 
         $filtros = [
@@ -176,7 +188,19 @@ class PdfController extends Controller
                 fn ($q) => $q->whereHas('lote.empresa', fn ($q2) => $q2->where('corporativo_id', $request->corporativo_id)))
             ->when($request->filled('sucursal_id'),
                 fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('sucursal_id', $request->sucursal_id)))
-            ->when($request->filled('lote_id'), fn ($q) => $q->where('lote_id', $request->lote_id))
+            ->when($request->filled('lote_id'), fn ($q) => $q->where('lote_id', $request->lote_id), function ($q) use ($request) {
+                $infoLote = $this->resolverLoteEstadoActualDesdeFiltros([
+                    'corporativo_id' => $request->input('corporativo_id'),
+                    'empresa_id' => $request->input('empresa_id'),
+                    'sucursal_id' => $request->input('sucursal_id'),
+                    'lote_id' => $request->input('lote_id'),
+                ]);
+                if ($infoLote['lote']) {
+                    $q->where('lote_id', $infoLote['lote']->id);
+                } else {
+                    $q->whereRaw('1=0');
+                }
+            })
             ->when($request->filled('edad_id'), fn ($q) => $q->whereHas('datoDemografico', fn ($q2) => $q2->where('edad_id', $request->edad_id)))
             ->when($request->filled('sexo_id'), fn ($q) => $q->whereHas('datoDemografico', fn ($q2) => $q2->where('sexo_id', $request->sexo_id)))
             ->when($request->filled('cargo_id'), fn ($q) => $q->whereHas('datoDemografico', fn ($q2) => $q2->where('cargo_id', $request->cargo_id)))

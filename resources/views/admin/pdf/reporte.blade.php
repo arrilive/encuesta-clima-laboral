@@ -263,7 +263,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach ($datosDimensiones as $index => $item)
+                @forelse ($datosDimensiones as $index => $item)
                     <tr>
                         <td style="color: #64748b;">{{ $index + 1 }}</td>
                         <td style="font-weight: bold;">{{ $item['nombre'] }}</td>
@@ -276,7 +276,11 @@
                             </span>
                         </td>
                     </tr>
-                @endforeach
+                @empty
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #94a3b8; padding: 20px 0;">No hay datos suficientes para mostrar esta tabla.</td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
 

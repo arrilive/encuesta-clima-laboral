@@ -1,6 +1,6 @@
 <x-layouts.encuesta>
     <div class="flex items-center justify-center px-4 py-14 min-h-[calc(100vh-5rem)]">
-        <div class="w-full max-w-sm page-enter">
+        <div class="w-full max-w-sm sm:max-w-md page-enter">
 
             {{-- Título --}}
             <h1 class="text-[1.75rem] font-bold text-slate-900 text-center tracking-tight leading-tight mb-3">
@@ -31,7 +31,7 @@
     {{-- Modal OTP — patrón idéntico al modal PDF (animaciones + backdrop click + escape) --}}
     <div x-teleport="body">
         <div x-data="modalOtp" x-on:abrir-modal-otp.window="abrir()" x-on:keyup.escape.window="cerrar()" x-cloak
-            x-show="abierto" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+            x-show="abierto" class="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-3 sm:p-4 pt-10 sm:pt-4">
             {{-- Backdrop con fade + click-fuera para cerrar --}}
             <div x-show="abierto" x-transition.opacity class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"
                 @click="cerrar()"></div>
@@ -47,8 +47,8 @@
                 {{-- Header --}}
                 <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                     <h2 class="text-base font-semibold text-slate-900" x-text="tituloEstado()"></h2>
-                    <button @click="cerrar()" class="text-slate-400 hover:text-slate-500 transition-colors">
-                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <button @click="cerrar()" aria-label="Cerrar" class="text-slate-400 hover:text-slate-500 transition-colors">
+                        <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd"
                                 d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
                                 clip-rule="evenodd" />
@@ -57,7 +57,7 @@
                 </div>
 
                 {{-- Cuerpo --}}
-                <div class="p-6">
+                <div class="p-4 sm:p-6 max-h-[70vh] overflow-y-auto">
 
                     {{-- ── Estado: ingreso_llave ─────────────────────────────── --}}
                     <div x-show="estado === 'ingreso_llave'">
@@ -97,9 +97,11 @@
                                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-blue-50 text-blue-700 border border-blue-100"
                                 x-text="nombreEntidad"></span>
                         </div>
-                        <p class="text-sm text-slate-500 mb-5">Te enviaremos un código de un solo uso a tu WhatsApp.</p>
+                        <p class="text-sm text-slate-500 mb-5">Te enviaremos un código de un solo uso a tu teléfono por SMS.</p>
                         <div class="space-y-4">
-                            <input id="phone-input" type="tel" placeholder="Número de WhatsApp"
+                            <label for="phone-input" class="sr-only">Número de teléfono</label>
+                            <input id="phone-input" type="tel" placeholder="Número de teléfono"
+                                x-on:keydown.enter="solicitarOtp()"
                                 x-on:input="
                                     let val = $el.value;
                                     let clean = val.startsWith('+') ? '+' + val.slice(1).replace(/\D/g, '') : val.replace(/\D/g, '');
@@ -144,22 +146,24 @@
                             <circle cx="12" cy="12" r="10" stroke-opacity="0.25" />
                             <path d="M12 2a10 10 0 0 1 10 10" />
                         </svg>
-                        <p class="text-base text-slate-600">Enviando código a tu WhatsApp…</p>
+                        <p class="text-base text-slate-600">Enviando código SMS a tu teléfono…</p>
                     </div>
 
                     {{-- ── Estado: ingreso_otp ──────────────────────────────── --}}
                     <div x-show="estado === 'ingreso_otp'">
                         <p class="text-sm text-slate-500 mb-5">
-                            Revisa tu WhatsApp. El código expira en
+                            Revisa tus mensajes SMS. El código expira en
                             <span class="font-semibold tabular-nums text-slate-700" x-text="timerFormateado()"></span>.
                         </p>
-                        <div class="flex gap-2 justify-center mb-5">
+                        <div class="flex gap-1.5 sm:gap-2 justify-center mb-5">
                             <template x-for="(_, i) in otp" :key="i">
-                                <input type="text" inputmode="numeric" maxlength="1" :id="'otp-' + i"
+                                <input type="text" inputmode="numeric" maxlength="1" autocomplete="one-time-code" :id="'otp-' + i"
+                                    :aria-label="'Dígito ' + (i + 1) + ' del código de verificación'"
                                     x-model="otp[i]" x-on:input="moverFoco($event, i)"
                                     x-on:keydown.backspace="retrocederFoco($event, i)"
+                                    x-on:keydown.enter="if (otp.join('').length === 6) verificarOtp()"
                                     x-on:paste.prevent="pegarOtp($event)"
-                                    class="w-11 h-12 text-center text-xl font-semibold border border-slate-300 rounded-xl
+                                    class="w-10 h-11 sm:w-11 sm:h-12 text-center text-xl font-semibold border border-slate-300 rounded-xl
                                            text-slate-900 bg-white focus:outline-none focus:border-blue-500
                                            focus:ring-4 focus:ring-blue-500/10 transition-all duration-200">
                             </template>
@@ -187,7 +191,7 @@
 
                     {{-- ── Estado: error ────────────────────────────────────── --}}
                     <div x-show="estado === 'error'">
-                        <div class="flex items-start gap-3 p-4 rounded-lg bg-red-50 border border-red-200 mb-5">
+                        <div role="alert" class="flex items-start gap-3 p-4 rounded-lg bg-red-50 border border-red-200 mb-5">
                             <svg aria-hidden="true" class="w-4 h-4 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor"
                                 stroke-width="2" viewBox="0 0 24 24">
                                 <circle cx="12" cy="12" r="10" />
@@ -213,7 +217,7 @@
 
                     {{-- ── Estado: bloqueado ────────────────────────────────── --}}
                     <div x-show="estado === 'bloqueado'">
-                        <div class="flex items-start gap-3 p-4 rounded-lg bg-amber-50 border border-amber-200 mb-5">
+                        <div role="alert" class="flex items-start gap-3 p-4 rounded-lg bg-amber-50 border border-amber-200 mb-5">
                             <svg aria-hidden="true" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor"
                                 stroke-width="2" viewBox="0 0 24 24">
                                 <path
@@ -250,6 +254,7 @@
                 numeroE164: '',
                 otp: ['', '', '', '', '', ''],
                 intentosRestantes: 3,
+                otpValido: false,
                 errorMsg: '',
                 phoneError: '',
                 timer: null,
@@ -293,6 +298,7 @@
                         this.segundos--;
                         if (this.segundos <= 0) {
                             clearInterval(this.timer);
+                            this.otpValido = false;
                             this.errorMsg = 'El código expiró. Solicita uno nuevo.';
                             this.estado = 'error';
                         }
@@ -347,7 +353,7 @@
                     this.phoneError = '';
 
                     if (this.iti && !this.iti.isValidNumber()) {
-                        this.phoneError = 'Ingresa un número de WhatsApp válido.';
+                        this.phoneError = 'Ingresa un número de teléfono válido.';
                         return;
                     }
 
@@ -370,6 +376,7 @@
                         });
                         const data = await res.json();
                         if (data.status === 'otp_enviado') {
+                            this.otpValido = true;
                             this.otp = ['', '', '', '', '', ''];
                             this.estado = 'ingreso_otp';
                             this.iniciarTimer();
@@ -377,6 +384,7 @@
                                 document.getElementById('otp-0')?.focus();
                             });
                         } else {
+                            this.otpValido = false;
                             this.errorMsg = data.error === 'ya_participaste' ?
                                 'Ya participaste en esta encuesta.' :
                                 'No fue posible enviar el código. Intenta de nuevo.';
@@ -411,6 +419,11 @@
                         } else if (data.error === 'intentos_agotados') {
                             clearInterval(this.timer);
                             this.estado = 'bloqueado';
+                        } else if (data.error === 'sin_tokens') {
+                            clearInterval(this.timer);
+                            this.otpValido = false;
+                            this.errorMsg = 'No hay encuestas disponibles en este lote.';
+                            this.estado = 'error';
                         } else {
                             this.intentosRestantes = data.intentos_restantes ?? this
                                 .intentosRestantes;
@@ -426,7 +439,7 @@
 
                 reiniciarDesdeError() {
                     this.errorMsg = '';
-                    if (this.loteId && this.numeroE164) {
+                    if (this.otpValido && this.loteId && this.numeroE164) {
                         this.otp = ['', '', '', '', '', ''];
                         this.estado = 'ingreso_otp';
                         this.iniciarTimer();
@@ -457,6 +470,8 @@
                         this.$nextTick(() => {
                             document.getElementById('otp-' + (index + 1))?.focus();
                         });
+                    } else if (val && index === 5) {
+                        this.$nextTick(() => this.verificarOtp());
                     }
                 },
 
@@ -477,6 +492,9 @@
                     this.$nextTick(() => {
                         document.getElementById('otp-' + nextIndex)?.focus();
                     });
+                    if (text.length === 6) {
+                        this.$nextTick(() => this.verificarOtp());
+                    }
                 },
             }));
         });

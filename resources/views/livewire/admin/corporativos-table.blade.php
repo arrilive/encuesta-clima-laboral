@@ -41,14 +41,23 @@
             <thead>
                 <tr class="border-b border-slate-200 bg-slate-50">
                     <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Nombre</th>
+                    <th class="text-center px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Empresas</th>
+                    <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Administrador</th>
                     <th class="text-center px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
                     <th class="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
                 @forelse($corporativos as $corporativo)
+                    @php $adminCorp = $corporativo->users->where('role', 'admin_corporativo')->first(); @endphp
                     <tr class="hover:bg-slate-50 transition-colors duration-100">
                         <td class="px-6 py-3.5 text-slate-900 font-medium">{{ $corporativo->nombre }}</td>
+                        <td class="px-6 py-3.5 text-center">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                                {{ $corporativo->empresas_count }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-3.5 text-slate-500">{{ $adminCorp?->name ?? 'Sin asignar' }}</td>
                         <td class="px-6 py-3.5 text-center">
                             @if($corporativo->activa)
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">Activo</span>
@@ -96,7 +105,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="3" class="px-6 py-12 text-center text-slate-400 text-sm">
+                        <td colspan="5" class="px-6 py-12 text-center text-slate-400 text-sm">
                             No se encontraron corporativos.
                         </td>
                     </tr>

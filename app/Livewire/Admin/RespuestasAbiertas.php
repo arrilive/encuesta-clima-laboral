@@ -6,13 +6,14 @@ use App\Models\Encuesta;
 use App\Models\PreguntaAbierta;
 use App\Models\RespuestaAbierta;
 use App\Services\ClimaScoringService;
+use App\Traits\HasTenantScope;
 use Livewire\Attributes\Reactive;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 class RespuestasAbiertas extends Component
 {
-    use WithPagination;
+    use HasTenantScope, WithPagination;
 
     #[Reactive]
     public string $filtroEdadId = '';
@@ -35,6 +36,15 @@ class RespuestasAbiertas extends Component
     #[Reactive]
     public string $filtroEmpresaId = '';
 
+    #[Reactive]
+    public string $filtroCorporativoId = '';
+
+    #[Reactive]
+    public string $filtroSucursalId = '';
+
+    #[Reactive]
+    public string $filtroLoteId = '';
+
     public ?int $preguntaAbiertaActiva = null;
 
     public bool $mostrarRespuestasAbiertas = false;
@@ -52,10 +62,33 @@ class RespuestasAbiertas extends Component
         $user = auth()->user();
         $query = Encuesta::query()->where('estado', 'completado');
 
-        if ($user->role === 'admin_empresa') {
-            $query->whereHas('lote', fn ($q) => $q->where('empresa_id', $user->empresa_id));
-        } elseif (! empty($this->filtroEmpresaId)) {
-            $query->whereHas('lote', fn ($q) => $q->where('empresa_id', $this->filtroEmpresaId));
+        $query->whereHas('lote', fn ($q) => $this->scopeByRole($q));
+
+        if ($user->role === \App\Enums\Role::SUPER_ADMIN->value && $this->filtroCorporativoId) {
+            $query->whereHas('lote.empresa', fn ($q) => $q->where('corporativo_id', $this->filtroCorporativoId));
+        }
+
+        if (! empty($this->filtroEmpresaId)) {
+            $sucursalIds = $this->sucursalIdsDeEmpresa((int) $this->filtroEmpresaId);
+            $query->whereHas('lote', function ($q) use ($sucursalIds) {
+                $q->where('empresa_id', $this->filtroEmpresaId)
+                    ->orWhereIn('sucursal_id', $sucursalIds);
+            });
+        }
+
+        if ($this->filtroSucursalId) {
+            $query->whereHas('lote', fn ($q) => $q->where('lotes.sucursal_id', $this->filtroSucursalId));
+        }
+
+        if ($this->filtroLoteId) {
+            $query->whereHas('lote', fn ($q) => $q->where('lotes.id', $this->filtroLoteId));
+        } else {
+            $infoLote = $this->resolverLoteEstadoActual();
+            if ($infoLote['lote']) {
+                $query->whereHas('lote', fn ($q) => $q->where('lotes.id', $infoLote['lote']->id));
+            } else {
+                $query->whereRaw('1=0');
+            }
         }
 
         if ($this->filtroEdadId) {

@@ -57,19 +57,33 @@ it('admin_sucursal puede acceder al dashboard admin', function () {
         ->assertOk();
 });
 
-it('admin_corporativo no puede acceder a tokens', function () {
+it('admin_corporativo puede ver el historial de tokens pero no el formulario de generación', function () {
     $corporativo = \App\Models\Corporativo::factory()->create();
     $admin = User::factory()->adminCorporativo($corporativo->id)->create();
     $this->actingAs($admin)
         ->get(route('admin.tokens'))
-        ->assertForbidden();
+        ->assertOk()
+        ->assertDontSee('Generar nuevo lote de tokens')
+        ->assertSee('Historial de lotes');
 });
 
-it('admin_sucursal no puede acceder a tokens', function () {
+it('admin_sucursal puede ver el historial de tokens pero no el formulario de generación', function () {
     $empresa = Empresa::factory()->create();
     $sucursal = \App\Models\Sucursal::factory()->create(['empresa_id' => $empresa->id]);
     $admin = User::factory()->adminSucursal($sucursal->id)->create();
     $this->actingAs($admin)
         ->get(route('admin.tokens'))
-        ->assertForbidden();
+        ->assertOk()
+        ->assertDontSee('Generar nuevo lote de tokens')
+        ->assertSee('Historial de lotes');
+});
+
+it('admin_empresa puede ver el historial de tokens pero no el formulario de generación', function () {
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+    $this->actingAs($admin)
+        ->get(route('admin.tokens'))
+        ->assertOk()
+        ->assertDontSee('Generar nuevo lote de tokens')
+        ->assertSee('Historial de lotes');
 });
