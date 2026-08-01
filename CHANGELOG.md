@@ -9,6 +9,54 @@ y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Sin publicar]
 
+---
+
+## [2.0.0] — 2026-08-01
+
+> **Consolidación multi-tenant, canal de mensajería SMS, módulo de Tendencias históricas y auditoría UX/UI integral**
+
+### Agregado
+
+- **Módulo de Tendencias (comparativas históricas):** Nuevo módulo de reportes para comparar el clima laboral de una entidad entre distintos lotes a lo largo del tiempo, con un modo "Estado de cuenta" de historial completo (`feat(reportes)`, #221, #242).
+- **Historial de lotes abierto a los 4 roles:** La vista de solo lectura del historial de lotes, antes exclusiva de `super_admin`, ahora es accesible a los cuatro roles del sistema (`feat(tokens)`).
+- **Sistema global de notificaciones toast:** Feedback visual centralizado para acciones de escritura en el panel administrativo, con escape explícito de nombres de entidad para prevenir XSS en el render (`feat(admin)`, #252).
+- **Sidebar responsive en mobile:** Drawer con overlay, botón de hamburguesa y cierre con tecla Escape para el panel de administración en pantallas pequeñas.
+- **Mensajería SMS vía Twilio:** Integración de Twilio Programmable Messaging para el envío de OTP y enlaces de acceso — reemplaza el flujo originalmente planeado por WhatsApp Business API, descartado por el tiempo de aprobación de plantillas de Meta (`feat(sms)`, #119).
+- **Soporte de Enter y auto-submit en el flujo de OTP:** El flujo de bienvenida de la encuesta acepta Enter para avanzar en cada paso y envía automáticamente el código al completar el sexto dígito (#263).
+
+### Cambiado
+
+- **Consolidación de scoring empresa+sucursales:** Los promedios de clima ahora consolidan correctamente los datos de una empresa junto con todas sus sucursales en los 5 puntos del sistema donde antes se calculaban por separado (`fix(scoring)`, #210).
+- **`DemoSeeder` con jerarquía real:** Reescrito para generar una jerarquía Corporativo → Empresa → Sucursal realista, con los 4 umbrales de clima representados (`refactor(seeder)`, #211).
+- **Umbrales de clima recalibrados:** Nuevos rangos de clasificación (Excelente ≥80, En atención ≥40) (`refactor(clima)`, #253).
+- **Creación de administradores separada de la asignación a entidades:** Se separa el alta de un administrador de su asignación a una entidad específica, con validación escopeada por rol y protección contra reasignación cruzada vía requests manipulados (`feat(admin)`, #251).
+- **Selectores "Empresa" renombrados:** Se ajustan etiquetas y se muestra la entidad compuesta (empresa · sucursal) donde corresponde, reflejando correctamente la jerarquía (`refactor(ui)`, #217).
+- **Modo B de generación de tokens:** Ahora agrupa y diferencia visualmente entre lotes generales y de sucursal (`fix(tokens)`, #214).
+- **Badges de rol diferenciados por color:** Los 4 roles ahora tienen colores distintos en las tablas de administración (`style(admin)`, #219).
+- **Botón "Exportar PDF" rediseñado:** Nuevo estilo visual y título dinámico de la pestaña del navegador en Reportes (`fix(admin)`, #241).
+- **Identidad visual unificada en el flujo de encuesta:** Gradientes e íconos de dimensión ahora coinciden entre las vistas `dimensiones` y `completado`; estilos propios para el selector de país (`intl-tel-input`); anchos de contenedor responsivos en tablet (#263).
+
+### Corregido
+
+- **Permisos de `liberarTokens()`:** Restringido a los roles con responsabilidad operativa directa — `admin_corporativo` ya no puede liberar tokens de empresas que no administra directamente (`fix(dashboard)`, #213).
+- **Límite temporal de scoring y reportes:** Los promedios de clima y los reportes ahora se limitan correctamente al lote del estado actual, en vez de mezclar datos de lotes históricos (`fix(scoring)` #226, `fix(reportes)` #235).
+- **Aislamiento de tenant en Comparativas Demográficas:** Corrige una fuga de datos entre tenants que afectaba a todos los roles en este componente (`fix(security)`, #238).
+- **Límite temporal en exportación PDF:** El PDF ahora respeta la vigencia del lote actual (`fix(pdf)`, #237).
+- **Filtros de Respuestas Abiertas:** Se propagan correctamente los filtros de sucursal, corporativo y lote a este componente (`fix(reportes)`, #239).
+- **Capitalización de "Confirmar y generar":** Estilo oracional correcto en el botón de confirmación de tokens (#220).
+- **Auditoría UX/UI integral del panel administrativo (32 hallazgos, #244):** Accesibilidad (labels, aria-roles, navegación por teclado), estados de carga reales, estados vacíos, confirmaciones antes de acciones irreversibles, responsividad, consistencia de copy, y overflow de modales con combobox (#218).
+- **Bugs críticos + auditoría UX/UI del flujo de encuesta (#263):** Reintento incorrecto tras OTP inválido o expirado, confirmación antes de finalizar, doble sticky header, overflow de inputs en 320px, contraste WCAG insuficiente, indicador visual de selección, contador de caracteres en tiempo real.
+- **Edición de datos demográficos al retomar encuesta (#265):** Se impide reingresar y modificar datos demográficos ya enviados — ahora redirige directamente a la vista de dimensiones.
+
+### Eliminado
+
+- **Flujo de "¿Olvidaste tu contraseña?":** Eliminado del login administrativo — los admins reciben credenciales generadas por `super_admin` (`fix(auth)`, #212).
+- **Búsqueda por token en `EncuestasTable`:** Eliminada — el token es anónimo por diseño, sin uso operativo real (`fix(encuestas)`, #215).
+- **Columna "Generado por" en historial de tokens:** Eliminada — solo `super_admin` genera tokens, la columna siempre mostraba el mismo valor (`fix(tokens)`, #216).
+- **Código muerto:** `navigation.blade.php` y `register.blade.php` de Breeze, sin uso real en producción.
+
+---
+
 ## [1.2.1] — 2026-06-27
 
 > **Jerarquía tipográfica global, optimización de ranking y actualización del seeder de demo**
@@ -154,7 +202,8 @@ y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
 ---
 
-[Sin publicar]: https://github.com/arrilive/encuesta-clima-laboral/compare/v1.2.1...HEAD
+[Sin publicar]: https://github.com/arrilive/encuesta-clima-laboral/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/arrilive/encuesta-clima-laboral/compare/v1.2.1...v2.0.0
 [1.2.1]: https://github.com/arrilive/encuesta-clima-laboral/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/arrilive/encuesta-clima-laboral/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/arrilive/encuesta-clima-laboral/compare/v1.0.1...v1.1.0
