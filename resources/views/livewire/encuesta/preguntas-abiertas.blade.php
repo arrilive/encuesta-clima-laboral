@@ -13,7 +13,7 @@
     {{-- Preguntas abiertas --}}
     <div class="space-y-4">
         @foreach($preguntas as $pregunta)
-            <div class="bg-white border border-slate-200 rounded-2xl p-6">
+            <div x-data="{ count: {{ strlen($respuestas[$pregunta->id] ?? '') }} }" class="bg-white border border-slate-200 rounded-2xl p-6">
 
                 {{-- Label --}}
                 <label for="pregunta-abierta-{{ $pregunta->id }}" class="block text-sm font-semibold text-slate-700 leading-relaxed mb-3">
@@ -25,6 +25,7 @@
                 <textarea
                     id="pregunta-abierta-{{ $pregunta->id }}"
                     wire:model.live.debounce.800ms="respuestas.{{ $pregunta->id }}"
+                    x-on:input="count = $event.target.value.length"
                     maxlength="300"
                     rows="4"
                     placeholder="Escribe tu respuesta aquí…"
@@ -34,8 +35,8 @@
                            transition-all duration-200"></textarea>
 
                 {{-- Contador de caracteres --}}
-                <p class="text-right text-xs text-slate-400 mt-1.5">
-                    {{ strlen($respuestas[$pregunta->id] ?? '') }}/300
+                <p class="text-right text-xs mt-1.5" :class="count >= 300 ? 'text-red-500 font-medium' : (count >= 270 ? 'text-amber-500' : 'text-slate-400')">
+                    <span x-text="count"></span>/300
                 </p>
 
             </div>
