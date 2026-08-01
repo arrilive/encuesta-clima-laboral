@@ -83,6 +83,36 @@
         animation: page-enter 0.4s ease-out both;
         opacity: 0;
     }
+
+    /* intl-tel-input v17.0.19 custom overrides */
+    .iti {
+        width: 100%;
+    }
+    .iti__selected-flag {
+        border-top-left-radius: 0.75rem;
+        border-bottom-left-radius: 0.75rem;
+        background-color: transparent;
+        transition: background-color 0.2s ease;
+    }
+    .iti__selected-flag:hover {
+        background-color: rgba(241, 245, 249, 0.8);
+    }
+    .iti__country-list {
+        border-radius: 0.75rem !important;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+        border: 1px solid #e2e8f0 !important;
+        padding: 0.5rem 0 !important;
+        max-height: 200px !important;
+        z-index: 50 !important;
+    }
+    .iti__country {
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.875rem !important;
+        color: #1e293b !important;
+    }
+    .iti__country:hover, .iti__country.iti__highlight {
+        background-color: #f1f5f9 !important;
+    }
 }
 
 @keyframes shimmer {

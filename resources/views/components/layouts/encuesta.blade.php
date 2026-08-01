@@ -7,6 +7,10 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>Encuesta de Clima Laboral</title>
+    <meta name="description" content="Encuesta de clima laboral anónima y confidencial.">
+    <meta property="og:title" content="Encuesta de Clima Laboral">
+    <meta property="og:description" content="Tu opinión es anónima y ayuda a mejorar el ambiente de trabajo.">
+    <meta property="og:type" content="website">
 
     <!-- DM Sans — Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,8 +34,8 @@
     <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-white focus:px-4 focus:py-2 focus:rounded-xl focus:shadow-lg focus:text-blue-600 focus:text-sm focus:font-semibold">Saltar al contenido principal</a>
 
     <!-- Header sticky -->
-    <header class="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-20">
-        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+    <header class="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-20 h-14">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
 
             <!-- Izquierda: título -->
             <span class="text-sm font-semibold text-slate-800 tracking-tight">Clima Laboral</span>
@@ -39,7 +43,8 @@
             <!-- Derecha: badge -->
             <span
                 class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-500 select-none">
-                Anónima · Confidencial
+                <span class="sm:hidden">Anónima</span>
+                <span class="hidden sm:inline">Anónima · Confidencial</span>
             </span>
         </div>
     </header>
