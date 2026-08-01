@@ -31,7 +31,7 @@
     {{-- Modal OTP — patrón idéntico al modal PDF (animaciones + backdrop click + escape) --}}
     <div x-teleport="body">
         <div x-data="modalOtp" x-on:abrir-modal-otp.window="abrir()" x-on:keyup.escape.window="cerrar()" x-cloak
-            x-show="abierto" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+            x-show="abierto" class="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-3 sm:p-4 pt-10 sm:pt-4">
             {{-- Backdrop con fade + click-fuera para cerrar --}}
             <div x-show="abierto" x-transition.opacity class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"
                 @click="cerrar()"></div>
@@ -57,7 +57,7 @@
                 </div>
 
                 {{-- Cuerpo --}}
-                <div class="p-6">
+                <div class="p-4 sm:p-6 max-h-[70vh] overflow-y-auto">
 
                     {{-- ── Estado: ingreso_llave ─────────────────────────────── --}}
                     <div x-show="estado === 'ingreso_llave'">
@@ -154,14 +154,14 @@
                             Revisa tus mensajes SMS. El código expira en
                             <span class="font-semibold tabular-nums text-slate-700" x-text="timerFormateado()"></span>.
                         </p>
-                        <div class="flex gap-2 justify-center mb-5">
+                        <div class="flex gap-1.5 sm:gap-2 justify-center mb-5">
                             <template x-for="(_, i) in otp" :key="i">
                                 <input type="text" inputmode="numeric" maxlength="1" :id="'otp-' + i"
                                     :aria-label="'Dígito ' + (i + 1) + ' del código de verificación'"
                                     x-model="otp[i]" x-on:input="moverFoco($event, i)"
                                     x-on:keydown.backspace="retrocederFoco($event, i)"
                                     x-on:paste.prevent="pegarOtp($event)"
-                                    class="w-11 h-12 text-center text-xl font-semibold border border-slate-300 rounded-xl
+                                    class="w-10 h-11 sm:w-11 sm:h-12 text-center text-xl font-semibold border border-slate-300 rounded-xl
                                            text-slate-900 bg-white focus:outline-none focus:border-blue-500
                                            focus:ring-4 focus:ring-blue-500/10 transition-all duration-200">
                             </template>
