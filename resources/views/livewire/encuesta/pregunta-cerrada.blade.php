@@ -19,6 +19,8 @@
         {{ $pregunta->texto }}
     </p>
 
+    <p wire:loading wire:target="seleccionar" class="text-xs text-slate-400 mb-2">Guardando…</p>
+
     {{-- Opciones --}}
     <div class="space-y-2">
         @foreach ($opciones as $opcion)

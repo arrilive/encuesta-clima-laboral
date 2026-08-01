@@ -160,4 +160,25 @@
 
     </div>
 
+    {{-- Script para hacer scroll al primer campo faltante --}}
+    @script
+        <script>
+            $wire.on('scroll-to-campo', ({
+                campoId
+            }) => {
+                const el = document.getElementById(campoId);
+                if (el) {
+                    setTimeout(() => {
+                        const y = el.getBoundingClientRect().top + window.scrollY -
+                            100;
+                        window.scrollTo({
+                            top: y,
+                            behavior: 'smooth'
+                        });
+                    }, 50);
+                }
+            });
+        </script>
+    @endscript
+
 </div>

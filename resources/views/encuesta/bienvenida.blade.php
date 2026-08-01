@@ -101,6 +101,7 @@
                         <div class="space-y-4">
                             <label for="phone-input" class="sr-only">Número de teléfono</label>
                             <input id="phone-input" type="tel" placeholder="Número de teléfono"
+                                x-on:keydown.enter="solicitarOtp()"
                                 x-on:input="
                                     let val = $el.value;
                                     let clean = val.startsWith('+') ? '+' + val.slice(1).replace(/\D/g, '') : val.replace(/\D/g, '');
@@ -160,6 +161,7 @@
                                     :aria-label="'Dígito ' + (i + 1) + ' del código de verificación'"
                                     x-model="otp[i]" x-on:input="moverFoco($event, i)"
                                     x-on:keydown.backspace="retrocederFoco($event, i)"
+                                    x-on:keydown.enter="if (otp.join('').length === 6) verificarOtp()"
                                     x-on:paste.prevent="pegarOtp($event)"
                                     class="w-10 h-11 sm:w-11 sm:h-12 text-center text-xl font-semibold border border-slate-300 rounded-xl
                                            text-slate-900 bg-white focus:outline-none focus:border-blue-500
@@ -468,6 +470,8 @@
                         this.$nextTick(() => {
                             document.getElementById('otp-' + (index + 1))?.focus();
                         });
+                    } else if (val && index === 5) {
+                        this.$nextTick(() => this.verificarOtp());
                     }
                 },
 
@@ -488,6 +492,9 @@
                     this.$nextTick(() => {
                         document.getElementById('otp-' + nextIndex)?.focus();
                     });
+                    if (text.length === 6) {
+                        this.$nextTick(() => this.verificarOtp());
+                    }
                 },
             }));
         });
