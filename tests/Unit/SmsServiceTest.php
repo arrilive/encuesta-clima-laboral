@@ -25,7 +25,7 @@ test('SmsService envia enlace de acceso en modo simulado durante pruebas', funct
 
     expect($result)->toBeTrue();
     Log::shouldHaveReceived('info')->with('[SIMULADO] SMS Enlace Acceso enviado', [
-        'to'      => '+529991234567',
+        'to' => '+529991234567',
         'entidad' => 'Empresa Demo',
     ]);
 });

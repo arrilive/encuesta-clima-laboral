@@ -50,8 +50,8 @@ class SmsService
             $mensaje = "Tu codigo de verificacion para la encuesta de clima laboral es: {$codigo}. Vence en 10 minutos. Por tu seguridad, no lo compartas con nadie.";
 
             $this->client->messages->create($to, [
-                'from'             => $this->from,
-                'body'             => $mensaje,
+                'from' => $this->from,
+                'body' => $mensaje,
                 'contentRetention' => 'discard',
                 'addressRetention' => 'obfuscate',
             ]);
@@ -75,7 +75,7 @@ class SmsService
     {
         if (! $this->configured || app()->environment('testing')) {
             Log::info('[SIMULADO] SMS Enlace Acceso enviado', [
-                'to'      => $to,
+                'to' => $to,
                 'entidad' => $nombreEntidad,
             ]);
 
@@ -86,8 +86,8 @@ class SmsService
             $mensaje = "Hola, te invitamos a participar en la encuesta de clima laboral de {$nombreEntidad}. Ingresa aqui: {$urlAcceso}";
 
             $this->client->messages->create($to, [
-                'from'             => $this->from,
-                'body'             => $mensaje,
+                'from' => $this->from,
+                'body' => $mensaje,
                 'contentRetention' => 'discard',
                 'addressRetention' => 'obfuscate',
             ]);
