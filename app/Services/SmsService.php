@@ -41,7 +41,6 @@ class SmsService
         if (! $this->configured || app()->environment('testing')) {
             Log::info('[SIMULADO] SMS OTP enviado', [
                 'to' => $to,
-                'codigo' => $codigo,
             ]);
 
             return true;
@@ -53,6 +52,8 @@ class SmsService
             $this->client->messages->create($to, [
                 'from' => $this->from,
                 'body' => $mensaje,
+                'contentRetention' => 'discard',
+                'addressRetention' => 'obfuscate',
             ]);
 
             Log::info('SMS OTP enviado exitosamente vía Twilio', ['to' => $to]);
@@ -75,7 +76,6 @@ class SmsService
         if (! $this->configured || app()->environment('testing')) {
             Log::info('[SIMULADO] SMS Enlace Acceso enviado', [
                 'to' => $to,
-                'url' => $urlAcceso,
                 'entidad' => $nombreEntidad,
             ]);
 
@@ -88,6 +88,8 @@ class SmsService
             $this->client->messages->create($to, [
                 'from' => $this->from,
                 'body' => $mensaje,
+                'contentRetention' => 'discard',
+                'addressRetention' => 'obfuscate',
             ]);
 
             Log::info('SMS Enlace Acceso enviado exitosamente vía Twilio', ['to' => $to]);

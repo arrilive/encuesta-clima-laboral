@@ -14,7 +14,6 @@ test('SmsService envia OTP en modo simulado durante pruebas', function () {
     expect($result)->toBeTrue();
     Log::shouldHaveReceived('info')->with('[SIMULADO] SMS OTP enviado', [
         'to' => '+529991234567',
-        'codigo' => '123456',
     ]);
 });
 
@@ -27,7 +26,6 @@ test('SmsService envia enlace de acceso en modo simulado durante pruebas', funct
     expect($result)->toBeTrue();
     Log::shouldHaveReceived('info')->with('[SIMULADO] SMS Enlace Acceso enviado', [
         'to' => '+529991234567',
-        'url' => 'http://localhost/encuesta/demograficos/TK-1234',
         'entidad' => 'Empresa Demo',
     ]);
 });
