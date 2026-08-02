@@ -11,6 +11,22 @@ y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
 ---
 
+## [2.0.1] — 2026-08-01
+
+> **Rate limiting en flujo OTP/SMS y mitigación de exposición de datos sensibles vía Twilio**
+
+### Corregido
+
+- **Rate limiting en rutas públicas del flujo OTP/SMS:** `verificar-llave`, `solicitar-otp` y `verificar-otp` ahora limitan solicitudes por IP — mitiga fuerza bruta contra llaves maestras, abuso de costo en Twilio, y un ataque de enumeración que permitía inferir quién participó en una encuesta sin romper el hash de anonimato (`fix(security)`, #269).
+- **Logs simulados de `SmsService` sin datos sensibles:** los logs `[SIMULADO]` de desarrollo/testing ya no exponen el código OTP ni la URL de acceso junto al número de teléfono (`fix(privacy)`, #269).
+
+### Cambiado
+
+- **Mitigación de retención en Twilio:** se configuran `contentRetention=discard` y `addressRetention=obfuscate` en cada envío real de SMS, reduciendo la ventana de exposición de datos en la consola de Twilio (#269).
+- **Documentación de privacidad ampliada:** el README precisa el alcance real del riesgo de exposición de token vía Twilio — incluyendo que, mientras una encuesta esté en progreso, el enlace funciona como credencial portadora hasta que la persona la completa (#269).
+
+---
+
 ## [2.0.0] — 2026-08-01
 
 > **Consolidación multi-tenant, canal de mensajería SMS, módulo de Tendencias históricas y auditoría UX/UI integral**
@@ -202,7 +218,8 @@ y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
 ---
 
-[Sin publicar]: https://github.com/arrilive/encuesta-clima-laboral/compare/v2.0.0...HEAD
+[Sin publicar]: https://github.com/arrilive/encuesta-clima-laboral/compare/v2.0.1...HEAD
+[2.0.1]: https://github.com/arrilive/encuesta-clima-laboral/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/arrilive/encuesta-clima-laboral/compare/v1.2.1...v2.0.0
 [1.2.1]: https://github.com/arrilive/encuesta-clima-laboral/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/arrilive/encuesta-clima-laboral/compare/v1.1.0...v1.2.0
