@@ -167,7 +167,8 @@ it('clima contiene promedio_general para admin_empresa cuando hay respuestas', f
     $admin = User::factory()->adminEmpresa($empresa->id)->create();
     $lote = \App\Models\Lote::factory()->for($empresa)->create();
 
-    $opcion = OpcionRespuesta::where('valor_numerico', 3)->first();
+    $opcionFav = OpcionRespuesta::where('valor_numerico', 3)->first();
+    $opcionInv = OpcionRespuesta::where('valor_numerico', 1)->first();
     $preguntas = Pregunta::all();
 
     for ($i = 0; $i < 5; $i++) {
@@ -176,7 +177,7 @@ it('clima contiene promedio_general para admin_empresa cuando hay respuestas', f
             Respuesta::create([
                 'encuesta_id' => $encuesta->id,
                 'pregunta_id' => $pregunta->id,
-                'opcion_respuesta_id' => $opcion->id,
+                'opcion_respuesta_id' => $pregunta->invertida ? $opcionInv->id : $opcionFav->id,
             ]);
         }
     }
@@ -345,14 +346,15 @@ it('clima muestra escenario 2 (lote activo) cuando hay un lote activo sin cerrad
     ]);
 
     // Ponemos 5 respuestas para pasar el umbral
-    $opcion = OpcionRespuesta::where('valor_numerico', 3)->first();
+    $opcionFav = OpcionRespuesta::where('valor_numerico', 3)->first();
+    $opcionInv = OpcionRespuesta::where('valor_numerico', 1)->first();
     for ($i = 0; $i < 5; $i++) {
         $enc = Encuesta::factory()->completada()->create(['lote_id' => $loteActivo->id]);
         foreach (Pregunta::all() as $pregunta) {
             Respuesta::create([
                 'encuesta_id' => $enc->id,
                 'pregunta_id' => $pregunta->id,
-                'opcion_respuesta_id' => $opcion->id,
+                'opcion_respuesta_id' => $pregunta->invertida ? $opcionInv->id : $opcionFav->id,
             ]);
         }
     }
@@ -385,14 +387,15 @@ it('clima muestra escenario 3 (lote cerrado) cuando hay un lote cerrado sin lote
     ]);
 
     // Ponemos 5 respuestas para pasar el umbral
-    $opcion = OpcionRespuesta::where('valor_numerico', 3)->first();
+    $opcionFav = OpcionRespuesta::where('valor_numerico', 3)->first();
+    $opcionInv = OpcionRespuesta::where('valor_numerico', 1)->first();
     for ($i = 0; $i < 5; $i++) {
         $enc = Encuesta::factory()->completada()->create(['lote_id' => $loteCerrado->id]);
         foreach (Pregunta::all() as $pregunta) {
             Respuesta::create([
                 'encuesta_id' => $enc->id,
                 'pregunta_id' => $pregunta->id,
-                'opcion_respuesta_id' => $opcion->id,
+                'opcion_respuesta_id' => $pregunta->invertida ? $opcionInv->id : $opcionFav->id,
             ]);
         }
     }
@@ -433,8 +436,8 @@ it('clima muestra escenario 4 (lote cerrado + activo) cuando hay un lote cerrado
     ]);
 
     // Ponemos 5 respuestas en el cerrado, y 2 en el activo (que no se deben usar)
-    $opcionMax = OpcionRespuesta::where('valor_numerico', 3)->first();
-    $opcionMin = OpcionRespuesta::where('valor_numerico', 1)->first();
+    $opcionFav = OpcionRespuesta::where('valor_numerico', 3)->first();
+    $opcionInv = OpcionRespuesta::where('valor_numerico', 1)->first();
 
     for ($i = 0; $i < 5; $i++) {
         $enc = Encuesta::factory()->completada()->create(['lote_id' => $loteCerrado->id]);
@@ -442,7 +445,7 @@ it('clima muestra escenario 4 (lote cerrado + activo) cuando hay un lote cerrado
             Respuesta::create([
                 'encuesta_id' => $enc->id,
                 'pregunta_id' => $pregunta->id,
-                'opcion_respuesta_id' => $opcionMax->id,
+                'opcion_respuesta_id' => $pregunta->invertida ? $opcionInv->id : $opcionFav->id,
             ]);
         }
     }
@@ -453,7 +456,7 @@ it('clima muestra escenario 4 (lote cerrado + activo) cuando hay un lote cerrado
             Respuesta::create([
                 'encuesta_id' => $enc->id,
                 'pregunta_id' => $pregunta->id,
-                'opcion_respuesta_id' => $opcionMin->id,
+                'opcion_respuesta_id' => $pregunta->invertida ? $opcionFav->id : $opcionInv->id,
             ]);
         }
     }
@@ -487,13 +490,14 @@ it('clima calcula y muestra promedio_general aun con solo 1 respuesta completada
     ]);
 
     // Solo 1 encuesta completada
-    $opcion = OpcionRespuesta::where('valor_numerico', 3)->first();
+    $opcionFav = OpcionRespuesta::where('valor_numerico', 3)->first();
+    $opcionInv = OpcionRespuesta::where('valor_numerico', 1)->first();
     $enc = Encuesta::factory()->completada()->create(['lote_id' => $lote->id]);
     foreach (Pregunta::all() as $pregunta) {
         Respuesta::create([
             'encuesta_id' => $enc->id,
             'pregunta_id' => $pregunta->id,
-            'opcion_respuesta_id' => $opcion->id,
+            'opcion_respuesta_id' => $pregunta->invertida ? $opcionInv->id : $opcionFav->id,
         ]);
     }
 

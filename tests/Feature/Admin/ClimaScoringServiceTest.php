@@ -53,13 +53,14 @@ it('promedioGeneral retorna 100.0 cuando todas las respuestas son valor_numerico
 
     $empresa = Empresa::factory()->create();
     $encuesta = Encuesta::factory()->completada()->create(['lote_id' => \App\Models\Lote::factory()->for($empresa)->create()->id]);
-    $opcion = OpcionRespuesta::where('valor_numerico', 3)->first();
+    $opcionFav = OpcionRespuesta::where('valor_numerico', 3)->first();
+    $opcionInv = OpcionRespuesta::where('valor_numerico', 1)->first();
 
     foreach (Pregunta::all() as $pregunta) {
         Respuesta::create([
             'encuesta_id' => $encuesta->id,
             'pregunta_id' => $pregunta->id,
-            'opcion_respuesta_id' => $opcion->id,
+            'opcion_respuesta_id' => $pregunta->invertida ? $opcionInv->id : $opcionFav->id,
         ]);
     }
 
@@ -213,12 +214,12 @@ it('promediosGeneralesPorEmpresas usa el lote cerrado más reciente cuando hay c
             Respuesta::create([
                 'encuesta_id' => $enc1->id,
                 'pregunta_id' => $pregunta->id,
-                'opcion_respuesta_id' => $opcionMin->id,
+                'opcion_respuesta_id' => $pregunta->invertida ? $opcionMax->id : $opcionMin->id,
             ]);
             Respuesta::create([
                 'encuesta_id' => $enc2->id,
                 'pregunta_id' => $pregunta->id,
-                'opcion_respuesta_id' => $opcionMax->id,
+                'opcion_respuesta_id' => $pregunta->invertida ? $opcionMin->id : $opcionMax->id,
             ]);
             Respuesta::create([
                 'encuesta_id' => $enc3->id,
