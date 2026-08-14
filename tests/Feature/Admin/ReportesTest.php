@@ -104,11 +104,12 @@ it('admin_empresa solo ve datos de su empresa', function () {
     expect($puntaje)->toBeNull();
 });
 
-it('super_admin sin filtro ve datos de todas las empresas', function () {
+it('super_admin sin filtro no ve datos consolidados de empresas no relacionadas', function () {
     $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
 
-    $empresa1 = Empresa::factory()->create();
-    $empresa2 = Empresa::factory()->create();
+    $corp = \App\Models\Corporativo::factory()->create();
+    $empresa1 = Empresa::factory()->create(['corporativo_id' => $corp->id]);
+    $empresa2 = Empresa::factory()->create(['corporativo_id' => $corp->id]);
     $superAdmin = User::factory()->superAdmin()->create();
 
     $encuesta1 = Encuesta::factory()->completada()->create(['lote_id' => \App\Models\Lote::factory()->for($empresa1)->create()->id]);
@@ -129,10 +130,17 @@ it('super_admin sin filtro ve datos de todas las empresas', function () {
     }
 
     $component = Livewire::actingAs($superAdmin)->test(Reportes::class);
-    $datosNivel1 = $component->instance()->getDatosNivel1();
-    $puntaje = collect($datosNivel1)->firstWhere('id', $dimension->id)['puntaje'];
 
-    expect($puntaje)->toBeGreaterThan(0);
+    // Sin filtro corporativo: no dispara consolidación multi-empresa global (puntaje es null)
+    $datosSinFiltro = $component->instance()->getDatosNivel1();
+    $puntajeSinFiltro = collect($datosSinFiltro)->firstWhere('id', $dimension->id)['puntaje'];
+    expect($puntajeSinFiltro)->toBeNull();
+
+    // Con filtro corporativo: consolida únicamente las empresas del corporativo filtrado
+    $component->set('filtroCorporativoId', (string) $corp->id);
+    $datosConFiltro = $component->instance()->getDatosNivel1();
+    $puntajeConFiltro = collect($datosConFiltro)->firstWhere('id', $dimension->id)['puntaje'];
+    expect($puntajeConFiltro)->toBe(100.0);
 });
 
 it('irNivel2 cambia el nivel a 2 y asigna dimensionActivaId', function () {

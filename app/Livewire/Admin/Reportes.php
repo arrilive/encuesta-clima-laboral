@@ -228,9 +228,9 @@ class Reportes extends Component
         if ($this->filtroLoteId) {
             $query->whereHas('encuesta.lote', fn ($q) => $q->where('lotes.id', $this->filtroLoteId));
         } else {
-            $infoLote = $this->resolverLoteEstadoActual();
-            if ($infoLote['lote']) {
-                $query->whereHas('encuesta.lote', fn ($q) => $q->where('lotes.id', $infoLote['lote']->id));
+            $infoLote = $this->resolverLotesEstadoActual();
+            if (! empty($infoLote['lote_ids'])) {
+                $query->whereHas('encuesta.lote', fn ($q) => $q->whereIn('lotes.id', $infoLote['lote_ids']));
             } else {
                 $query->whereRaw('1=0');
             }
@@ -295,9 +295,9 @@ class Reportes extends Component
         if ($this->filtroLoteId) {
             $query->where('lote_id', $this->filtroLoteId);
         } else {
-            $infoLote = $this->resolverLoteEstadoActual();
-            if ($infoLote['lote']) {
-                $query->where('lote_id', $infoLote['lote']->id);
+            $infoLote = $this->resolverLotesEstadoActual();
+            if (! empty($infoLote['lote_ids'])) {
+                $query->whereIn('lote_id', $infoLote['lote_ids']);
             } else {
                 $query->whereRaw('1=0');
             }
@@ -449,9 +449,11 @@ class Reportes extends Component
 
         $completadasFiltradas = $this->getEncuestasBaseQuery()->count();
 
-        $loteIdParaTokens = $this->filtroLoteId;
-        if (! $loteIdParaTokens) {
-            $loteIdParaTokens = $this->resolverLoteEstadoActual()['lote']?->id;
+        $loteIdsParaTokens = [];
+        if ($this->filtroLoteId) {
+            $loteIdsParaTokens = [$this->filtroLoteId];
+        } else {
+            $loteIdsParaTokens = $this->resolverLotesEstadoActual()['lote_ids'];
         }
 
         $totalTokens = \App\Models\Encuesta::query()
@@ -460,7 +462,7 @@ class Reportes extends Component
                 \App\Enums\Role::SUPER_ADMIN->value,
                 \App\Enums\Role::ADMIN_CORPORATIVO->value,
             ]) && $this->filtroEmpresaId, fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $this->filtroEmpresaId)))
-            ->when($loteIdParaTokens, fn ($q) => $q->where('lote_id', $loteIdParaTokens), fn ($q) => $q->whereRaw('1=0'))
+            ->when(! empty($loteIdsParaTokens), fn ($q) => $q->whereIn('lote_id', $loteIdsParaTokens), fn ($q) => $q->whereRaw('1=0'))
             ->when($this->filtroCorporativoId && $user->role === \App\Enums\Role::SUPER_ADMIN->value,
                 fn ($q) => $q->whereHas('lote.empresa', fn ($q2) => $q2->where('corporativo_id', $this->filtroCorporativoId)))
             ->when($this->filtroSucursalId, fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('sucursal_id', $this->filtroSucursalId)))

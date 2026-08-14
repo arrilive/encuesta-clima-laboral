@@ -104,6 +104,190 @@ trait HasTenantScope
         return $this->resolverEstadoDesdeLotes($lotes);
     }
 
+    protected function getEmpresasInScope(?array $filtros = null): \Illuminate\Support\Collection
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return collect();
+        }
+
+        $corpId = $filtros ? ($filtros['corporativo_id'] ?? null) : ($this->filtroCorporativoId ?? null);
+        $empresaId = $filtros ? ($filtros['empresa_id'] ?? null) : ($this->filtroEmpresaId ?? null);
+        $sucursalId = $filtros ? ($filtros['sucursal_id'] ?? null) : ($this->filtroSucursalId ?? null);
+        $loteId = $filtros ? ($filtros['lote_id'] ?? null) : ($this->filtroLoteId ?? null);
+
+        if (! empty($loteId)) {
+            $lote = Lote::find($loteId);
+            if ($lote && $lote->empresa_id) {
+                return collect([$lote->empresa_id]);
+            }
+        }
+
+        if (! empty($sucursalId)) {
+            $sucursal = \App\Models\Sucursal::find($sucursalId);
+            if ($sucursal && $sucursal->empresa_id) {
+                return collect([$sucursal->empresa_id]);
+            }
+        }
+
+        if (! empty($empresaId)) {
+            return collect([(int) $empresaId]);
+        }
+
+        if ($user->role === Role::SUPER_ADMIN->value) {
+            if (! empty($corpId)) {
+                return \App\Models\Empresa::where('corporativo_id', $corpId)->pluck('id');
+            }
+
+            return collect();
+        }
+
+        if ($user->role === Role::ADMIN_CORPORATIVO->value) {
+            if ($user->corporativo_id) {
+                return \App\Models\Empresa::where('corporativo_id', $user->corporativo_id)->pluck('id');
+            }
+
+            return collect();
+        }
+
+        if ($user->role === Role::ADMIN_EMPRESA->value) {
+            if ($user->empresa_id) {
+                return collect([$user->empresa_id]);
+            }
+
+            return collect();
+        }
+
+        if ($user->role === Role::ADMIN_SUCURSAL->value) {
+            if ($user->sucursal_id) {
+                $empId = \App\Models\Sucursal::find($user->sucursal_id)?->empresa_id;
+                if ($empId) {
+                    return collect([$empId]);
+                }
+            }
+
+            return collect();
+        }
+
+        return collect();
+    }
+
+    protected function resolverLotesEstadoActual(): array
+    {
+        return $this->resolverLotesEstadoActualDesdeFiltros([
+            'corporativo_id' => $this->filtroCorporativoId ?? null,
+            'empresa_id' => $this->filtroEmpresaId ?? null,
+            'sucursal_id' => $this->filtroSucursalId ?? null,
+            'lote_id' => $this->filtroLoteId ?? null,
+        ]);
+    }
+
+    protected function resolverLotesEstadoActualDesdeFiltros(array $filtros): array
+    {
+        $empresasIds = $this->getEmpresasInScope($filtros);
+
+        if ($empresasIds->isEmpty()) {
+            return [
+                'is_multi' => false,
+                'lote' => null,
+                'lotes' => collect(),
+                'lote_ids' => [],
+                'escenario' => 1,
+                'lote_activo' => null,
+                'metadata' => [
+                    'total_empresas' => 0,
+                    'empresas_con_activo' => 0,
+                    'empresas_con_cerrado' => 0,
+                    'empresas_con_lote' => 0,
+                    'empresas_sin_lote' => 0,
+                ],
+            ];
+        }
+
+        if ($empresasIds->count() === 1) {
+            $infoSingle = $this->resolverLoteEstadoActualDesdeFiltros($filtros);
+            $lote = $infoSingle['lote'];
+
+            $loteIds = $lote ? [$lote->id] : [];
+            $lotesCol = $lote ? collect([$lote]) : collect();
+            $hasActive = $infoSingle['escenario'] === 2 || $infoSingle['escenario'] === 4;
+            $hasClosed = $infoSingle['escenario'] === 3 || $infoSingle['escenario'] === 4;
+
+            return [
+                'is_multi' => false,
+                'lote' => $lote,
+                'lotes' => $lotesCol,
+                'lote_ids' => $loteIds,
+                'escenario' => $infoSingle['escenario'],
+                'lote_activo' => $infoSingle['lote_activo'],
+                'metadata' => [
+                    'total_empresas' => $empresasIds->count(),
+                    'empresas_con_activo' => $hasActive ? 1 : 0,
+                    'empresas_con_cerrado' => $hasClosed ? 1 : 0,
+                    'empresas_con_lote' => $lote ? 1 : 0,
+                    'empresas_sin_lote' => $lote ? 0 : $empresasIds->count(),
+                ],
+            ];
+        }
+
+        $lotesCombinados = collect();
+        $loteIds = [];
+
+        $empresasConActivoCount = 0;
+        $empresasConCerradoCount = 0;
+        $empresasConLoteCount = 0;
+
+        foreach ($empresasIds as $empresaId) {
+            $queryLotesEmpresa = Lote::query()->where('empresa_id', $empresaId);
+
+            if (! empty($filtros['sucursal_id'])) {
+                $queryLotesEmpresa->where('sucursal_id', $filtros['sucursal_id']);
+            }
+            if (! empty($filtros['lote_id'])) {
+                $queryLotesEmpresa->where('id', $filtros['lote_id']);
+            }
+
+            $lotesEmpresa = $queryLotesEmpresa->get();
+
+            $infoEmpresa = $this->resolverEstadoDesdeLotes($lotesEmpresa);
+
+            if ($infoEmpresa['lote']) {
+                $lotesCombinados->push($infoEmpresa['lote']);
+                $loteIds[] = $infoEmpresa['lote']->id;
+                $empresasConLoteCount++;
+            }
+
+            $tieneActivo = $infoEmpresa['escenario'] === 2 || $infoEmpresa['escenario'] === 4;
+            $tieneCerrado = $infoEmpresa['escenario'] === 3 || $infoEmpresa['escenario'] === 4;
+
+            if ($tieneActivo) {
+                $empresasConActivoCount++;
+            }
+            if ($tieneCerrado) {
+                $empresasConCerradoCount++;
+            }
+        }
+
+        $totalEmpresas = $empresasIds->count();
+        $empresasSinLoteCount = max(0, $totalEmpresas - $empresasConLoteCount);
+
+        return [
+            'is_multi' => true,
+            'lote' => $lotesCombinados->first(),
+            'lotes' => $lotesCombinados,
+            'lote_ids' => $loteIds,
+            'escenario' => null,
+            'lote_activo' => null,
+            'metadata' => [
+                'total_empresas' => $totalEmpresas,
+                'empresas_con_activo' => $empresasConActivoCount,
+                'empresas_con_cerrado' => $empresasConCerradoCount,
+                'empresas_con_lote' => $empresasConLoteCount,
+                'empresas_sin_lote' => $empresasSinLoteCount,
+            ],
+        ];
+    }
+
     protected function resolverEstadoDesdeLotes(\Illuminate\Support\Collection $lotes): array
     {
         $hoy = Carbon::today()->toDateString();
