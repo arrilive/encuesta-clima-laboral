@@ -218,22 +218,16 @@ class Dashboard extends Component
                 ->whereHas('lote', fn ($loteQuery) => $this->scopeByRole($loteQuery))
             );
 
-        // Determine the lote to use based on rules or manual filter
-        $loteId = null;
-        $escenario = 1;
-        $loteEstadoActual = null;
-        $loteActivo = null;
-
-        $infoLote = $this->resolverLoteEstadoActual();
+        $infoLote = $this->resolverLotesEstadoActual();
+        $isMulti = $infoLote['is_multi'];
+        $loteIds = $infoLote['lote_ids'];
         $loteEstadoActual = $infoLote['lote'];
         $escenario = $infoLote['escenario'];
         $loteActivo = $infoLote['lote_activo'];
 
-        if ($loteEstadoActual) {
-            $loteId = $loteEstadoActual->id;
-            $respuestasBase->whereHas('encuesta', fn ($q) => $q->where('lote_id', $loteId));
+        if (! empty($loteIds)) {
+            $respuestasBase->whereHas('encuesta', fn ($q) => $q->whereIn('lote_id', $loteIds));
         } else {
-            // Force empty results if no current lote is found
             $respuestasBase->whereRaw('1=0');
         }
 
@@ -257,19 +251,37 @@ class Dashboard extends Component
         $scoresSubdimensiones = $scoring->scoresPorSubdimension($respuestasBase);
 
         $completadasLote = 0;
-        if ($loteEstadoActual) {
+        if (! empty($loteIds)) {
             $encuestasQuery = Encuesta::where('estado', 'completado')
-                ->where('lote_id', $loteEstadoActual->id);
+                ->whereIn('lote_id', $loteIds);
             if ($this->filtroSucursalId) {
                 $encuestasQuery->whereHas('lote', fn ($q) => $q->where('sucursal_id', $this->filtroSucursalId));
             }
             $completadasLote = $encuestasQuery->count();
         }
 
-        $sinDatos = ! $loteEstadoActual || $completadasLote === 0;
+        $sinDatos = empty($loteIds) || $completadasLote === 0;
+
+        $bannersMulti = [];
+        if ($isMulti) {
+            $meta = $infoLote['metadata'];
+            $tot = $meta['total_empresas'];
+            $act = $meta['empresas_con_activo'];
+            $sin = $meta['empresas_sin_lote'];
+
+            if ($act === $tot && $tot > 0) {
+                $bannersMulti[] = "Hay {$act} rondas activas en tu corporativo. Resultados parciales.";
+            } elseif ($act > 0 && $act < $tot) {
+                $bannersMulti[] = "Resultados parciales: {$act} de {$tot} empresas tienen una ronda en curso.";
+            }
+
+            if ($sin > 0) {
+                $bannersMulti[] = "{$sin} de {$tot} empresas aún no tiene(n) encuestas generadas.";
+            }
+        }
 
         return [
-            'promedio_general' => ($loteId && ! $sinDatos) ? $scoring->promedioGeneral($respuestasBase) : null,
+            'promedio_general' => (! empty($loteIds) && ! $sinDatos) ? $scoring->promedioGeneral($respuestasBase) : null,
             'dimension_alta' => $sinDatos ? null : $scoresDimensiones->sortByDesc('puntaje')->first(),
             'dimension_baja' => $sinDatos ? null : $scoresDimensiones->sortBy('puntaje')->first(),
             'subdimension_alta' => $sinDatos ? null : $scoresSubdimensiones->sortByDesc('puntaje')->first(),
@@ -280,6 +292,9 @@ class Dashboard extends Component
             'lote_nombre' => $loteEstadoActual ? $loteEstadoActual->nombre : '',
             'lote_fecha_fin' => ($loteEstadoActual && $loteEstadoActual->fecha_fin) ? $loteEstadoActual->fecha_fin->format('d/m/Y') : '',
             'lote_activo_nombre' => $loteActivo ? $loteActivo->nombre : '',
+            'is_multi' => $isMulti,
+            'banners_multi' => $bannersMulti,
+            'metadata' => $infoLote['metadata'],
         ];
     }
 
