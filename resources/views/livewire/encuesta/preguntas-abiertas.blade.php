@@ -13,7 +13,10 @@
     {{-- Preguntas abiertas --}}
     <div class="space-y-4">
         @foreach($preguntas as $pregunta)
-            <div x-data="{ count: {{ strlen($respuestas[$pregunta->id] ?? '') }} }" class="bg-white border border-slate-200 rounded-2xl p-6">
+            @php
+                $palabrasIniciales = count(preg_split('/\s+/u', trim($respuestas[$pregunta->id] ?? ''), -1, PREG_SPLIT_NO_EMPTY));
+            @endphp
+            <div x-data="{ count: {{ $palabrasIniciales }} }" class="bg-white border border-slate-200 rounded-2xl p-6">
 
                 {{-- Label --}}
                 <label for="pregunta-abierta-{{ $pregunta->id }}" class="block text-sm font-semibold text-slate-700 leading-relaxed mb-3">
@@ -25,8 +28,7 @@
                 <textarea
                     id="pregunta-abierta-{{ $pregunta->id }}"
                     wire:model.live.debounce.800ms="respuestas.{{ $pregunta->id }}"
-                    x-on:input="count = $event.target.value.length"
-                    maxlength="300"
+                    x-on:input="count = $event.target.value.trim() === '' ? 0 : $event.target.value.trim().split(/\s+/).length"
                     rows="4"
                     placeholder="Escribe tu respuesta aquí…"
                     class="w-full px-4 py-3 border border-slate-300 rounded-xl text-sm text-slate-900
@@ -35,8 +37,8 @@
                            transition-all duration-200"></textarea>
 
                 {{-- Contador de caracteres --}}
-                <p class="text-right text-xs mt-1.5" :class="count >= 300 ? 'text-red-500 font-medium' : (count >= 270 ? 'text-amber-500' : 'text-slate-400')">
-                    <span x-text="count"></span>/300
+                <p class="text-right text-xs mt-1.5" :class="count >= 200 ? 'text-red-500 font-medium' : (count >= 180 ? 'text-amber-500' : 'text-slate-400')">
+                    <span x-text="count"></span>/200 palabras
                 </p>
 
             </div>
