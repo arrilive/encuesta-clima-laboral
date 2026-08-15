@@ -773,3 +773,50 @@ it('los filtros demograficos se aplican sobre el lote resuelto sin arrastrar dat
         ->set('filtroSexoId', (string) $sexoMasculino->id)
         ->assertViewHas('promedioGeneral', 100.0);
 });
+
+test('filtroBadgeNivel3 filtra las preguntas por su badge resuelto y se resetea al cambiar de subdimensión', function () {
+    $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
+
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+    $lote = \App\Models\Lote::factory()->for($empresa)->create(['activo' => true]);
+
+    $subdimension = \App\Models\Subdimension::first();
+    $preguntas = Pregunta::where('subdimension_id', $subdimension->id)->get();
+
+    $opcionFav = OpcionRespuesta::where('valor_numerico', 3)->first();
+    $opcionDesfav = OpcionRespuesta::where('valor_numerico', 1)->first();
+
+    for ($i = 0; $i < 5; $i++) {
+        $enc = Encuesta::factory()->completada()->create(['lote_id' => $lote->id]);
+        foreach ($preguntas as $p) {
+            $opcion = ($p->id === $preguntas->first()->id)
+                ? ($p->invertida ? $opcionDesfav : $opcionFav)
+                : ($p->invertida ? $opcionFav : $opcionDesfav);
+
+            Respuesta::create([
+                'encuesta_id' => $enc->id,
+                'pregunta_id' => $p->id,
+                'opcion_respuesta_id' => $opcion->id,
+            ]);
+        }
+    }
+
+    $component = Livewire::actingAs($admin)
+        ->test(Reportes::class)
+        ->set('filtroLoteId', (string) $lote->id)
+        ->call('irNivel3', $subdimension->id);
+
+    expect(count($component->viewData('datosNivel3')))->toBe($preguntas->count());
+
+    $component->set('filtroBadgeNivel3', 'Excelente');
+    expect(count($component->viewData('datosNivel3')))->toBe(1);
+    expect($component->viewData('datosNivel3')[0]['id'])->toBe($preguntas->first()->id);
+
+    $component->set('filtroBadgeNivel3', 'Buen clima');
+    expect(count($component->viewData('datosNivel3')))->toBe(0);
+
+    $otraSub = \App\Models\Subdimension::skip(1)->first();
+    $component->call('irNivel3', $otraSub->id);
+    expect($component->get('filtroBadgeNivel3'))->toBe('');
+});
