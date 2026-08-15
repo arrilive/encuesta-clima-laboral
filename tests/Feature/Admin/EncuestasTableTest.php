@@ -299,3 +299,20 @@ it('updatedSelectAll selecciona todos los tokens disponibles del filtro actual a
             return true;
         });
 });
+
+test('censura la segunda mitad del token en la tabla de encuestas para prevenir suplantación', function () {
+    $empresa = Empresa::factory()->create();
+    $superAdmin = User::factory()->superAdmin()->create();
+    $lote = Lote::factory()->create(['empresa_id' => $empresa->id]);
+
+    $encuesta = Encuesta::create([
+        'token' => 'TK-ABCD-1234',
+        'estado' => 'disponible',
+        'lote_id' => $lote->id,
+    ]);
+
+    Livewire::actingAs($superAdmin)
+        ->test(EncuestasTable::class)
+        ->assertSee('TK-ABCD-••••')
+        ->assertDontSee('TK-ABCD-1234');
+});
