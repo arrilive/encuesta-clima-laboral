@@ -225,7 +225,7 @@
                                 </td>
                             @endif
                             <td class="px-6 py-3.5 font-mono text-xs text-slate-600">
-                                {{ substr($encuesta->token, 0, 16) }}…
+                                {{ substr($encuesta->token, 0, 8) }}••••
                             </td>
                             @if(in_array(auth()->user()->role, [\App\Enums\Role::SUPER_ADMIN->value, \App\Enums\Role::ADMIN_CORPORATIVO->value]))
                                 <td class="px-6 py-3.5 text-slate-700">
