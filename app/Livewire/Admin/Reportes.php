@@ -48,6 +48,8 @@ class Reportes extends Component
 
     public string $filtroLoteId = '';
 
+    public string $filtroBadgeNivel3 = '';
+
     public ?string $hashDatosNivel1 = null;
 
     public array $pdfSvgs = [];
@@ -97,6 +99,7 @@ class Reportes extends Component
     {
         $this->nivel = 3;
         $this->subdimensionActivaId = $subdimensionId;
+        $this->filtroBadgeNivel3 = '';
     }
 
     public function limpiarFiltros(): void
@@ -460,7 +463,7 @@ class Reportes extends Component
 
         $grouped = $respuestasRaw->groupBy('pregunta_id');
 
-        return $preguntas->map(function ($pregunta) use ($grouped) {
+        $resultado = $preguntas->map(function ($pregunta) use ($grouped) {
             $respuestasPregunta = $grouped->get($pregunta->id, collect());
             $totalRespuestas = $respuestasPregunta->sum('total');
 
@@ -490,7 +493,17 @@ class Reportes extends Component
                                         : 0,
                 ])->toArray(),
             ];
-        })->toArray();
+        });
+
+        if ($this->filtroBadgeNivel3 !== '') {
+            $resultado = $resultado->filter(function ($pregunta) {
+                $interp = \App\Support\ClimaBadge::resolver($pregunta['puntaje']);
+
+                return $interp['label'] === $this->filtroBadgeNivel3;
+            });
+        }
+
+        return $resultado->values()->all();
     }
 
     private function despacharEventos(array $datosNivel1, array $datosNivel2, array $distribucionAgregada): void

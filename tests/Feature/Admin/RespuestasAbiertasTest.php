@@ -99,7 +99,7 @@ test('admin_empresa solo ve respuestas de su empresa', function () {
         ->assertDontSee('Respuesta secreta de otra empresa');
 });
 
-test('cuando hay menos de 10 respuestas completadas bajoUmbral es true en la vista de respuestas abiertas', function () {
+test('cuando hay menos de 5 respuestas completadas bajoUmbral es true en la vista de respuestas abiertas', function () {
     seedPreguntasAbiertas();
     $empresa = \App\Models\Empresa::factory()->create();
     $user = User::factory()->adminEmpresa($empresa->id)->create();
@@ -119,7 +119,7 @@ test('cuando hay menos de 10 respuestas completadas bajoUmbral es true en la vis
         ->assertViewHas('bajoUmbral', true)
         ->call('toggleRespuestasAbiertas')
         ->assertSee('Comentarios protegidos')
-        ->assertSee('Se necesitan al menos 10 respuestas');
+        ->assertSee('Se necesitan al menos 5 respuestas');
 });
 
 test('sin filtroLoteId explicito el resultado se limita al lote de estado actual', function () {

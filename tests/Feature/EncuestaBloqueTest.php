@@ -397,14 +397,14 @@ test('updatedRespuestas guarda respuesta abierta en BD', function () {
         ->exists())->toBeTrue();
 });
 
-test('updatedRespuestas no guarda si el texto supera 300 caracteres', function () {
+test('updatedRespuestas no guarda si el texto supera 200 palabras', function () {
     seedEncuesta();
     app()['db']->table('preguntas_abiertas')->count() === 0
         && (new \Database\Seeders\PreguntasAbiertasSeeder)->run();
     $encuesta = Encuesta::factory()->create(['estado' => 'en_progreso']);
     \App\Models\DatoDemografico::factory()->create(['encuesta_id' => $encuesta->id]);
     $pregunta = \App\Models\PreguntaAbierta::orderBy('orden')->first();
-    $textoLargo = str_repeat('a', 301);
+    $textoLargo = implode(' ', array_fill(0, 201, 'palabra'));
 
     Livewire::test(\App\Livewire\Encuesta\PreguntasAbiertas::class, ['token' => $encuesta->token])
         ->set("respuestas.{$pregunta->id}", $textoLargo);

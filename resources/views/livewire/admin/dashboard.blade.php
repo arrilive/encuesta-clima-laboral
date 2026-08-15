@@ -35,7 +35,7 @@
                     {{-- Empresa (super_admin y admin_corporativo) --}}
                     @if(in_array(auth()->user()->role, [\App\Enums\Role::SUPER_ADMIN->value, \App\Enums\Role::ADMIN_CORPORATIVO->value]))
                         @php
-                            $empresaDeshabilitada = auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value && !$filtroCorporativoId;
+                            $empresaDeshabilitada = false;
                         @endphp
                         <div class="flex items-center gap-1.5">
                             <span class="text-sm font-semibold text-slate-600">Empresa:</span>

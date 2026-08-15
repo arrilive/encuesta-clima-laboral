@@ -12,7 +12,7 @@ class ClimaScoringService
 {
     public const UMBRAL_REPORTES = 5;
 
-    public const UMBRAL_RESPUESTAS_ABIERTAS = 10;
+    public const UMBRAL_RESPUESTAS_ABIERTAS = 5;
 
     /**
      * Calcula el puntaje (0–100) para cada dimensión sobre el conjunto
