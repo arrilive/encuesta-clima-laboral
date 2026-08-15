@@ -83,9 +83,9 @@ class RespuestasAbiertas extends Component
         if ($this->filtroLoteId) {
             $query->whereHas('lote', fn ($q) => $q->where('lotes.id', $this->filtroLoteId));
         } else {
-            $infoLote = $this->resolverLoteEstadoActual();
-            if ($infoLote['lote']) {
-                $query->whereHas('lote', fn ($q) => $q->where('lotes.id', $infoLote['lote']->id));
+            $infoLote = $this->resolverLotesEstadoActual();
+            if (! empty($infoLote['lote_ids'])) {
+                $query->whereHas('lote', fn ($q) => $q->whereIn('lotes.id', $infoLote['lote_ids']));
             } else {
                 $query->whereRaw('1=0');
             }

@@ -228,9 +228,9 @@ class Reportes extends Component
         if ($this->filtroLoteId) {
             $query->whereHas('encuesta.lote', fn ($q) => $q->where('lotes.id', $this->filtroLoteId));
         } else {
-            $infoLote = $this->resolverLoteEstadoActual();
-            if ($infoLote['lote']) {
-                $query->whereHas('encuesta.lote', fn ($q) => $q->where('lotes.id', $infoLote['lote']->id));
+            $infoLote = $this->resolverLotesEstadoActual();
+            if (! empty($infoLote['lote_ids'])) {
+                $query->whereHas('encuesta.lote', fn ($q) => $q->whereIn('lotes.id', $infoLote['lote_ids']));
             } else {
                 $query->whereRaw('1=0');
             }
@@ -295,9 +295,9 @@ class Reportes extends Component
         if ($this->filtroLoteId) {
             $query->where('lote_id', $this->filtroLoteId);
         } else {
-            $infoLote = $this->resolverLoteEstadoActual();
-            if ($infoLote['lote']) {
-                $query->where('lote_id', $infoLote['lote']->id);
+            $infoLote = $this->resolverLotesEstadoActual();
+            if (! empty($infoLote['lote_ids'])) {
+                $query->whereIn('lote_id', $infoLote['lote_ids']);
             } else {
                 $query->whereRaw('1=0');
             }
@@ -355,21 +355,85 @@ class Reportes extends Component
         return $allScores->whereIn('id', $subIds)->values()->toArray();
     }
 
+    public function tieneInvertidasEnNivel2(): bool
+    {
+        if (! $this->dimensionActivaId) {
+            return false;
+        }
+
+        return \App\Models\Pregunta::whereHas('subdimension', fn ($q) => $q->where('dimension_id', $this->dimensionActivaId))
+            ->where('invertida', true)
+            ->exists();
+    }
+
     public function getDistribucionAgregadaNivel2(): array
     {
-        return (clone $this->getBaseQuery())
-            ->whereHas('pregunta.subdimension', fn ($q) => $q->where('dimension_id', $this->dimensionActivaId)
-            )
+        if (! $this->dimensionActivaId) {
+            return [];
+        }
+
+        $tieneInvertidas = $this->tieneInvertidasEnNivel2();
+
+        if (! $tieneInvertidas) {
+            return (clone $this->getBaseQuery())
+                ->whereHas('pregunta.subdimension', fn ($q) => $q->where('dimension_id', $this->dimensionActivaId))
+                ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
+                ->selectRaw('opciones_respuesta.id, opciones_respuesta.opcion as nombre, opciones_respuesta.orden, COUNT(*) as total')
+                ->groupBy('opciones_respuesta.id', 'opciones_respuesta.opcion', 'opciones_respuesta.orden')
+                ->orderBy('opciones_respuesta.orden')
+                ->get()
+                ->map(fn ($row) => [
+                    'opcion' => $row->nombre,
+                    'total' => (int) $row->total,
+                ])
+                ->toArray();
+        }
+
+        $respuestas = (clone $this->getBaseQuery())
+            ->whereHas('pregunta.subdimension', fn ($q) => $q->where('dimension_id', $this->dimensionActivaId))
             ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
-            ->selectRaw('opciones_respuesta.id, opciones_respuesta.opcion as nombre, opciones_respuesta.orden, COUNT(*) as total')
-            ->groupBy('opciones_respuesta.id', 'opciones_respuesta.opcion', 'opciones_respuesta.orden')
-            ->orderBy('opciones_respuesta.orden')
-            ->get()
-            ->map(fn ($row) => [
-                'opcion' => $row->nombre,
-                'total' => (int) $row->total,
-            ])
-            ->toArray();
+            ->join('preguntas', 'respuestas.pregunta_id', '=', 'preguntas.id')
+            ->selectRaw('opciones_respuesta.valor_numerico, preguntas.invertida, COUNT(*) as total')
+            ->groupBy('opciones_respuesta.valor_numerico', 'preguntas.invertida')
+            ->get();
+
+        $totalesCategorias = [
+            'Favorable' => 0,
+            'Neutral' => 0,
+            'Desfavorable' => 0,
+            'Sin responder' => 0,
+        ];
+
+        foreach ($respuestas as $row) {
+            $val = (int) $row->valor_numerico;
+            $inv = (bool) $row->invertida;
+            $cnt = (int) $row->total;
+
+            if ($val === 0) {
+                $totalesCategorias['Sin responder'] += $cnt;
+            } else {
+                $efectivo = $inv ? (4 - $val) : $val;
+                if ($efectivo === 3) {
+                    $totalesCategorias['Favorable'] += $cnt;
+                } elseif ($efectivo === 2) {
+                    $totalesCategorias['Neutral'] += $cnt;
+                } elseif ($efectivo === 1) {
+                    $totalesCategorias['Desfavorable'] += $cnt;
+                }
+            }
+        }
+
+        $resultado = [];
+        foreach ($totalesCategorias as $cat => $total) {
+            if ($total > 0) {
+                $resultado[] = [
+                    'opcion' => $cat,
+                    'total' => $total,
+                ];
+            }
+        }
+
+        return $resultado;
     }
 
     // ── NIVEL 3: PREGUNTAS INDIVIDUALES ──────────────────────────────────
@@ -400,20 +464,26 @@ class Reportes extends Component
             $respuestasPregunta = $grouped->get($pregunta->id, collect());
             $totalRespuestas = $respuestasPregunta->sum('total');
 
-            // Calcular promedio excluyendo valor_numerico = 0
+            // Calcular promedio excluyendo valor_numerico = 0, aplicando inversión si invertida = true
             $respuestasValidas = $respuestasPregunta->filter(fn ($op) => $op->valor_numerico != 0);
-            $sumaValores = $respuestasValidas->sum(fn ($op) => $op->valor_numerico * $op->total);
+            $sumaValores = $respuestasValidas->sum(function ($op) use ($pregunta) {
+                $valEfectivo = $pregunta->invertida ? (4 - $op->valor_numerico) : $op->valor_numerico;
+
+                return $valEfectivo * $op->total;
+            });
             $cuentaValores = $respuestasValidas->sum('total');
             $promedio = $cuentaValores > 0 ? ($sumaValores / $cuentaValores) : null;
 
             return [
                 'id' => $pregunta->id,
                 'texto' => $pregunta->texto,
+                'invertida' => (bool) $pregunta->invertida,
                 'puntaje' => $promedio !== null ? round((($promedio - 1) / 2) * 100, 1) : 0.0,
                 'total' => $totalRespuestas,
                 'distribucion' => $respuestasPregunta->map(fn ($op) => [
                     'opcion' => $op->opcion,
                     'valor_numerico' => $op->valor_numerico,
+                    'valor_efectivo' => ($pregunta->invertida && $op->valor_numerico != 0) ? (4 - $op->valor_numerico) : $op->valor_numerico,
                     'total' => $op->total,
                     'porcentaje' => $totalRespuestas > 0
                                         ? round($op->total / $totalRespuestas * 100)
@@ -449,9 +519,11 @@ class Reportes extends Component
 
         $completadasFiltradas = $this->getEncuestasBaseQuery()->count();
 
-        $loteIdParaTokens = $this->filtroLoteId;
-        if (! $loteIdParaTokens) {
-            $loteIdParaTokens = $this->resolverLoteEstadoActual()['lote']?->id;
+        $loteIdsParaTokens = [];
+        if ($this->filtroLoteId) {
+            $loteIdsParaTokens = [$this->filtroLoteId];
+        } else {
+            $loteIdsParaTokens = $this->resolverLotesEstadoActual()['lote_ids'];
         }
 
         $totalTokens = \App\Models\Encuesta::query()
@@ -460,7 +532,7 @@ class Reportes extends Component
                 \App\Enums\Role::SUPER_ADMIN->value,
                 \App\Enums\Role::ADMIN_CORPORATIVO->value,
             ]) && $this->filtroEmpresaId, fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('empresa_id', $this->filtroEmpresaId)))
-            ->when($loteIdParaTokens, fn ($q) => $q->where('lote_id', $loteIdParaTokens), fn ($q) => $q->whereRaw('1=0'))
+            ->when(! empty($loteIdsParaTokens), fn ($q) => $q->whereIn('lote_id', $loteIdsParaTokens), fn ($q) => $q->whereRaw('1=0'))
             ->when($this->filtroCorporativoId && $user->role === \App\Enums\Role::SUPER_ADMIN->value,
                 fn ($q) => $q->whereHas('lote.empresa', fn ($q2) => $q2->where('corporativo_id', $this->filtroCorporativoId)))
             ->when($this->filtroSucursalId, fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('sucursal_id', $this->filtroSucursalId)))

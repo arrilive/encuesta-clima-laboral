@@ -469,13 +469,17 @@
 
                 {{-- Chart donut distribución --}}
                 <div class="bg-white rounded-2xl shadow-sm p-4">
-                    <h2 class="text-base font-semibold text-slate-800 tracking-tight mb-4">Distribución de Respuestas</h2>
+                    <h2 class="text-base font-semibold text-slate-800 tracking-tight mb-4">{{ $this->tieneInvertidasEnNivel2() ? 'Distribución de Percepción' : 'Distribución de Respuestas' }}</h2>
                     <div x-data="{ chart: null }" x-init="window.donutNivel2Datos = @js($distribucionAgregada);
                     const colorMap = {
                         'Verdadero': '#10b981',
                         'A veces falso/a veces verdadero': '#f59e0b',
                         'Falso': '#ef4444',
                         'Prefiero no responder': '#cbd5e1',
+                        'Favorable': '#10b981',
+                        'Neutral': '#f59e0b',
+                        'Desfavorable': '#ef4444',
+                        'Sin responder': '#cbd5e1',
                     };
                     window.donutNivel2Options.series = window.donutNivel2Datos.map(d => d.total);
                     window.donutNivel2Options.labels = window.donutNivel2Datos.map(d => d.opcion);
@@ -492,6 +496,10 @@
                                 'A veces falso/a veces verdadero':  '#f59e0b',
                                 'Falso':                            '#ef4444',
                                 'Prefiero no responder':            '#cbd5e1',
+                                'Favorable':                        '#10b981',
+                                'Neutral':                          '#f59e0b',
+                                'Desfavorable':                     '#ef4444',
+                                'Sin responder':                    '#cbd5e1',
                             };
                             if (chart) { chart.destroy(); }
                             window.donutNivel2Options.series  = $event.detail.datos.map(d => d.total);
@@ -582,11 +590,25 @@
                         class="bg-white border border-slate-100 rounded-xl p-5 shadow-sm
                                 transition-shadow duration-200 hover:shadow-md">
 
-                        {{-- Fila superior: número + texto + score + badge --}}
+                        {{-- Fila superior: número + texto + tooltip + score + badge --}}
                         <div class="flex items-start justify-between gap-4 mb-4">
-                            <p class="text-sm font-medium text-slate-800 leading-relaxed">
-                                {{ $index + 1 }}. {{ $pregunta['texto'] }}
-                            </p>
+                            <div class="text-sm font-medium text-slate-800 leading-relaxed flex items-center gap-1.5 flex-wrap">
+                                <span>{{ $index + 1 }}. {{ $pregunta['texto'] }}</span>
+                                @if(!empty($pregunta['invertida']))
+                                    <span class="inline-flex items-center" x-data="{ open: false }">
+                                        <span class="cursor-pointer text-amber-500 hover:text-amber-600 transition-colors relative inline-flex items-center"
+                                              @mouseenter="open = true" @mouseleave="open = false" @focus="open = true" @blur="open = false" tabindex="0">
+                                            <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                                            </svg>
+                                            <div x-show="open" x-cloak x-transition
+                                                 class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-2.5 bg-slate-900 text-white text-xs rounded-xl shadow-xl z-30 font-normal leading-normal text-left pointer-events-none">
+                                                Pregunta de puntuación invertida: mide carga mental, presión o riesgo psicosocial, no algo positivo por sí mismo. Por eso, responder 'Falso' representa bienestar y suma al puntaje de clima, mientras que 'Verdadero' lo resta.
+                                            </div>
+                                        </span>
+                                    </span>
+                                @endif
+                            </div>
                             <div class="flex-shrink-0 text-right">
                                 <div class="text-2xl font-bold leading-none mb-1" style="color: {{ $scoreColor }}">
                                     {{ number_format($pregunta['puntaje'], 1) }}
@@ -602,7 +624,7 @@
                         {{-- Stacked bar fusionada --}}
                         <div class="flex h-2 rounded-full overflow-hidden mb-3">
                             @foreach ($pregunta['distribucion'] as $segmento)
-                                <div style="width: {{ $segmento['porcentaje'] }}%; background: {{ $colorMap[$segmento['valor_numerico']] ?? '#e2e8f0' }}"
+                                <div style="width: {{ $segmento['porcentaje'] }}%; background: {{ $colorMap[$segmento['valor_efectivo'] ?? $segmento['valor_numerico']] ?? '#e2e8f0' }}"
                                     title="{{ $segmento['opcion'] }}: {{ $segmento['porcentaje'] }}%"></div>
                             @endforeach
                         </div>
@@ -612,7 +634,7 @@
                             @foreach ($pregunta['distribucion'] as $segmento)
                                 <span class="flex items-center gap-1.5 text-xs text-slate-500">
                                     <span class="w-2.5 h-2.5 rounded-sm flex-shrink-0"
-                                        style="background: {{ $colorMap[$segmento['valor_numerico']] ?? '#e2e8f0' }}"></span>
+                                        style="background: {{ $colorMap[$segmento['valor_efectivo'] ?? $segmento['valor_numerico']] ?? '#e2e8f0' }}"></span>
                                     {{ $segmento['opcion'] }}:&nbsp;<span class="font-semibold text-slate-700">
                                         {{ $segmento['porcentaje'] }}%
                                     </span>

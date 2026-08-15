@@ -14,6 +14,11 @@ class Pregunta extends Model
         'subdimension_id',
         'texto',
         'orden',
+        'invertida',
+    ];
+
+    protected $casts = [
+        'invertida' => 'boolean',
     ];
 
     public function subdimension(): BelongsTo
