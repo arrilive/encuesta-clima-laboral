@@ -570,10 +570,26 @@
             </div>
         @elseif ($sinDatos)
             <x-admin.empty-state mensaje="No hay respuestas para los filtros seleccionados en esta subdimensión." />
-        @elseif (empty($datosNivel3))
-            <x-admin.empty-state mensaje="Esta subdimensión no tiene preguntas registradas." :conBotonFiltros="false" />
         @else
-            <div class="space-y-3">
+            <div class="flex flex-wrap items-center gap-2 mb-4">
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider mr-1">Filtrar por estado:</span>
+                @foreach(['' => 'Todas', 'Excelente' => 'Excelente', 'Buen clima' => 'Buen clima', 'En atención' => 'En atención', 'En riesgo' => 'En riesgo'] as $val => $label)
+                    <button type="button"
+                        wire:click="$set('filtroBadgeNivel3', '{{ $val }}')"
+                        class="px-3 py-1.5 text-xs font-medium rounded-xl transition-all duration-200 {{ $filtroBadgeNivel3 === $val ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50' }}">
+                        {{ $label }}
+                    </button>
+                @endforeach
+            </div>
+
+            @if (empty($datosNivel3))
+                @if (! empty($filtroBadgeNivel3))
+                    <x-admin.empty-state mensaje="No hay preguntas con el badge seleccionado en esta subdimensión." :conBotonFiltros="false" />
+                @else
+                    <x-admin.empty-state mensaje="Esta subdimensión no tiene preguntas registradas." :conBotonFiltros="false" />
+                @endif
+            @else
+                <div class="space-y-3">
                 @foreach ($datosNivel3 as $index => $pregunta)
                     @php
                         $interp = \App\Support\ClimaBadge::resolver($pregunta['puntaje']);
@@ -646,6 +662,7 @@
                     </div>
                 @endforeach
             </div>
+        @endif
         @endif
     @endif
 
