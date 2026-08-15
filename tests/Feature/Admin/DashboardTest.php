@@ -189,6 +189,32 @@ it('clima contiene promedio_general para admin_empresa cuando hay respuestas', f
     expect($clima['promedio_general'])->toBe(100.0);
 });
 
+it('super_admin puede seleccionar empresa sin seleccionar corporativo y el combobox no está deshabilitado', function () {
+    $superAdmin = User::factory()->superAdmin()->create();
+    $empresa1 = Empresa::factory()->create(['nombre' => 'Alfa Corp']);
+    $empresa2 = Empresa::factory()->create(['nombre' => 'Beta Corp']);
+
+    $lote1 = \App\Models\Lote::factory()->for($empresa1)->create();
+    $lote2 = \App\Models\Lote::factory()->for($empresa2)->create();
+
+    Encuesta::factory()->count(4)->create(['lote_id' => $lote1->id]);
+    Encuesta::factory()->count(2)->create(['lote_id' => $lote2->id]);
+
+    $this->actingAs($superAdmin);
+
+    $component = Livewire::test(Dashboard::class);
+
+    // Muestra todas las empresas aunque filtroCorporativoId esté vacío
+    expect($component->viewData('empresas')->pluck('id')->toArray())
+        ->toContain($empresa1->id, $empresa2->id);
+
+    expect($component->viewData('kpis')['total_tokens'])->toBe(6);
+
+    // Al filtrar por una empresa sin corporativo seleccionado
+    $component->set('filtroEmpresaId', (string) $empresa1->id);
+    expect($component->viewData('kpis')['total_tokens'])->toBe(4);
+});
+
 it('filtroLoteId filtra KPIs al lote seleccionado', function () {
     $empresa = Empresa::factory()->create();
     $admin = User::factory()->adminEmpresa($empresa->id)->create();
