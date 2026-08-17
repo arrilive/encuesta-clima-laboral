@@ -129,7 +129,7 @@ class PreguntasSeeder extends Seeder
 
         DB::table('preguntas')
             ->where('subdimension_id', $seguridad)
-            ->whereIn('orden', [2, 3, 4, 5, 6, 7, 8])
+            ->whereIn('orden', [2, 5, 6, 7, 8])
             ->update(['invertida' => true]);
     }
 }

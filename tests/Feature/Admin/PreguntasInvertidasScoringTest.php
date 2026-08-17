@@ -32,6 +32,19 @@ test('pregunta invertida con respuesta Falso equivale a 3 puntos (100%) y Verdad
     expect($preguntaNormal->invertida)->toBeFalse();
     expect($preguntaInvertida->invertida)->toBeTrue();
 
+    // Verificar que las preguntas 3 y 4 de Seguridad NO son invertidas
+    $p3 = Pregunta::where('subdimension_id', $subSeguridad->id)->where('orden', 3)->first();
+    $p4 = Pregunta::where('subdimension_id', $subSeguridad->id)->where('orden', 4)->first();
+    expect($p3->invertida)->toBeFalse();
+    expect($p4->invertida)->toBeFalse();
+
+    // Verificar que las preguntas 2, 5, 6, 7 y 8 SI son invertidas
+    $invertidasOrdenes = [2, 5, 6, 7, 8];
+    foreach ($invertidasOrdenes as $orden) {
+        $p = Pregunta::where('subdimension_id', $subSeguridad->id)->where('orden', $orden)->first();
+        expect($p->invertida)->toBeTrue();
+    }
+
     // Encuesta A: Responde "Falso" (val 1) en pregunta invertida
     $encuestaA = Encuesta::factory()->completada()->create(['lote_id' => $lote->id]);
     Respuesta::create([
