@@ -17,7 +17,7 @@ return new class extends Migration
         if ($subSeguridadId) {
             DB::table('preguntas')
                 ->where('subdimension_id', $subSeguridadId)
-                ->whereIn('orden', [2, 3, 4, 5, 6, 7, 8])
+                ->whereIn('orden', [2, 5, 6, 7, 8])
                 ->update(['invertida' => true]);
         }
     }
