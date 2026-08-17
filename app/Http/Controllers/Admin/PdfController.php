@@ -80,14 +80,14 @@ class PdfController extends Controller
         if ($request->filled('lote_id')) {
             $query->whereHas('encuesta.lote', fn ($q) => $q->where('lotes.id', $request->lote_id));
         } else {
-            $infoLote = $this->resolverLoteEstadoActualDesdeFiltros([
+            $infoLote = $this->resolverLotesEstadoActualDesdeFiltros([
                 'corporativo_id' => $request->input('corporativo_id'),
                 'empresa_id' => $request->input('empresa_id'),
                 'sucursal_id' => $request->input('sucursal_id'),
                 'lote_id' => $request->input('lote_id'),
             ]);
-            if ($infoLote['lote']) {
-                $query->whereHas('encuesta.lote', fn ($q) => $q->where('lotes.id', $infoLote['lote']->id));
+            if (! empty($infoLote['lote_ids'])) {
+                $query->whereHas('encuesta.lote', fn ($q) => $q->whereIn('lotes.id', $infoLote['lote_ids']));
             } else {
                 $query->whereRaw('1=0');
             }
@@ -189,14 +189,14 @@ class PdfController extends Controller
             ->when($request->filled('sucursal_id'),
                 fn ($q) => $q->whereHas('lote', fn ($q2) => $q2->where('sucursal_id', $request->sucursal_id)))
             ->when($request->filled('lote_id'), fn ($q) => $q->where('lote_id', $request->lote_id), function ($q) use ($request) {
-                $infoLote = $this->resolverLoteEstadoActualDesdeFiltros([
+                $infoLote = $this->resolverLotesEstadoActualDesdeFiltros([
                     'corporativo_id' => $request->input('corporativo_id'),
                     'empresa_id' => $request->input('empresa_id'),
                     'sucursal_id' => $request->input('sucursal_id'),
                     'lote_id' => $request->input('lote_id'),
                 ]);
-                if ($infoLote['lote']) {
-                    $q->where('lote_id', $infoLote['lote']->id);
+                if (! empty($infoLote['lote_ids'])) {
+                    $q->whereIn('lote_id', $infoLote['lote_ids']);
                 } else {
                     $q->whereRaw('1=0');
                 }

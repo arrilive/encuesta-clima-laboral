@@ -12,7 +12,7 @@ class ClimaScoringService
 {
     public const UMBRAL_REPORTES = 5;
 
-    public const UMBRAL_RESPUESTAS_ABIERTAS = 10;
+    public const UMBRAL_RESPUESTAS_ABIERTAS = 5;
 
     /**
      * Calcula el puntaje (0–100) para cada dimensión sobre el conjunto
@@ -32,7 +32,7 @@ class ClimaScoringService
             ->whereHas('opcionRespuesta', fn (Builder $q) => $q->where('valor_numerico', '!=', 0))
             ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
             ->join('preguntas', 'respuestas.pregunta_id', '=', 'preguntas.id')
-            ->selectRaw('preguntas.subdimension_id, AVG(opciones_respuesta.valor_numerico) as promedio')
+            ->selectRaw('preguntas.subdimension_id, AVG(CASE WHEN preguntas.invertida THEN (4 - opciones_respuesta.valor_numerico) ELSE opciones_respuesta.valor_numerico END) as promedio')
             ->groupBy('preguntas.subdimension_id')
             ->get()
             ->keyBy('subdimension_id');
@@ -75,7 +75,7 @@ class ClimaScoringService
             )
             ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
             ->join('preguntas', 'respuestas.pregunta_id', '=', 'preguntas.id')
-            ->selectRaw('preguntas.subdimension_id, AVG(opciones_respuesta.valor_numerico) as promedio')
+            ->selectRaw('preguntas.subdimension_id, AVG(CASE WHEN preguntas.invertida THEN (4 - opciones_respuesta.valor_numerico) ELSE opciones_respuesta.valor_numerico END) as promedio')
             ->groupBy('preguntas.subdimension_id')
             ->get()
             ->keyBy('subdimension_id');
@@ -123,7 +123,7 @@ class ClimaScoringService
             ->join('encuestas as enc_join', 'respuestas.encuesta_id', '=', 'enc_join.id')
             ->join('datos_demograficos', 'enc_join.id', '=', 'datos_demograficos.encuesta_id')
             ->join('preguntas', 'respuestas.pregunta_id', '=', 'preguntas.id')
-            ->selectRaw("preguntas.subdimension_id, datos_demograficos.{$fkDemografico} as grupo_id, AVG(opciones_respuesta.valor_numerico) as promedio")
+            ->selectRaw("preguntas.subdimension_id, datos_demograficos.{$fkDemografico} as grupo_id, AVG(CASE WHEN preguntas.invertida THEN (4 - opciones_respuesta.valor_numerico) ELSE opciones_respuesta.valor_numerico END) as promedio")
             ->groupBy('preguntas.subdimension_id', "datos_demograficos.{$fkDemografico}")
             ->get();
 
@@ -236,7 +236,7 @@ class ClimaScoringService
             ->where('encuestas.estado', 'completado')
             ->whereIn('encuestas.lote_id', array_values($lotesValidos))
             ->where('opciones_respuesta.valor_numerico', '!=', 0)
-            ->selectRaw('COALESCE(lotes.empresa_id, sucursales.empresa_id) as empresa_id, preguntas.subdimension_id, AVG(opciones_respuesta.valor_numerico) as promedio')
+            ->selectRaw('COALESCE(lotes.empresa_id, sucursales.empresa_id) as empresa_id, preguntas.subdimension_id, AVG(CASE WHEN preguntas.invertida THEN (4 - opciones_respuesta.valor_numerico) ELSE opciones_respuesta.valor_numerico END) as promedio')
             ->groupBy(\Illuminate\Support\Facades\DB::raw('COALESCE(lotes.empresa_id, sucursales.empresa_id)'), 'preguntas.subdimension_id')
             ->get()
             ->groupBy('empresa_id');
@@ -297,7 +297,7 @@ class ClimaScoringService
             ->join('opciones_respuesta', 'respuestas.opcion_respuesta_id', '=', 'opciones_respuesta.id')
             ->join('encuestas as enc_join', 'respuestas.encuesta_id', '=', 'enc_join.id')
             ->join('preguntas', 'respuestas.pregunta_id', '=', 'preguntas.id')
-            ->selectRaw('preguntas.subdimension_id, enc_join.lote_id, AVG(opciones_respuesta.valor_numerico) as promedio')
+            ->selectRaw('preguntas.subdimension_id, enc_join.lote_id, AVG(CASE WHEN preguntas.invertida THEN (4 - opciones_respuesta.valor_numerico) ELSE opciones_respuesta.valor_numerico END) as promedio')
             ->groupBy('preguntas.subdimension_id', 'enc_join.lote_id')
             ->get();
 

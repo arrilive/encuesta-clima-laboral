@@ -126,5 +126,10 @@ class PreguntasSeeder extends Seeder
             ['subdimension_id' => $capacitacion, 'texto' => '¿Recibo la capacitación necesaria y planificada para realizar bien mi trabajo y crecer profesionalmente?', 'orden' => 1, 'created_at' => now(), 'updated_at' => now()],
             ['subdimension_id' => $capacitacion, 'texto' => '¿El programa de inducción y acondicionamiento para realizar el trabajo es adecuado?', 'orden' => 2, 'created_at' => now(), 'updated_at' => now()],
         ]);
+
+        DB::table('preguntas')
+            ->where('subdimension_id', $seguridad)
+            ->whereIn('orden', [2, 3, 4, 5, 6, 7, 8])
+            ->update(['invertida' => true]);
     }
 }

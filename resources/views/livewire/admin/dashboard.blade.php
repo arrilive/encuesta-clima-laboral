@@ -35,7 +35,7 @@
                     {{-- Empresa (super_admin y admin_corporativo) --}}
                     @if(in_array(auth()->user()->role, [\App\Enums\Role::SUPER_ADMIN->value, \App\Enums\Role::ADMIN_CORPORATIVO->value]))
                         @php
-                            $empresaDeshabilitada = auth()->user()->role === \App\Enums\Role::SUPER_ADMIN->value && !$filtroCorporativoId;
+                            $empresaDeshabilitada = false;
                         @endphp
                         <div class="flex items-center gap-1.5">
                             <span class="text-sm font-semibold text-slate-600">Empresa:</span>
@@ -112,11 +112,19 @@
                 \App\Enums\Role::ADMIN_CORPORATIVO->value,
                 \App\Enums\Role::ADMIN_SUCURSAL->value,
             ]))
-                @if($clima['sinDatos'])
-                    <x-admin.empty-state titulo="Sin datos de clima" mensaje="No hay datos de encuestas disponibles para esta entidad." :conBotonFiltros="false" />
-                @else
-                    {{-- Banners Informativos de Escenarios --}}
-                    <div class="mb-4">
+                {{-- Banners Informativos de Escenarios --}}
+                <div class="mb-4 space-y-2">
+                    @if($clima['is_multi'])
+                        @foreach($clima['banners_multi'] as $mensajeBanner)
+                            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                                <span class="flex h-2 w-2 relative">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                                </span>
+                                <span>{{ $mensajeBanner }}</span>
+                            </div>
+                        @endforeach
+                    @else
                         @if($clima['escenario'] === 2)
                             <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
                                 <span class="flex h-2 w-2 relative">
@@ -144,7 +152,12 @@
                                 <span>Hay una nueva ronda en curso (<strong>{{ $clima['lote_activo_nombre'] }}</strong>), este panorama se actualizará cuando cierre.</span>
                             </div>
                         @endif
-                    </div>
+                    @endif
+                </div>
+
+                @if($clima['sinDatos'])
+                    <x-admin.empty-state titulo="Sin datos de clima" mensaje="No hay datos de encuestas disponibles para esta entidad." :conBotonFiltros="false" />
+                @else
 
                     {{-- Grid normal de clima --}}
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">

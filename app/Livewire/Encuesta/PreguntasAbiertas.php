@@ -34,7 +34,8 @@ class PreguntasAbiertas extends Component
             'Esta encuesta ya ha sido completada y no puede ser modificada.'
         );
 
-        if (strlen($value) > 300) {
+        $palabras = preg_split('/\s+/u', trim($value), -1, PREG_SPLIT_NO_EMPTY);
+        if (count($palabras) > 200) {
             return;
         }
 

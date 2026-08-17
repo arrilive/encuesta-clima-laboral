@@ -104,11 +104,12 @@ it('admin_empresa solo ve datos de su empresa', function () {
     expect($puntaje)->toBeNull();
 });
 
-it('super_admin sin filtro ve datos de todas las empresas', function () {
+it('super_admin sin filtro no ve datos consolidados de empresas no relacionadas', function () {
     $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
 
-    $empresa1 = Empresa::factory()->create();
-    $empresa2 = Empresa::factory()->create();
+    $corp = \App\Models\Corporativo::factory()->create();
+    $empresa1 = Empresa::factory()->create(['corporativo_id' => $corp->id]);
+    $empresa2 = Empresa::factory()->create(['corporativo_id' => $corp->id]);
     $superAdmin = User::factory()->superAdmin()->create();
 
     $encuesta1 = Encuesta::factory()->completada()->create(['lote_id' => \App\Models\Lote::factory()->for($empresa1)->create()->id]);
@@ -129,10 +130,17 @@ it('super_admin sin filtro ve datos de todas las empresas', function () {
     }
 
     $component = Livewire::actingAs($superAdmin)->test(Reportes::class);
-    $datosNivel1 = $component->instance()->getDatosNivel1();
-    $puntaje = collect($datosNivel1)->firstWhere('id', $dimension->id)['puntaje'];
 
-    expect($puntaje)->toBeGreaterThan(0);
+    // Sin filtro corporativo: no dispara consolidación multi-empresa global (puntaje es null)
+    $datosSinFiltro = $component->instance()->getDatosNivel1();
+    $puntajeSinFiltro = collect($datosSinFiltro)->firstWhere('id', $dimension->id)['puntaje'];
+    expect($puntajeSinFiltro)->toBeNull();
+
+    // Con filtro corporativo: consolida únicamente las empresas del corporativo filtrado
+    $component->set('filtroCorporativoId', (string) $corp->id);
+    $datosConFiltro = $component->instance()->getDatosNivel1();
+    $puntajeConFiltro = collect($datosConFiltro)->firstWhere('id', $dimension->id)['puntaje'];
+    expect($puntajeConFiltro)->toBe(100.0);
 });
 
 it('irNivel2 cambia el nivel a 2 y asigna dimensionActivaId', function () {
@@ -764,4 +772,51 @@ it('los filtros demograficos se aplican sobre el lote resuelto sin arrastrar dat
         ->test(Reportes::class)
         ->set('filtroSexoId', (string) $sexoMasculino->id)
         ->assertViewHas('promedioGeneral', 100.0);
+});
+
+test('filtroBadgeNivel3 filtra las preguntas por su badge resuelto y se resetea al cambiar de subdimensión', function () {
+    $this->seed([DimensionesSeeder::class, SubdimensionesSeeder::class, PreguntasSeeder::class, OpcionesRespuestaSeeder::class]);
+
+    $empresa = Empresa::factory()->create();
+    $admin = User::factory()->adminEmpresa($empresa->id)->create();
+    $lote = \App\Models\Lote::factory()->for($empresa)->create(['activo' => true]);
+
+    $subdimension = \App\Models\Subdimension::first();
+    $preguntas = Pregunta::where('subdimension_id', $subdimension->id)->get();
+
+    $opcionFav = OpcionRespuesta::where('valor_numerico', 3)->first();
+    $opcionDesfav = OpcionRespuesta::where('valor_numerico', 1)->first();
+
+    for ($i = 0; $i < 5; $i++) {
+        $enc = Encuesta::factory()->completada()->create(['lote_id' => $lote->id]);
+        foreach ($preguntas as $p) {
+            $opcion = ($p->id === $preguntas->first()->id)
+                ? ($p->invertida ? $opcionDesfav : $opcionFav)
+                : ($p->invertida ? $opcionFav : $opcionDesfav);
+
+            Respuesta::create([
+                'encuesta_id' => $enc->id,
+                'pregunta_id' => $p->id,
+                'opcion_respuesta_id' => $opcion->id,
+            ]);
+        }
+    }
+
+    $component = Livewire::actingAs($admin)
+        ->test(Reportes::class)
+        ->set('filtroLoteId', (string) $lote->id)
+        ->call('irNivel3', $subdimension->id);
+
+    expect(count($component->viewData('datosNivel3')))->toBe($preguntas->count());
+
+    $component->set('filtroBadgeNivel3', 'Excelente');
+    expect(count($component->viewData('datosNivel3')))->toBe(1);
+    expect($component->viewData('datosNivel3')[0]['id'])->toBe($preguntas->first()->id);
+
+    $component->set('filtroBadgeNivel3', 'Buen clima');
+    expect(count($component->viewData('datosNivel3')))->toBe(0);
+
+    $otraSub = \App\Models\Subdimension::skip(1)->first();
+    $component->call('irNivel3', $otraSub->id);
+    expect($component->get('filtroBadgeNivel3'))->toBe('');
 });
